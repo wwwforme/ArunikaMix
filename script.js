@@ -697,7 +697,7 @@ function Home() {
     ),
 
     /* POSISI NOTIFIKASI DIKUNCI LANGSUNG KE KIRI BAWAH */
-    notice && React.createElement('div', {
+        notice && React.createElement('div', { 
       className: 'toast-notice',
       style: {
         position: 'fixed',
