@@ -696,8 +696,7 @@ function Home() {
       React.createElement('span', { style: { fontFamily: 'var(--font-mono)' } }, 'SUPABASE CLOUD ACTIVE')
     ),
 
-    /* POSISI NOTIFIKASI DIKUNCI LANGSUNG KE KIRI BAWAH */
-        notice && React.createElement('div', { 
+    notice && React.createElement('div', { 
       className: 'toast-notice',
       style: {
         position: 'fixed',
