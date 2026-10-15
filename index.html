@@ -20,14 +20,105 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- CSS Utama (Menggunakan jalur relatif dengan penanda versi agar cache browser ter-refresh) -->
-    <link rel="stylesheet" href="./style.css?v=4">
+    <!-- STYLE LANGSUNG DALAM HTML (Memaksa Tampilan Krem & Logo Rapi) -->
+    <style>
+      :root {
+        --paper: #fbf9f5;
+        --paper-light: #fffefb;
+        --line: #e6dfd5;
+        --ink: #2c2925;
+        --ink-soft: #706b63;
+        --plum: #4b334d;
+        --coral: #ee806c;
+        --coral-deep: #d96b58;
+        --saffron: #edb949;
+        --teal: #4c9382;
+        --font-display: 'Fraunces', serif;
+        --font-sans: 'DM Sans', sans-serif;
+        --font-mono: 'DM Mono', monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html, body {
+        background-color: #fbf9f5 !important;
+        color: #2c2925 !important;
+        font-family: 'DM Sans', sans-serif !important;
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      .app-shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      /* LOGO FIX */
+      .brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Fraunces', serif;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .brand-mark {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+      }
+
+      .brand-mark span {
+        width: 5px !important;
+        height: 16px !important;
+        background-color: #4b334d !important;
+        border-radius: 3px !important;
+        display: inline-block !important;
+      }
+
+      /* LAYOUT & PANEL */
+      .hero-wrap, .panel, .mix-panel, .results-section {
+        background: #fffefb !important;
+        border: 1px solid #e6dfd5 !important;
+        border-radius: 16px;
+      }
+
+      .participant-row, .hero-stamp, .balance-note, .group-card, .copy-button {
+        background: #fbf9f5 !important;
+        border: 1px solid #e6dfd5 !important;
+      }
+
+      .shuffle-button {
+        background: #4b334d !important;
+        color: #ffffff !important;
+      }
+
+      .toast-notice {
+        position: fixed !important;
+        bottom: 24px !important;
+        left: 24px !important;
+        background: #4b334d !important;
+        color: #ffffff !important;
+        padding: 12px 18px;
+        border-radius: 10px;
+        z-index: 999999 !important;
+      }
+    </style>
+
+    <!-- Panggilan CSS Eksternal Tetap Dipertahankan sebagai Cadangan -->
+    <link rel="stylesheet" href="./style.css?v=99">
 </head>
-<body style="background-color: #fbf9f5 !important; margin: 0; padding: 0;">
+<body>
 
     <div id="root"></div>
 
-    <!-- Script Utama ArunikaMix -->
-    <script src="./script.js?v=4"></script>
+    <!-- Script Utama -->
+    <script src="./script.js?v=99"></script>
 </body>
 </html>
