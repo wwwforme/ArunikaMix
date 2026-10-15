@@ -55,16 +55,24 @@ function Home() {
   const [notice, setNotice] = useState('');
 
   const [history, setHistory] = useState([]);
-  const [templates, setTemplates] = useState([
-    { name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }
-  ]);
-  const [templateNameInput, setTemplateNameInput] = useState('');
   
+  // Ambil template tersimpan dari localStorage agar tidak hilang saat browser ditutup
+  const [templates, setTemplates] = useState(() => {
+    const saved = localStorage.getItem('arunikamix_templates');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+    }
+    return [{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }];
+  });
+
+  const [templateNameInput, setTemplateNameInput] = useState('');
   const [activeTab, setActiveTab] = useState('groups');
 
+  // Spin Wheel State
   const [spinning, setSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [selectedWinner, setSelectedWinner] = useState(null);
+  const [removeWinnerOnSelect, setRemoveWinnerOnSelect] = useState(false);
 
   const [duels, setDuels] = useState([]);
   const [queueList, setQueueList] = useState([]);
@@ -190,6 +198,7 @@ function Home() {
     showNotice('Urutan giliran diacak!');
   };
 
+  // Simpan Template ke LocalStorage agar permanen
   const saveAsTemplate = () => {
     const name = templateNameInput.trim();
     if (!name) return;
@@ -197,9 +206,11 @@ function Home() {
       showNotice('Daftar nama kosong');
       return;
     }
-    setTemplates(prev => [...prev, { name, list: [...participants] }]);
+    const updatedTemplates = [...templates, { name, list: [...participants] }];
+    setTemplates(updatedTemplates);
+    localStorage.setItem('arunikamix_templates', JSON.stringify(updatedTemplates));
     setTemplateNameInput('');
-    showNotice(`Template "${name}" disimpan`);
+    showNotice(`Template "${name}" disimpan permanen`);
   };
 
   const loadTemplate = (list) => {
@@ -209,7 +220,9 @@ function Home() {
   };
 
   const deleteTemplate = (index) => {
-    setTemplates(prev => prev.filter((_, i) => i !== index));
+    const updatedTemplates = templates.filter((_, i) => i !== index);
+    setTemplates(updatedTemplates);
+    localStorage.setItem('arunikamix_templates', JSON.stringify(updatedTemplates));
     showNotice('Template dihapus');
   };
 
@@ -227,8 +240,16 @@ function Home() {
 
     setTimeout(() => {
       setSpinning(false);
-      setSelectedWinner(participants[randomIndex]);
-      showNotice(`Terpilih: ${participants[randomIndex]}!`);
+      const winner = participants[randomIndex];
+      setSelectedWinner(winner);
+
+      // Jika opsi hapus pemenang dicentang, hapus namanya dari daftar utama
+      if (removeWinnerOnSelect) {
+        setParticipants(current => current.filter((_, i) => i !== randomIndex));
+        showNotice(`Pemenang ${winner} terpilih dan dihapus dari daftar!`);
+      } else {
+        showNotice(`Terpilih: ${winner}!`);
+      }
     }, 3800);
   };
 
@@ -360,7 +381,7 @@ function Home() {
         ),
         React.createElement('div', { style: { marginTop: '15px', paddingTop: '12px', borderTop: '1px solid var(--line)' } },
           React.createElement('div', { className: 'section-kicker', style: { marginBottom: '8px' } },
-            React.createElement(Icon, { name: 'folder', size: 12 }), ' TEMPLATE LIST NAMA'
+            React.createElement(Icon, { name: 'folder', size: 12 }), ' TEMPLATE TERSIMPAN (PERMANEN)'
           ),
           React.createElement('div', { style: { display: 'flex', gap: '6px', marginBottom: '8px' } },
             React.createElement('input', {
@@ -432,8 +453,20 @@ function Home() {
         activeTab === 'wheel' && React.createElement('div', { style: { textAlign: 'center' } },
           React.createElement('div', { className: 'section-kicker', style: { justifyContent: 'center' } }, React.createElement(Icon, { name: 'disc', size: 15 }), ' RODA PUTAR'),
           React.createElement('h2', null, 'Putar Roda Undian'),
-          React.createElement('p', { className: 'mix-description' }, 'Tampilan roda bersih tanpa teks nama.'),
-          React.createElement('div', { style: { position: 'relative', width: '240px', height: '240px', margin: '15px auto' } },
+          React.createElement('p', { className: 'mix-description' }, 'Pilih apakah nama pemenang otomatis dihapus atau tetap di daftar.'),
+          
+          /* Checkbox Hapus Nama Pemenang */
+          React.createElement('div', { style: { margin: '10px 0', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--ink-soft)' } },
+            React.createElement('input', {
+              type: 'checkbox',
+              id: 'removeWinner',
+              checked: removeWinnerOnSelect,
+              onChange: (e) => setRemoveWinnerOnSelect(e.target.checked)
+            }),
+            React.createElement('label', { htmlFor: 'removeWinner', style: { cursor: 'pointer' } }, 'Hapus nama dari daftar setelah terpilih')
+          ),
+
+          React.createElement('div', { style: { position: 'relative', width: '220px', height: '220px', margin: '10px auto' } },
             React.createElement('div', { style: { position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '18px solid var(--coral-deep)' } }),
             React.createElement('div', { style: { width: '100%', height: '100%', borderRadius: '50%', border: '4px solid var(--plum)', transform: `rotate(${wheelRotation}deg)`, transition: spinning ? 'transform 3.8s cubic-bezier(0.1, 0.9, 0.2, 1)' : 'none', overflow: 'hidden', position: 'relative', background: 'var(--paper-light)', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' } },
               React.createElement('svg', { viewBox: '0 0 100 100', style: { width: '100%', height: '100%' } },
