@@ -443,7 +443,7 @@ body {
 }
 
 .group-names {
-  padding: 12px;
+  paddding: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -494,7 +494,6 @@ body {
   padding-top: 16px;
 }
 
-/* POSISI NOTIFIKASI DIKUNCI KE KIRI BAWAH */
 .toast-notice {
   position: fixed !important;
   bottom: 24px !important;
@@ -509,18 +508,6 @@ body {
   font-size: 13px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
   z-index: 999999 !important;
-  animation: slideInLeft 0.3s ease-out;
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .spin-icon {
