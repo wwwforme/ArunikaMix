@@ -20,10 +20,10 @@
   padding: 0;
 }
 
-html, body {
-  background-color: var(--paper) !important;
-  color: var(--ink) !important;
-  font-family: var(--font-sans) !important;
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
   min-height: 100vh;
   padding: 24px;
 }
@@ -51,17 +51,15 @@ html, body {
 }
 
 .brand-mark {
-  display: inline-flex !important;
-  align-items: center;
-  gap: 3px !important;
+  display: flex;
+  gap: 3px;
 }
 
 .brand-mark span {
-  width: 5px !important;
-  height: 16px !important;
-  background-color: var(--plum) !important;
-  border-radius: 3px !important;
-  display: inline-block !important;
+  width: 6px;
+  height: 16px;
+  background: var(--plum);
+  border-radius: 3px;
 }
 
 .brand-light {
@@ -174,7 +172,7 @@ html, body {
   }
 }
 
-.panel, .mix-panel {
+.panel {
   background: var(--paper-light);
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -182,6 +180,10 @@ html, body {
 }
 
 .mix-panel {
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
 }
@@ -253,7 +255,27 @@ html, body {
   gap: 4px;
 }
 
-.row-action, .icon-button {
+.row-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-soft);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.row-action:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.row-action.delete-action:hover {
+  color: #c94a4a;
+}
+
+.icon-button {
   background: none;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -265,11 +287,11 @@ html, body {
   justify-content: center;
 }
 
-.row-action:hover, .icon-button:hover {
+.icon-button:hover {
   background: var(--line);
 }
 
-.row-action.delete-action:hover, .icon-button.delete-action:hover {
+.icon-button.delete-action:hover {
   border-color: #c94a4a;
   color: #c94a4a;
 }
@@ -486,6 +508,18 @@ html, body {
   font-size: 13px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
   z-index: 999999 !important;
+  animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .spin-icon {
