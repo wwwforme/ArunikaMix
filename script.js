@@ -45,7 +45,7 @@ function createGroups(names, count) {
 
 function Home() {
   const [participants, setParticipants] = useState(ORIGINAL_PARTICIPANTS);
-  const [groupCount, setGroupCount] = useState(4);
+  const [groupCountInput, setGroupCountInput] = useState('4'); // Menggunakan teks agar bebas dihapus
   const [groups, setGroups] = useState([]);
   const [inputBoxText, setInputBoxText] = useState('');
   const [editingIndex, setEditingIndex] = useState(null);
@@ -76,7 +76,13 @@ function Home() {
   const [queueList, setQueueList] = useState([]);
 
   const noticeTimer = useRef(null);
-  const effectiveGroupCount = Math.min(Math.max(2, groupCount), Math.max(2, participants.length));
+
+  // Hitung jumlah kelompok yang valid (minimal 2, maksimal jumlah peserta)
+  const effectiveGroupCount = useMemo(() => {
+    const parsed = parseInt(groupCountInput, 10);
+    if (isNaN(parsed) || parsed < 2) return 2;
+    return Math.min(parsed, Math.max(2, participants.length));
+  }, [groupCountInput, participants.length]);
 
   const groupSizeLabel = useMemo(() => {
     if (!participants.length) return 'Belum ada yang dibagi';
@@ -153,7 +159,7 @@ function Home() {
     setGroups([]);
     setDuels([]);
     setQueueList([]);
-    setGroupCount(4);
+    setGroupCountInput('4');
     setEditingIndex(null);
     showNotice('Daftar awal dikembalikan');
   };
@@ -196,7 +202,6 @@ function Home() {
     showNotice('Urutan giliran diacak!');
   };
 
-  // Simpan Template Permanen
   const saveAsTemplate = () => {
     const name = templateNameInput.trim();
     if (!name) {
@@ -220,9 +225,8 @@ function Home() {
     showNotice('Template dimuat ke daftar');
   };
 
-  // Hapus Template
   const deleteTemplate = (e, index) => {
-    e.stopPropagation(); // Mencegah ter-load saat ditekan
+    e.stopPropagation();
     if (window.confirm('Hapus template ini?')) {
       const updatedTemplates = templates.filter((_, i) => i !== index);
       setTemplates(updatedTemplates);
@@ -435,13 +439,11 @@ function Home() {
           React.createElement('div', { style: { margin: '15px 0' } },
             React.createElement('label', { style: { fontSize: '12px', color: 'var(--ink-soft)', display: 'block', marginBottom: '6px' } }, 'Jumlah Kelompok:'),
             React.createElement('input', {
-              type: 'number',
-              min: '2',
-              max: Math.max(2, participants.length),
-              value: groupCount,
+              type: 'text', // Menggunakan text agar bebas dihapus tanpa macet
+              inputMode: 'numeric',
+              value: groupCountInput,
               onChange: (e) => {
-                const val = parseInt(e.target.value) || 2;
-                setGroupCount(val);
+                setGroupCountInput(e.target.value);
                 setGroups([]);
               },
               style: { width: '100%', padding: '12px', fontSize: '18px', fontWeight: 'bold', textAlign: 'center', background: 'rgba(246, 240, 228, 0.68)', border: '1px solid var(--line)', borderRadius: '12px', color: 'var(--ink)', fontFamily: 'var(--font-display)' }
