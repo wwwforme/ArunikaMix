@@ -64,7 +64,8 @@ function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [history, setHistory] = useState([]);
-  const [templates, setTemplates] = useState([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }]);
+  // Nama template awal diganti menjadi "Arunika"
+  const [templates, setTemplates] = useState([{ name: 'Arunika', list: ORIGINAL_PARTICIPANTS }]);
   const [templateNameInput, setTemplateNameInput] = useState('');
   const [activeTab, setActiveTab] = useState('groups');
 
@@ -92,7 +93,7 @@ function Home() {
       if (session?.user) {
         fetchUserTemplates(session.user.id);
       } else {
-        setTemplates([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }]);
+        setTemplates([{ name: 'Arunika', list: ORIGINAL_PARTICIPANTS }]);
       }
     });
 
@@ -108,7 +109,7 @@ function Home() {
 
     if (!error && data) {
       const cloudTemplates = data.map(item => ({ id: item.id, name: item.name, list: item.list }));
-      setTemplates([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }, ...cloudTemplates]);
+      setTemplates([{ name: 'Arunika', list: ORIGINAL_PARTICIPANTS }, ...cloudTemplates]);
     }
   };
 
@@ -141,7 +142,7 @@ function Home() {
 
   const handleLogout = async () => {
     if (supabaseClient) await supabaseClient.auth.signOut();
-    setTemplates([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }]);
+    setTemplates([{ name: 'Arunika', list: ORIGINAL_PARTICIPANTS }]);
     showNotice('Berhasil keluar akun');
   };
 
