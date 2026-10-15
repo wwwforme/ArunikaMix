@@ -47,21 +47,19 @@ function Home() {
   const [participants, setParticipants] = useState(ORIGINAL_PARTICIPANTS);
   const [groupCount, setGroupCount] = useState(4);
   const [groups, setGroups] = useState([]);
-  const [inputBoxText, setInputBoxText] = useState(''); // Mendukung input per baris / paste masal
+  const [inputBoxText, setInputBoxText] = useState('');
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [isShuffling, setIsShuffling] = useState(false);
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
 
-  // Fitur Tambahan: History, Spin Wheel, Mode Seru Lainnya
   const [history, setHistory] = useState([]);
   const [templates, setTemplates] = useState([
     { name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }
   ]);
   const [templateNameInput, setTemplateNameInput] = useState('');
   
-  // Fitur Mode Interaktif Lainnya ('groups' | 'wheel' | 'duel' | 'queue')
   const [activeTab, setActiveTab] = useState('groups');
 
   // Spin Wheel State
@@ -69,14 +67,12 @@ function Home() {
   const [wheelRotation, setWheelRotation] = useState(0);
   const [selectedWinner, setSelectedWinner] = useState(null);
 
-  // Mode Duel / Berpasangan State
+  // Duel & Queue State
   const [duels, setDuels] = useState([]);
-
-  // Mode Urutan Antrean / Giliran State
   const [queueList, setQueueList] = useState([]);
 
   const noticeTimer = useRef(null);
-  const effectiveGroupCount = Math.min(groupCount, Math.max(2, participants.length));
+  const effectiveGroupCount = Math.min(Math.max(2, groupCount), Math.max(2, participants.length));
 
   const groupSizeLabel = useMemo(() => {
     if (!participants.length) return 'Belum ada yang dibagi';
@@ -91,7 +87,6 @@ function Home() {
     noticeTimer.current = window.setTimeout(() => setNotice(''), 2800);
   };
 
-  // Handler Input Nama (Bisa ketik satu atau paste banyak nama sekaligus per baris)
   const handleAddNames = () => {
     const text = inputBoxText.trim();
     if (!text) return;
@@ -175,7 +170,6 @@ function Home() {
     }, 420);
   };
 
-  // Fitur Tambahan 4: Pengacak Duel / Berpasangan
   const makeDuels = () => {
     if (participants.length < 2) return;
     const shuffled = [...participants].sort(() => Math.random() - 0.5);
@@ -184,7 +178,6 @@ function Home() {
       if (i + 1 < shuffled.length) {
         pairs.push([shuffled[i], shuffled[i + 1]]);
       } else {
-        // Sisa ganjil digabung ke pasangan terakhir
         pairs[pairs.length - 1].push(shuffled[i]);
       }
     }
@@ -192,7 +185,6 @@ function Home() {
     showNotice('Pasangan duel dibentuk!');
   };
 
-  // Fitur Tambahan 4: Pengacak Urutan / Antrean Giliran
   const makeQueue = () => {
     if (!participants.length) return;
     const shuffled = [...participants].sort(() => Math.random() - 0.5);
@@ -200,7 +192,6 @@ function Home() {
     showNotice('Urutan giliran diacak!');
   };
 
-  // Template Handlers
   const saveAsTemplate = () => {
     const name = templateNameInput.trim();
     if (!name) return;
@@ -224,7 +215,6 @@ function Home() {
     showNotice('Template dihapus');
   };
 
-  // Spin Wheel Logic (Dengan Nama Tercantum di Roda)
   const startSpin = () => {
     if (spinning || participants.length < 2) return;
     setSpinning(true);
@@ -256,13 +246,6 @@ function Home() {
     } catch {
       showNotice('Clipboard tidak dapat diakses');
     }
-  };
-
-  const updateGroupCount = (next) => {
-    const maxForRoom = Math.max(2, participants.length);
-    const safeCount = Math.max(2, Math.min(maxForRoom, next));
-    setGroupCount(safeCount);
-    setGroups([]);
   };
 
   return (
@@ -303,22 +286,22 @@ function Home() {
 
       {/* NAVIGASI MODE FITUR */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '22px', flexWrap: 'wrap' }}>
-        <button type="button" className={`copy-button ${activeTab === 'groups' ? 'active-tab' : ''}`} onClick={() => setActiveTab('groups')} style={{ background: activeTab === 'groups' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'groups' ? '#fff' : 'var(--ink)' }}>
+        <button type="button" className="copy-button" onClick={() => setActiveTab('groups')} style={{ background: activeTab === 'groups' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'groups' ? '#fff' : 'var(--ink)' }}>
           <Icon name="users" size={16} /> Pembagi Kelompok
         </button>
-        <button type="button" className={`copy-button ${activeTab === 'wheel' ? 'active-tab' : ''}`} onClick={() => setActiveTab('wheel')} style={{ background: activeTab === 'wheel' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'wheel' ? '#fff' : 'var(--ink)' }}>
+        <button type="button" className="copy-button" onClick={() => setActiveTab('wheel')} style={{ background: activeTab === 'wheel' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'wheel' ? '#fff' : 'var(--ink)' }}>
           <Icon name="disc" size={16} /> Roda Putar (Spin Wheel)
         </button>
-        <button type="button" className={`copy-button ${activeTab === 'duel' ? 'active-tab' : ''}`} onClick={() => setActiveTab('duel')} style={{ background: activeTab === 'duel' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'duel' ? '#fff' : 'var(--ink)' }}>
+        <button type="button" className="copy-button" onClick={() => setActiveTab('duel')} style={{ background: activeTab === 'duel' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'duel' ? '#fff' : 'var(--ink)' }}>
           <Icon name="git-pull-request" size={16} /> Undian Berpasangan (Duel)
         </button>
-        <button type="button" className={`copy-button ${activeTab === 'queue' ? 'active-tab' : ''}`} onClick={() => setActiveTab('queue')} style={{ background: activeTab === 'queue' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'queue' ? '#fff' : 'var(--ink)' }}>
+        <button type="button" className="copy-button" onClick={() => setActiveTab('queue')} style={{ background: activeTab === 'queue' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'queue' ? '#fff' : 'var(--ink)' }}>
           <Icon name="list-ordered" size={16} /> Urutan Antrean / Giliran
         </button>
       </div>
 
       <div className="workspace">
-        {/* KOLOM KIRI: DAFTAR PESERTA & INPUT NAMA */}
+        {/* KOLOM KIRI: DAFTAR PESERTA */}
         <div className="panel">
           <div className="panel-heading">
             <div>
@@ -455,216 +438,18 @@ function Home() {
               </div>
 
               <h2>Berapa kelompok?</h2>
-              <p className="mix-description">Pilih jumlah kelompok yang diinginkan, lalu acak secara merata.</p>
+              <p className="mix-description">Ketik langsung jumlah kelompok yang diinginkan, lalu acak secara merata.</p>
 
-              <div className="group-picker">
-                <button type="button" className="picker-button" onClick={() => updateGroupCount(effectiveGroupCount - 1)} disabled={effectiveGroupCount <= 2}>
-                  <Icon name="minus" size={18} />
-                </button>
-                <div className="group-count">
-                  <strong>{effectiveGroupCount}</strong>
-                  <span>kelompok</span>
-                </div>
-                <button type="button" className="picker-button" onClick={() => updateGroupCount(effectiveGroupCount + 1)} disabled={effectiveGroupCount >= Math.max(2, participants.length)}>
-                  <Icon name="plus" size={18} />
-                </button>
-              </div>
-
-              <div className="balance-note">
-                <span className="balance-mark">≈</span>
-                <span>{groupSizeLabel}</span>
-                <span className="balance-divider" />
-                <span>{participants.length ? 'seimbang' : 'kosong'}</span>
-              </div>
-
-              <button type="button" className="shuffle-button" onClick={shuffleGroups} disabled={isShuffling || participants.length < 2}>
-                <Icon name="shuffle" size={18} className={isShuffling ? 'spin-icon' : ''} />
-                {isShuffling ? 'Mengacak...' : groups.length ? 'Acak Lagi' : 'Acak Kelompok'}
-                <Icon name="arrow-right" size={18} />
-              </button>
-
-              {/* RIWAYAT */}
-              {history.length > 0 && (
-                <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid var(--line)' }}>
-                  <div className="section-kicker" style={{ marginBottom: '8px' }}><Icon name="clock" size={12} /> RIWAYAT ACAKAN</div>
-                  <div style={{ maxHeight: '110px', overflowY: 'auto' }}>
-                    {history.map((item) => (
-                      <div key={item.id} onClick={() => setGroups(item.data)} style={{ padding: '6px 8px', borderRadius: '6px', background: 'rgba(0,0,0,0.03)', marginBottom: '4px', cursor: 'pointer', fontSize: '11px', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Acakan {item.data.length} Kelompok</span>
-                        <span style={{ color: 'var(--ink-soft)' }}>{item.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeTab === 'wheel' && (
-            <div style={{ textAlign: 'center' }}>
-              <div className="section-kicker" style={{ justifyContent: 'center' }}><Icon name="disc" size={15} /> RODA PUTAR</div>
-              <h2>Putar Nama Peserta</h2>
-              <p className="mix-description">Nama tercantum di roda dan siap diundi.</p>
-
-              <div style={{ position: 'relative', width: '240px', height: '240px', margin: '15px auto' }}>
-                <div style={{
-                  position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', zIndex: 10,
-                  width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '18px solid var(--coral-deep)'
-                }} />
-                <div style={{
-                  width: '100%', height: '100%', borderRadius: '50%', border: '4px solid var(--plum)',
-                  transform: `rotate(${wheelRotation}deg)`, transition: spinning ? 'transform 3.8s cubic-bezier(0.1, 0.9, 0.2, 1)' : 'none',
-                  overflow: 'hidden', position: 'relative', background: 'var(--paper-light)', boxShadow: '0 8px 20px rgba(0,0,0,0.1)'
-                }}>
-                  <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
-                    {participants.map((person, i) => {
-                      const total = participants.length;
-                      const angle = 360 / total;
-                      const startAngle = i * angle;
-                      const endAngle = (i + 1) * angle;
-                      
-                      const x1 = 50 + 50 * Math.cos((Math.PI * (startAngle - 90)) / 180);
-                      const y1 = 50 + 50 * Math.sin((Math.PI * (startAngle - 90)) / 180);
-                      const x2 = 50 + 50 * Math.cos((Math.PI * (endAngle - 90)) / 180);
-                      const y2 = 50 + 50 * Math.sin((Math.PI * (endAngle - 90)) / 180);
-
-                      const largeArc = angle > 180 ? 1 : 0;
-                      const pathData = `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`;
-                      const colors = ['#ee806c', '#edb949', '#4c9382', '#4b334d', '#86abb4', '#d78b88', '#93b99d', '#ba8850'];
-
-                      // Posisi teks di dalam slice roda
-                      const midAngle = startAngle + angle / 2;
-                      const textRadius = 32;
-                      const tx = 50 + textRadius * Math.cos((Math.PI * (midAngle - 90)) / 180);
-                      const ty = 50 + textRadius * Math.sin((Math.PI * (midAngle - 90)) / 180);
-
-                      return (
-                        <g key={i}>
-                          <path d={pathData} fill={colors[i % colors.length]} stroke="#fff" strokeWidth="0.5" />
-                          <text x={tx} y={ty} fill="#fff" fontSize="4" fontWeight="bold" textAnchor="middle" dominantBaseline="middle" transform={`rotate(${midAngle}, ${tx}, ${ty})`}>
-                            {person.length > 10 ? person.substring(0, 9) + '..' : person}
-                          </text>
-                        </g>
-                      );
-                    })}
-                  </svg>
-                </div>
-              </div>
-
-              <button type="button" className="shuffle-button" onClick={startSpin} disabled={spinning || participants.length < 2}>
-                <Icon name="rotate-cw" size={18} className={spinning ? 'spin-icon' : ''} />
-                {spinning ? 'Berputar...' : 'Putar Roda'}
-              </button>
-
-              {selectedWinner && (
-                <div style={{ marginTop: '14px', padding: '10px', background: 'rgba(76, 147, 130, 0.15)', borderRadius: '8px', fontSize: '13px' }}>
-                  🎉 Pemenang: <strong style={{ color: 'var(--teal)' }}>{selectedWinner}</strong>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'duel' && (
-            <div>
-              <div className="section-kicker"><Icon name="git-pull-request" size={15} /> UNDIAN BERPASANGAN</div>
-              <h2>Pasangan Duel / Tim 2 Orang</h2>
-              <p className="mix-description">Cocokkan peserta menjadi pasangan tanding atau partner kerja.</p>
-
-              <button type="button" className="shuffle-button" onClick={makeDuels} disabled={participants.length < 2}>
-                <Icon name="shuffle" size={18} /> Acak Pasangan Sekarang
-              </button>
-
-              {duels.length > 0 && (
-                <div style={{ marginTop: '15px', maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {duels.map((pair, idx) => (
-                    <div key={idx} style={{ padding: '10px', background: 'var(--paper-light)', border: '1px solid var(--line)', borderRadius: '8px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 'bold', color: 'var(--coral-deep)' }}>Pasangan #{idx + 1}</span>
-                      <span>{pair.join(' vs ')}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'queue' && (
-            <div>
-              <div className="section-kicker"><Icon name="list-ordered" size={15} /> URUTAN ANTREAN</div>
-              <h2>Nomor Giliran / Presentasi</h2>
-              <p className="mix-description">Acak siapa yang tampil duluan hingga terakhir secara adil.</p>
-
-              <button type="button" className="shuffle-button" onClick={makeQueue} disabled={!participants.length}>
-                <Icon name="shuffle" size={18} /> Acak Urutan Giliran
-              </button>
-
-              {queueList.length > 0 && (
-                <div style={{ marginTop: '15px', maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {queueList.map((name, idx) => (
-                    <div key={idx} style={{ padding: '8px 12px', background: 'var(--paper-light)', border: '1px solid var(--line)', borderRadius: '6px', fontSize: '12px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'bold', color: 'var(--coral)' }}>#{String(idx + 1).padStart(2, '0')}</span>
-                      <span>{name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* HASIL KELOMPOK */}
-      {activeTab === 'groups' && (
-        <section className="results-section">
-          <div className="results-heading">
-            <div>
-              <div className="section-kicker">HASIL ACAKAN</div>
-              <h2>Kelompokmu <span>{groups.length ? `· ${groups.length}` : ''}</span></h2>
-            </div>
-            <button type="button" className="copy-button" onClick={copyGroups} disabled={!groups.length}>
-              <Icon name={copied ? "check" : "clipboard"} size={16} />
-              {copied ? 'Tersalin' : 'Salin Kelompok'}
-            </button>
-          </div>
-
-          {groups.length ? (
-            <div className="groups-grid">
-              {groups.map((group) => (
-                <article className={`group-card group-${GROUP_COLORS[group.id % GROUP_COLORS.length]}`} key={group.id}>
-                  <div className="group-card-head">
-                    <span className="group-label">KELOMPOK</span>
-                    <span className="group-number">{String(group.id + 1).padStart(2, '0')}</span>
-                    <span className="group-total">{group.names.length} orang</span>
-                  </div>
-                  <div className="group-names">
-                    {group.names.map((name, index) => (
-                      <div className="group-person" key={`${name}-${index}`}>
-                        <span className="member-dot" />
-                        {name}
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="result-empty">
-              <div className="empty-sun"><Icon name="shuffle" size={24} /></div>
-              <h3>Belum ada hasil acakan kelompok.</h3>
-              <p style={{ color: 'var(--ink-soft)', fontSize: '13px' }}>Pilih jumlah kelompok di atas lalu klik acak.</p>
-            </div>
-          )}
-        </section>
-      )}
-
-      <footer className="site-footer">
-        <span>ArunikaMix • alat kecil untuk menyatukan orang</span>
-        <span style={{ fontFamily: 'var(--font-mono)' }}>LOKAL SAJA / TANPA LOGIN</span>
-      </footer>
-
-      {notice && <div className="toast-notice">{notice}</div>}
-    </main>
-  );
-}
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<Home />);
+              {/* INPUT LANGSUNG JUMLAH KELOMPOK */}
+              <div style={{ margin: '15px 0' }}>
+                <label style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'block', marginBottom: '6px' }}>Jumlah Kelompok:</label>
+                <input
+                  type="number"
+                  min="2"
+                  max={Math.max(2, participants.length)}
+                  value={groupCount}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 2;
+                    setGroupCount(val);
+                    setGroups([]);
+                  }}
