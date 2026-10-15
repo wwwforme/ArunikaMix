@@ -1,5 +1,10 @@
 const { useState, useMemo, useRef, useEffect } = React;
 
+// Konfigurasi Supabase Cloud
+const SUPABASE_URL = 'https://hldsxluraxvsxscjfbqf.supabase.co';
+const SUPABASE_ANON_KEY = 'Sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0';
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
 const ORIGINAL_PARTICIPANTS = [
   'Agung Pranaja', 'Aina Salsabil', 'Ainul Mardhiah', 'Azfar Syahmi Al Akbar',
   'Fhyan Farikha Andi', 'Iffanda Putri Vallendini', 'Kansya Asqira Madhani Alam',
@@ -20,10 +25,7 @@ const Icon = ({ name, size = 16, className = '' }) => {
     if (ref.current) {
       ref.current.innerHTML = `<i data-lucide="${name}" style="width:${size}px; height:${size}px;"></i>`;
       if (window.lucide) {
-        window.lucide.createIcons({
-          nameAttr: 'data-lucide',
-          attrs: { class: className }
-        });
+        window.lucide.createIcons({ nameAttr: 'data-lucide', attrs: { class: className } });
       }
     }
   }, [name, size, className]);
@@ -45,7 +47,7 @@ function createGroups(names, count) {
 
 function Home() {
   const [participants, setParticipants] = useState(ORIGINAL_PARTICIPANTS);
-  const [groupCountInput, setGroupCountInput] = useState('4'); // Menggunakan teks agar bebas dihapus
+  const [groupCountInput, setGroupCountInput] = useState('4');
   const [groups, setGroups] = useState([]);
   const [inputBoxText, setInputBoxText] = useState('');
   const [editingIndex, setEditingIndex] = useState(null);
@@ -54,16 +56,15 @@ function Home() {
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState('');
 
-  const [history, setHistory] = useState([]);
-  
-  const [templates, setTemplates] = useState(() => {
-    const saved = localStorage.getItem('arunikamix_templates');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
-    }
-    return [{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }];
-  });
+  // Sesi Login Akun Cloud
+  const [user, setUser] = useState(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
+  const [history, setHistory] = useState([]);
+  const [templates, setTemplates] = useState([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }]);
   const [templateNameInput, setTemplateNameInput] = useState('');
   const [activeTab, setActiveTab] = useState('groups');
 
@@ -77,24 +78,71 @@ function Home() {
 
   const noticeTimer = useRef(null);
 
-  // Hitung jumlah kelompok yang valid (minimal 2, maksimal jumlah peserta)
-  const effectiveGroupCount = useMemo(() => {
-    const parsed = parseInt(groupCountInput, 10);
-    if (isNaN(parsed) || parsed < 2) return 2;
-    return Math.min(parsed, Math.max(2, participants.length));
-  }, [groupCountInput, participants.length]);
+  // Pantau Status Login Supabase
+  useEffect(() => {
+    if (!supabaseClient) return;
+    
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchUserTemplates(session.user.id);
+    });
 
-  const groupSizeLabel = useMemo(() => {
-    if (!participants.length) return 'Belum ada yang dibagi';
-    const smallest = Math.floor(participants.length / effectiveGroupCount);
-    const largest = Math.ceil(participants.length / effectiveGroupCount);
-    return smallest === largest ? `${smallest} per grup` : `${smallest}–${largest} per grup`;
-  }, [effectiveGroupCount, participants.length]);
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserTemplates(session.user.id);
+      } else {
+        setTemplates([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchUserTemplates = async (userId) => {
+    if (!supabaseClient) return;
+    const { data, error } = await supabaseClient
+      .from('templates')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (!error && data) {
+      const cloudTemplates = data.map(item => ({ id: item.id, name: item.name, list: item.list }));
+      setTemplates([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }, ...cloudTemplates]);
+    }
+  };
 
   const showNotice = (message) => {
     setNotice(message);
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
     noticeTimer.current = window.setTimeout(() => setNotice(''), 2800);
+  };
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    if (!supabaseClient) return;
+
+    if (isSignUp) {
+      const { error } = await supabaseClient.auth.signUp({ email: authEmail, password: authPassword });
+      if (error) showNotice(error.message);
+      else {
+        showNotice('Pendaftaran berhasil! Silakan masuk.');
+        setIsSignUp(false);
+      }
+    } else {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email: authEmail, password: authPassword });
+      if (error) showNotice(error.message);
+      else {
+        showNotice('Berhasil masuk akun!');
+        setShowAuthModal(false);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    if (supabaseClient) await supabaseClient.auth.signOut();
+    setTemplates([{ name: 'Daftar Awal', list: ORIGINAL_PARTICIPANTS }]);
+    showNotice('Berhasil keluar akun');
   };
 
   const handleAddNames = () => {
@@ -164,6 +212,19 @@ function Home() {
     showNotice('Daftar awal dikembalikan');
   };
 
+  const effectiveGroupCount = useMemo(() => {
+    const parsed = parseInt(groupCountInput, 10);
+    if (isNaN(parsed) || parsed < 2) return 2;
+    return Math.min(parsed, Math.max(2, participants.length));
+  }, [groupCountInput, participants.length]);
+
+  const groupSizeLabel = useMemo(() => {
+    if (!participants.length) return 'Belum ada yang dibagi';
+    const smallest = Math.floor(participants.length / effectiveGroupCount);
+    const largest = Math.ceil(participants.length / effectiveGroupCount);
+    return smallest === largest ? `${smallest} per grup` : `${smallest}–${largest} per grup`;
+  }, [effectiveGroupCount, participants.length]);
+
   const shuffleGroups = () => {
     if (!participants.length || isShuffling) return;
     setIsShuffling(true);
@@ -202,7 +263,12 @@ function Home() {
     showNotice('Urutan giliran diacak!');
   };
 
-  const saveAsTemplate = () => {
+  const saveAsTemplate = async () => {
+    if (!user) {
+      showNotice('Silakan login akun terlebih dahulu');
+      setShowAuthModal(true);
+      return;
+    }
     const name = templateNameInput.trim();
     if (!name) {
       showNotice('Ketik nama template terlebih dahulu');
@@ -212,11 +278,19 @@ function Home() {
       showNotice('Daftar nama masih kosong');
       return;
     }
-    const updatedTemplates = [...templates, { name, list: [...participants] }];
-    setTemplates(updatedTemplates);
-    localStorage.setItem('arunikamix_templates', JSON.stringify(updatedTemplates));
-    setTemplateNameInput('');
-    showNotice(`Template "${name}" berhasil disimpan`);
+
+    const { data, error } = await supabaseClient
+      .from('templates')
+      .insert([{ user_id: user.id, name, list: participants }])
+      .select();
+
+    if (error) {
+      showNotice('Gagal menyimpan: ' + error.message);
+    } else if (data) {
+      setTemplates(prev => [...prev, { id: data[0].id, name, list: participants }]);
+      setTemplateNameInput('');
+      showNotice(`Template "${name}" tersimpan di Cloud!`);
+    }
   };
 
   const loadTemplate = (list) => {
@@ -225,13 +299,15 @@ function Home() {
     showNotice('Template dimuat ke daftar');
   };
 
-  const deleteTemplate = (e, index) => {
+  const deleteTemplate = async (e, id, index) => {
     e.stopPropagation();
-    if (window.confirm('Hapus template ini?')) {
-      const updatedTemplates = templates.filter((_, i) => i !== index);
-      setTemplates(updatedTemplates);
-      localStorage.setItem('arunikamix_templates', JSON.stringify(updatedTemplates));
-      showNotice('Template berhasil dihapus');
+    if (!user) return;
+    if (window.confirm('Hapus template ini dari Cloud?')) {
+      if (id) {
+        await supabaseClient.from('templates').delete().eq('id', id);
+      }
+      setTemplates(prev => prev.filter((_, i) => i !== index));
+      showNotice('Template dihapus');
     }
   };
 
@@ -286,9 +362,13 @@ function Home() {
         ),
         React.createElement('span', null, 'Arunika', React.createElement('span', { className: 'brand-light' }, 'Mix'))
       ),
-      React.createElement('div', { className: 'header-note' },
-        React.createElement('span', { className: 'pulse-dot' }),
-        'kelompok adil, energi baru'
+      React.createElement('div', { className: 'header-note', style: { gap: '10px' } },
+        user ?
+          React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
+            React.createElement('span', { style: { fontSize: '12px', fontWeight: 'bold' } }, user.email.split('@')[0]),
+            React.createElement('button', { type: 'button', className: 'copy-button', onClick: handleLogout, style: { padding: '4px 8px', fontSize: '11px' } }, 'Keluar')
+          ) :
+          React.createElement('button', { type: 'button', className: 'copy-button', onClick: () => setShowAuthModal(true), style: { padding: '4px 10px', fontSize: '12px' } }, 'Masuk / Daftar Akun')
       )
     ),
 
@@ -306,6 +386,30 @@ function Home() {
         React.createElement('span', { className: 'stamp-caption' }, 'orang', React.createElement('br'), 'di dalamnya'),
         React.createElement('div', { className: 'stamp-line' }),
         React.createElement('span', { className: 'stamp-caption' }, 'satu titik awal', React.createElement('br'), 'yang adil')
+      )
+    ),
+
+    showAuthModal && React.createElement('div', {
+      style: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'grid', placeItems: 'center', padding: '15px' }
+    },
+      React.createElement('div', { className: 'panel', style: { width: '100%', maxWidth: '380px', background: 'var(--paper-light)' } },
+        React.createElement('h3', null, isSignUp ? 'Daftar Akun Baru' : 'Masuk ke ArunikaMix'),
+        React.createElement('p', { className: 'panel-intro' }, 'Simpan template nama milikmu di Cloud agar tidak hilang.'),
+        React.createElement('form', { onSubmit: handleAuth },
+          React.createElement('input', {
+            type: 'email', required: true, placeholder: 'Email kamu...', value: authEmail, onChange: (e) => setAuthEmail(e.target.value),
+            style: { width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--line)', marginBottom: '8px' }
+          }),
+          React.createElement('input', {
+            type: 'password', required: true, placeholder: 'Kata sandi...', value: authPassword, onChange: (e) => setAuthPassword(e.target.value),
+            style: { width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--line)', marginBottom: '12px' }
+          }),
+          React.createElement('button', { type: 'submit', className: 'shuffle-button', style: { width: '100%', padding: '10px' } }, isSignUp ? 'Daftar Sekarang' : 'Masuk Akun')
+        ),
+        React.createElement('div', { style: { marginTop: '12px', fontSize: '12px', textAlign: 'center', cursor: 'pointer', color: 'var(--coral-deep)' }, onClick: () => setIsSignUp(!isSignUp) },
+          isSignUp ? 'Sudah punya akun? Masuk' : 'Belum punya akun? Daftar'
+        ),
+        React.createElement('button', { type: 'button', className: 'copy-button', onClick: () => setShowAuthModal(false), style: { width: '100%', marginTop: '10px' } }, 'Batal')
       )
     ),
 
@@ -388,24 +492,24 @@ function Home() {
           ) : React.createElement('div', { style: { textAlign: 'center', padding: '20px', color: 'var(--ink-soft)' } }, 'Belum ada peserta. Masukkan nama di atas.')
         ),
 
-        /* MANAJEMEN TEMPLATE LIST NAMA */
+        /* TEMPLATE CLOUD MANAGER */
         React.createElement('div', { style: { marginTop: '15px', paddingTop: '12px', borderTop: '1px solid var(--line)' } },
           React.createElement('div', { className: 'section-kicker', style: { marginBottom: '8px' } },
-            React.createElement(Icon, { name: 'folder', size: 12 }), ' TEMPLATE TERSIMPAN (PERMANEN)'
+            React.createElement(Icon, { name: 'folder', size: 12 }), ' TEMPLATE CLOUD ', user ? '(TERHUBUNG)' : '(PERLU LOGIN)'
           ),
           React.createElement('div', { style: { display: 'flex', gap: '6px', marginBottom: '10px' } },
             React.createElement('input', {
               className: 'edit-input',
-              placeholder: 'Nama template baru...',
+              placeholder: user ? 'Nama template baru...' : 'Login untuk simpan template...',
               value: templateNameInput,
               onChange: (e) => setTemplateNameInput(e.target.value)
             }),
-            React.createElement('button', { type: 'button', className: 'copy-button', onClick: saveAsTemplate }, 'Simpan')
+            React.createElement('button', { type: 'button', className: 'copy-button', onClick: saveAsTemplate }, 'Simpan Cloud')
           ),
           React.createElement('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap' } },
             templates.map((tpl, i) =>
               React.createElement('span', {
-                key: i,
+                key: tpl.id || i,
                 onClick: () => loadTemplate(tpl.list),
                 style: {
                   background: 'var(--line)', padding: '6px 10px', borderRadius: '8px', fontSize: '11px',
@@ -415,11 +519,8 @@ function Home() {
                 React.createElement('span', { style: { fontWeight: 'bold' } }, `${tpl.name} (${tpl.list.length})`),
                 i > 0 && React.createElement('button', {
                   type: 'button',
-                  onClick: (e) => deleteTemplate(e, i),
-                  style: {
-                    background: 'none', border: 'none', color: '#c94a4a', cursor: 'pointer',
-                    padding: '0 2px', fontSize: '12px', fontWeight: 'bold'
-                  },
+                  onClick: (e) => deleteTemplate(e, tpl.id, i),
+                  style: { background: 'none', border: 'none', color: '#c94a4a', cursor: 'pointer', padding: '0 2px', fontSize: '12px', fontWeight: 'bold' },
                   title: 'Hapus Template'
                 }, '✕')
               )
@@ -439,7 +540,7 @@ function Home() {
           React.createElement('div', { style: { margin: '15px 0' } },
             React.createElement('label', { style: { fontSize: '12px', color: 'var(--ink-soft)', display: 'block', marginBottom: '6px' } }, 'Jumlah Kelompok:'),
             React.createElement('input', {
-              type: 'text', // Menggunakan text agar bebas dihapus tanpa macet
+              type: 'text',
               inputMode: 'numeric',
               value: groupCountInput,
               onChange: (e) => {
@@ -592,7 +693,7 @@ function Home() {
 
     React.createElement('footer', { className: 'site-footer' },
       React.createElement('span', null, 'ArunikaMix • alat kecil untuk menyatukan orang'),
-      React.createElement('span', { style: { fontFamily: 'var(--font-mono)' } }, 'LOKAL SAJA / TANPA LOGIN')
+      React.createElement('span', { style: { fontFamily: 'var(--font-mono)' } }, 'SUPABASE CLOUD ACTIVE')
     ),
 
     notice && React.createElement('div', { className: 'toast-notice' }, notice)
