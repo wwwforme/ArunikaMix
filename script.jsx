@@ -62,12 +62,10 @@ function Home() {
   
   const [activeTab, setActiveTab] = useState('groups');
 
-  // Spin Wheel State
   const [spinning, setSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [selectedWinner, setSelectedWinner] = useState(null);
 
-  // Duel & Queue State
   const [duels, setDuels] = useState([]);
   const [queueList, setQueueList] = useState([]);
 
@@ -284,7 +282,6 @@ function Home() {
         </div>
       </section>
 
-      {/* NAVIGASI MODE FITUR */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '22px', flexWrap: 'wrap' }}>
         <button type="button" className="copy-button" onClick={() => setActiveTab('groups')} style={{ background: activeTab === 'groups' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'groups' ? '#fff' : 'var(--ink)' }}>
           <Icon name="users" size={16} /> Pembagi Kelompok
@@ -296,160 +293,4 @@ function Home() {
           <Icon name="git-pull-request" size={16} /> Undian Berpasangan (Duel)
         </button>
         <button type="button" className="copy-button" onClick={() => setActiveTab('queue')} style={{ background: activeTab === 'queue' ? 'var(--plum)' : 'var(--paper-light)', color: activeTab === 'queue' ? '#fff' : 'var(--ink)' }}>
-          <Icon name="list-ordered" size={16} /> Urutan Antrean / Giliran
-        </button>
-      </div>
-
-      <div className="workspace">
-        {/* KOLOM KIRI: DAFTAR PESERTA */}
-        <div className="panel">
-          <div className="panel-heading">
-            <div>
-              <div className="section-kicker">
-                <Icon name="users" size={15} />
-                PESERTA
-              </div>
-              <h2>Daftar peserta <span>({participants.length})</span></h2>
-            </div>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button type="button" className="icon-button delete-action" onClick={clearAllParticipants} title="Hapus Semua Nama">
-                <Icon name="trash-2" size={16} />
-              </button>
-              <button type="button" className="icon-button" onClick={resetList} title="Kembalikan ke daftar awal">
-                <Icon name="rotate-ccw" size={16} />
-              </button>
-            </div>
-          </div>
-
-          <p className="panel-intro">Ketik satu nama atau tempel (*paste*) daftar nama panjang sekaligus di bawah ini (baris baru otomatis jadi nama terpisah).</p>
-
-          <div style={{ marginBottom: '14px' }}>
-            <textarea
-              rows={3}
-              value={inputBoxText}
-              onChange={(e) => setInputBoxText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAddNames();
-                }
-              }}
-              placeholder="Ketik atau tempel daftar nama di sini..."
-              style={{
-                width: '100%', border: '1px solid var(--line)', borderRadius: '8px',
-                padding: '10px 12px', background: 'rgba(246, 240, 228, 0.68)', color: 'var(--ink)', fontSize: '13px', fontFamily: 'inherit', resize: 'vertical'
-              }}
-            />
-            <button type="button" className="shuffle-button" onClick={handleAddNames} style={{ marginTop: '8px', padding: '10px', fontSize: '13px' }}>
-              <Icon name="plus" size={16} /> Tambahkan ke Daftar
-            </button>
-          </div>
-
-          <div className="participant-list">
-            {participants.length ? (
-              participants.map((person, index) => (
-                <div className="participant-row" key={`${person}-${index}`}>
-                  {editingIndex === index ? (
-                    <input
-                      className="edit-input"
-                      autoFocus
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveEdit(index);
-                        if (e.key === 'Escape') setEditingIndex(null);
-                      }}
-                    />
-                  ) : (
-                    <>
-                      <span className="person-number">{String(index + 1).padStart(2, '0')}</span>
-                      <span className="person-name">{person}</span>
-                    </>
-                  )}
-
-                  <div className="row-actions">
-                    {editingIndex === index ? (
-                      <>
-                        <button type="button" className="row-action" onClick={() => saveEdit(index)}>
-                          <Icon name="check" size={14} />
-                        </button>
-                        <button type="button" className="row-action" onClick={() => setEditingIndex(null)}>
-                          <Icon name="x" size={14} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button type="button" className="row-action" onClick={() => { setEditingIndex(index); setEditingName(person); }}>
-                          <Icon name="edit-3" size={14} />
-                        </button>
-                        <button type="button" className="row-action delete-action" onClick={() => removeParticipant(index)}>
-                          <Icon name="trash-2" size={14} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--ink-soft)' }}>
-                Belum ada peserta. Masukkan nama di atas.
-              </div>
-            )}
-          </div>
-
-          {/* TEMPLATES MANAGER */}
-          <div style={{ marginTop: '15px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
-            <div className="section-kicker" style={{ marginBottom: '8px' }}>
-              <Icon name="folder" size={12} /> TEMPLATE LIST NAMA
-            </div>
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-              <input
-                className="edit-input"
-                placeholder="Nama template baru..."
-                value={templateNameInput}
-                onChange={(e) => setTemplateNameInput(e.target.value)}
-              />
-              <button type="button" className="copy-button" onClick={saveAsTemplate}>Simpan</button>
-            </div>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {templates.map((tpl, i) => (
-                <span key={i} style={{ background: 'var(--line)', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                  <span style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={() => loadTemplate(tpl.list)}>
-                    {tpl.name} ({tpl.list.length})
-                  </span>
-                  {i > 0 && (
-                    <Icon name="x" size={12} className="row-action delete-action" onClick={() => deleteTemplate(i)} />
-                  )}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* KOLOM KANAN: KONTROL BERDASARKAN TAB AKTIF */}
-        <div className="mix-panel">
-          {activeTab === 'groups' && (
-            <>
-              <div className="mix-topline">
-                <div className="section-kicker"><Icon name="shuffle" size={15} /> PEMBAGI KELOMPOK</div>
-                <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', background: 'var(--line)', padding: '2px 6px', borderRadius: '4px' }}>
-                  {groups.length ? 'SUDAH DIACAK' : 'SIAP'}
-                </span>
-              </div>
-
-              <h2>Berapa kelompok?</h2>
-              <p className="mix-description">Ketik langsung jumlah kelompok yang diinginkan, lalu acak secara merata.</p>
-
-              {/* INPUT LANGSUNG JUMLAH KELOMPOK */}
-              <div style={{ margin: '15px 0' }}>
-                <label style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'block', marginBottom: '6px' }}>Jumlah Kelompok:</label>
-                <input
-                  type="number"
-                  min="2"
-                  max={Math.max(2, participants.length)}
-                  value={groupCount}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 2;
-                    setGroupCount(val);
-                    setGroups([]);
-                  }}
+          <Icon name="list-ordered" size={16}
