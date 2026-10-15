@@ -432,3 +432,169 @@ function Home() {
           ),
           React.createElement('h2', null, 'Berapa kelompok?'),
           React.createElement('p', { className: 'mix-description' }, 'Ketik langsung jumlah kelompok yang diinginkan, lalu acak secara merata.'),
+          React.createElement('div', { style: { margin: '15px 0' } },
+            React.createElement('label', { style: { fontSize: '12px', color: 'var(--ink-soft)', display: 'block', marginBottom: '6px' } }, 'Jumlah Kelompok:'),
+            React.createElement('input', {
+              type: 'number',
+              min: '2',
+              max: Math.max(2, participants.length),
+              value: groupCount,
+              onChange: (e) => {
+                const val = parseInt(e.target.value) || 2;
+                setGroupCount(val);
+                setGroups([]);
+              },
+              style: { width: '100%', padding: '12px', fontSize: '18px', fontWeight: 'bold', textAlign: 'center', background: 'rgba(246, 240, 228, 0.68)', border: '1px solid var(--line)', borderRadius: '12px', color: 'var(--ink)', fontFamily: 'var(--font-display)' }
+            })
+          ),
+          React.createElement('div', { className: 'balance-note' },
+            React.createElement('span', { className: 'balance-mark' }, '≈'),
+            React.createElement('span', null, groupSizeLabel),
+            React.createElement('span', { className: 'balance-divider' }),
+            React.createElement('span', null, participants.length ? 'seimbang' : 'kosong')
+          ),
+          React.createElement('button', { type: 'button', className: 'shuffle-button', onClick: shuffleGroups, disabled: isShuffling || participants.length < 2 },
+            React.createElement(Icon, { name: 'shuffle', size: 18, className: isShuffling ? 'spin-icon' : '' }),
+            isShuffling ? 'Mengacak...' : groups.length ? 'Acak Lagi' : 'Acak Kelompok',
+            React.createElement(Icon, { name: 'arrow-right', size: 18 })
+          ),
+          history.length > 0 && React.createElement('div', { style: { marginTop: '20px', paddingTop: '15px', borderTop: '1px solid var(--line)' } },
+            React.createElement('div', { className: 'section-kicker', style: { marginBottom: '8px' } }, React.createElement(Icon, { name: 'clock', size: 12 }), ' RIWAYAT ACAKAN'),
+            React.createElement('div', { style: { maxHeight: '110px', overflowY: 'auto' } },
+              history.map((item) =>
+                React.createElement('div', { key: item.id, onClick: () => setGroups(item.data), style: { padding: '6px 8px', borderRadius: '6px', background: 'rgba(0,0,0,0.03)', marginBottom: '4px', cursor: 'pointer', fontSize: '11px', display: 'flex', justifyContent: 'space-between' } },
+                  React.createElement('span', null, `Acakan ${item.data.length} Kelompok`),
+                  React.createElement('span', { style: { color: 'var(--ink-soft)' } }, item.time)
+                )
+              )
+            )
+          )
+        ),
+
+        activeTab === 'wheel' && React.createElement('div', { style: { textAlign: 'center' } },
+          React.createElement('div', { className: 'section-kicker', style: { justifyContent: 'center' } }, React.createElement(Icon, { name: 'disc', size: 15 }), ' RODA PUTAR'),
+          React.createElement('h2', null, 'Putar Roda Undian'),
+          React.createElement('p', { className: 'mix-description' }, 'Pilih apakah nama pemenang otomatis dihapus atau tetap di daftar.'),
+          
+          React.createElement('div', { style: { margin: '10px 0', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--ink-soft)' } },
+            React.createElement('input', {
+              type: 'checkbox',
+              id: 'removeWinner',
+              checked: removeWinnerOnSelect,
+              onChange: (e) => setRemoveWinnerOnSelect(e.target.checked)
+            }),
+            React.createElement('label', { htmlFor: 'removeWinner', style: { cursor: 'pointer' } }, 'Hapus nama dari daftar setelah terpilih')
+          ),
+
+          React.createElement('div', { style: { position: 'relative', width: '220px', height: '220px', margin: '10px auto' } },
+            React.createElement('div', { style: { position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '18px solid var(--coral-deep)' } }),
+            React.createElement('div', { style: { width: '100%', height: '100%', borderRadius: '50%', border: '4px solid var(--plum)', transform: `rotate(${wheelRotation}deg)`, transition: spinning ? 'transform 3.8s cubic-bezier(0.1, 0.9, 0.2, 1)' : 'none', overflow: 'hidden', position: 'relative', background: 'var(--paper-light)', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' } },
+              React.createElement('svg', { viewBox: '0 0 100 100', style: { width: '100%', height: '100%' } },
+                participants.map((person, i) => {
+                  const total = participants.length;
+                  const angle = 360 / total;
+                  const startAngle = i * angle;
+                  const endAngle = (i + 1) * angle;
+                  const x1 = 50 + 50 * Math.cos((Math.PI * (startAngle - 90)) / 180);
+                  const y1 = 50 + 50 * Math.sin((Math.PI * (startAngle - 90)) / 180);
+                  const x2 = 50 + 50 * Math.cos((Math.PI * (endAngle - 90)) / 180);
+                  const y2 = 50 + 50 * Math.sin((Math.PI * (endAngle - 90)) / 180);
+                  const largeArc = angle > 180 ? 1 : 0;
+                  const pathData = `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`;
+                  const colors = ['#ee806c', '#edb949', '#4c9382', '#4b334d', '#86abb4', '#d78b88', '#93b99d', '#ba8850'];
+                  return React.createElement('path', { key: i, d: pathData, fill: colors[i % colors.length], stroke: '#fff', strokeWidth: '0.5' });
+                })
+              )
+            )
+          ),
+          React.createElement('button', { type: 'button', className: 'shuffle-button', onClick: startSpin, disabled: spinning || participants.length < 2 },
+            React.createElement(Icon, { name: 'rotate-cw', size: 18, className: spinning ? 'spin-icon' : '' }),
+            spinning ? 'Berputar...' : 'Putar Roda'
+          ),
+          selectedWinner && React.createElement('div', { style: { marginTop: '14px', padding: '10px', background: 'rgba(76, 147, 130, 0.15)', borderRadius: '8px', fontSize: '13px' } },
+            '🎉 Pemenang: ', React.createElement('strong', { style: { color: 'var(--teal)' } }, selectedWinner)
+          )
+        ),
+
+        activeTab === 'duel' && React.createElement('div', null,
+          React.createElement('div', { className: 'section-kicker' }, React.createElement(Icon, { name: 'git-pull-request', size: 15 }), ' UNDIAN BERPASANGAN'),
+          React.createElement('h2', null, 'Pasangan Duel / Tim 2 Orang'),
+          React.createElement('p', { className: 'mix-description' }, 'Cocokkan peserta menjadi pasangan tanding atau partner kerja.'),
+          React.createElement('button', { type: 'button', className: 'shuffle-button', onClick: makeDuels, disabled: participants.length < 2 },
+            React.createElement(Icon, { name: 'shuffle', size: 18 }), ' Acak Pasangan Sekarang'
+          ),
+          duels.length > 0 && React.createElement('div', { style: { marginTop: '15px', maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' } },
+            duels.map((pair, idx) =>
+              React.createElement('div', { key: idx, style: { padding: '10px', background: 'var(--paper-light)', border: '1px solid var(--line)', borderRadius: '8px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+                React.createElement('span', { style: { fontWeight: 'bold', color: 'var(--coral-deep)' } }, `Pasangan #${idx + 1}`),
+                React.createElement('span', null, pair.join(' vs '))
+              )
+            )
+          )
+        ),
+
+        activeTab === 'queue' && React.createElement('div', null,
+          React.createElement('div', { className: 'section-kicker' }, React.createElement(Icon, { name: 'list-ordered', size: 15 }), ' URUTAN ANTREAN'),
+          React.createElement('h2', null, 'Nomor Giliran / Presentasi'),
+          React.createElement('p', { className: 'mix-description' }, 'Acak siapa yang tampil duluan hingga terakhir secara adil.'),
+          React.createElement('button', { type: 'button', className: 'shuffle-button', onClick: makeQueue, disabled: !participants.length },
+            React.createElement(Icon, { name: 'shuffle', size: 18 }), ' Acak Urutan Giliran'
+          ),
+          queueList.length > 0 && React.createElement('div', { style: { marginTop: '15px', maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' } },
+            queueList.map((name, idx) =>
+              React.createElement('div', { key: idx, style: { padding: '8px 12px', background: 'var(--paper-light)', border: '1px solid var(--line)', borderRadius: '6px', fontSize: '12px', display: 'flex', gap: '12px', alignItems: 'center' } },
+                React.createElement('span', { style: { fontFamily: 'var(--font-mono)', fontWeight: 'bold', color: 'var(--coral)' } }, `#${String(idx + 1).padStart(2, '0')}`),
+                React.createElement('span', null, name)
+              )
+            )
+          )
+        )
+      )
+    ),
+
+    activeTab === 'groups' && React.createElement('section', { className: 'results-section' },
+      React.createElement('div', { className: 'results-heading' },
+        React.createElement('div', null,
+          React.createElement('div', { className: 'section-kicker' }, 'HASIL ACAKAN'),
+          React.createElement('h2', null, 'Kelompokmu ', React.createElement('span', null, groups.length ? `· ${groups.length}` : ''))
+        ),
+        React.createElement('button', { type: 'button', className: 'copy-button', onClick: copyGroups, disabled: !groups.length },
+          React.createElement(Icon, { name: copied ? 'check' : 'clipboard', size: 16 }),
+          copied ? 'Tersalin' : 'Salin Kelompok'
+        )
+      ),
+      groups.length ? React.createElement('div', { className: 'groups-grid' },
+        groups.map((group) =>
+          React.createElement('article', { className: `group-card group-${GROUP_COLORS[group.id % GROUP_COLORS.length]}`, key: group.id },
+            React.createElement('div', { className: 'group-card-head' },
+              React.createElement('span', { className: 'group-label' }, 'KELOMPOK'),
+              React.createElement('span', { className: 'group-number' }, String(group.id + 1).padStart(2, '0')),
+              React.createElement('span', { className: 'group-total' }, `${group.names.length} orang`)
+            ),
+            React.createElement('div', { className: 'group-names' },
+              group.names.map((name, index) =>
+                React.createElement('div', { className: 'group-person', key: `${name}-${index}` },
+                  React.createElement('span', { className: 'member-dot' }),
+                  name
+                )
+              )
+            )
+          )
+        )
+      ) : React.createElement('div', { className: 'result-empty' },
+        React.createElement('div', { className: 'empty-sun' }, React.createElement(Icon, { name: 'shuffle', size: 24 })),
+        React.createElement('h3', null, 'Belum ada hasil acakan kelompok.'),
+        React.createElement('p', { style: { color: 'var(--ink-soft)', fontSize: '13px' } }, 'Tentukan jumlah kelompok di atas lalu klik acak.')
+      )
+    ),
+
+    React.createElement('footer', { className: 'site-footer' },
+      React.createElement('span', null, 'ArunikaMix • alat kecil untuk menyatukan orang'),
+      React.createElement('span', { style: { fontFamily: 'var(--font-mono)' } }, 'LOKAL SAJA / TANPA LOGIN')
+    ),
+
+    notice && React.createElement('div', { className: 'toast-notice' }, notice)
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(Home));
