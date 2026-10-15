@@ -20,10 +20,10 @@
   padding: 0;
 }
 
-body {
-  background-color: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-sans);
+html, body {
+  background-color: var(--paper) !important;
+  color: var(--ink) !important;
+  font-family: var(--font-sans) !important;
   min-height: 100vh;
   padding: 24px;
 }
@@ -51,15 +51,17 @@ body {
 }
 
 .brand-mark {
-  display: flex;
-  gap: 3px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 3px !important;
 }
 
 .brand-mark span {
-  width: 6px;
-  height: 16px;
-  background: var(--plum);
-  border-radius: 3px;
+  width: 5px !important;
+  height: 16px !important;
+  background-color: var(--plum) !important;
+  border-radius: 3px !important;
+  display: inline-block !important;
 }
 
 .brand-light {
@@ -172,7 +174,7 @@ body {
   }
 }
 
-.panel {
+.panel, .mix-panel {
   background: var(--paper-light);
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -180,10 +182,6 @@ body {
 }
 
 .mix-panel {
-  background: var(--paper-light);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 24px;
   display: flex;
   flex-direction: column;
 }
@@ -255,27 +253,7 @@ body {
   gap: 4px;
 }
 
-.row-action {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--ink-soft);
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-}
-
-.row-action:hover {
-  background: var(--line);
-  color: var(--ink);
-}
-
-.row-action.delete-action:hover {
-  color: #c94a4a;
-}
-
-.icon-button {
+.row-action, .icon-button {
   background: none;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -287,11 +265,11 @@ body {
   justify-content: center;
 }
 
-.icon-button:hover {
+.row-action:hover, .icon-button:hover {
   background: var(--line);
 }
 
-.icon-button.delete-action:hover {
+.row-action.delete-action:hover, .icon-button.delete-action:hover {
   border-color: #c94a4a;
   color: #c94a4a;
 }
@@ -443,7 +421,7 @@ body {
 }
 
 .group-names {
-  paddding: 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
