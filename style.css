@@ -494,7 +494,7 @@ body {
   padding-top: 16px;
 }
 
-/* DIKUNCI KE KIRI BAWAH SECARA MUTLAK */
+/* POSISI NOTIFIKASI DIKUNCI KE KIRI BAWAH */
 .toast-notice {
   position: fixed !important;
   bottom: 24px !important;
