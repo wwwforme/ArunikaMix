@@ -64,7 +64,6 @@ function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [history, setHistory] = useState([]);
-  // Nama template awal diganti menjadi "Arunika"
   const [templates, setTemplates] = useState([{ name: 'Arunika', list: ORIGINAL_PARTICIPANTS }]);
   const [templateNameInput, setTemplateNameInput] = useState('');
   const [activeTab, setActiveTab] = useState('groups');
@@ -697,7 +696,25 @@ function Home() {
       React.createElement('span', { style: { fontFamily: 'var(--font-mono)' } }, 'SUPABASE CLOUD ACTIVE')
     ),
 
-    notice && React.createElement('div', { className: 'toast-notice' }, notice)
+    /* POSISI NOTIFIKASI DIKUNCI LANGSUNG KE KIRI BAWAH */
+    notice && React.createElement('div', {
+      className: 'toast-notice',
+      style: {
+        position: 'fixed',
+        bottom: '24px',
+        left: '24px',
+        right: 'auto',
+        top: 'auto',
+        transform: 'none',
+        background: 'var(--plum)',
+        color: '#ffffff',
+        padding: '12px 18px',
+        borderRadius: '10px',
+        fontSize: '13px',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
+        zIndex: 999999
+      }
+    }, notice)
   );
 }
 
