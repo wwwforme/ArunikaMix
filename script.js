@@ -2,7 +2,7 @@ const { useState, useMemo, useRef, useEffect } = React;
 
 // Konfigurasi Supabase Cloud
 const SUPABASE_URL = 'https://hldsxluraxvsxscjfbqf.supabase.co';
-const SUPABASE_ANON_KEY = 'Sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsZHN4bHVyYXh2c3hzY2pmYnFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTU2NDU4MzgsImV4cCI6MjAxMTIyMTgzOH0';
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const ORIGINAL_PARTICIPANTS = [
@@ -696,7 +696,8 @@ function Home() {
       React.createElement('span', { style: { fontFamily: 'var(--font-mono)' } }, 'SUPABASE CLOUD ACTIVE')
     ),
 
-    notice && React.createElement('div', { 
+    /* POSISI NOTIFIKASI DIKUNCI LANGSUNG KE KIRI BAWAH */
+    notice && React.createElement('div', {
       className: 'toast-notice',
       style: {
         position: 'fixed',
@@ -710,7 +711,7 @@ function Home() {
         padding: '12px 18px',
         borderRadius: '10px',
         fontSize: '13px',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.25)',
         zIndex: 999999
       }
     }, notice)
