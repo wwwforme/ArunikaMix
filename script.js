@@ -2,7 +2,7 @@ const { useState, useMemo, useRef, useEffect } = React;
 
 // Konfigurasi Supabase Cloud
 const SUPABASE_URL = 'https://hldsxluraxvsxscjfbqf.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0;
+const SUPABASE_ANON_KEY = 'sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0';
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const ORIGINAL_PARTICIPANTS = [
