@@ -121,19 +121,19 @@ body {
 .brand-mark span:nth-child(1) {
   height: 15px;
   background: var(--saffron);
-  transform: rotate(-12deg);
+  transform: rotate(-9deg);
 }
 
 .brand-mark span:nth-child(2) {
   height: 22px;
   background: var(--teal);
-  transform: rotate(8deg);
+  transform: rotate(-6deg);
 }
 
 .brand-mark span:nth-child(3) {
   height: 18px;
   background: var(--coral);
-  transform: rotate(-7deg);
+  transform: rotate(7deg);
 }
 
 .brand-light {
