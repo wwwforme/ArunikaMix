@@ -1,9 +1,3 @@
-/* =========================================================
-   ARUNIKAMIX
-   Random Group & Mini Games
-   React 18 + Supabase
-   ========================================================= */
-
 const {
   useState,
   useEffect,
