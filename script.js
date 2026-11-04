@@ -1,35 +1,27 @@
-const { useState, useEffect, useMemo } = React;
+const { useState, useMemo, useRef, useEffect } = React;
 
-/* =========================================================
-   SUPABASE CONFIG
-========================================================= */
+// =========================================================
+// KONFIGURASI SUPABASE CLOUD
+// =========================================================
 
 const SUPABASE_URL = 'https://hldsxluraxvsxscjfbqf.supabase.co';
 
-const SUPABASE_ANON_KEY = 
-  'sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0';
-let supabaseClient = null;
-
-try {
-  if (
-    window.supabase &&
-    typeof window.supabase.createClient === 'function'
-  ) {
-    supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
-  }
-} catch (error) {
-  console.error('Supabase gagal diinisialisasi:', error);
-}
+const SUPABASE_ANON_KEY =
+'sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0';
+const supabaseClient =
+  window.supabase
+    ? window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      )
+    : null;
 
 
-/* =========================================================
-   DEFAULT DATA
-========================================================= */
+// =========================================================
+// DAFTAR PESERTA AWAL
+// =========================================================
 
-const DEFAULT_PEOPLE = [
+const ORIGINAL_PARTICIPANTS = [
   'Agung Pranaja',
   'Aina Salsabil',
   'Ainul Mardhiah',
@@ -71,2594 +63,1473 @@ const GROUP_COLORS = [
   'ochre'
 ];
 
-const TABS = [
-  {
-    id: 'groups',
-    label: 'Pembagi Kelompok',
-    icon: 'users'
-  },
-  {
-    id: 'wheel',
-    label: 'Roda Putar',
-    icon: 'refresh-cw'
-  },
-  {
-    id: 'duel',
-    label: 'Undian Berpasangan',
-    icon: 'swords'
-  },
-  {
-    id: 'queue',
-    label: 'Urutan Antrean',
-    icon: 'list-ordered'
-  }
-];
 
+// =========================================================
+// ICON
+// =========================================================
 
-/* =========================================================
-   HELPERS
-========================================================= */
+const Icon = ({
+  name,
+  size = 16,
+  className = ''
+}) => {
+  const ref = useRef(null);
 
-function shuffleArray(array) {
-  const result = [...array];
+  useEffect(() => {
+    if (!ref.current) return;
 
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    ref.current.innerHTML =
+      `<i data-lucide="${name}" style="width:${size}px;height:${size}px;"></i>`;
 
-    [result[i], result[j]] = [result[j], result[i]];
-  }
+    if (window.lucide) {
+      window.lucide.createIcons({
+        nameAttr: 'data-lucide'
+      });
+    }
+  }, [name, size, className]);
 
-  return result;
-}
-
-
-function makeGroups(people, count) {
-  if (!people.length) return [];
-
-  const safeCount = Math.max(
-    1,
-    Math.min(Number(count) || 1, people.length)
+  return React.createElement(
+    'span',
+    {
+      ref,
+      className,
+      style: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }
+    }
   );
+};
 
-  const shuffled = shuffleArray(people);
 
-  const groups = Array.from(
-    { length: safeCount },
+// =========================================================
+// MEMBUAT KELOMPOK
+// =========================================================
+
+function createGroups(names, count) {
+  const shuffled = [...names];
+
+  for (
+    let index = shuffled.length - 1;
+    index > 0;
+    index -= 1
+  ) {
+    const swapIndex = Math.floor(
+      Math.random() * (index + 1)
+    );
+
+    [
+      shuffled[index],
+      shuffled[swapIndex]
+    ] = [
+      shuffled[swapIndex],
+      shuffled[index]
+    ];
+  }
+
+  return Array.from(
+    { length: count },
     (_, index) => ({
       id: index,
-      people: []
+      names: shuffled.filter(
+        (_, personIndex) =>
+          personIndex % count === index
+      )
     })
   );
-
-  shuffled.forEach((person, index) => {
-    groups[index % safeCount].people.push(person);
-  });
-
-  return groups;
 }
 
 
-function getGroupSizeText(total, count) {
-  if (!total || !count) return '—';
+// =========================================================
+// HOME
+// =========================================================
 
-  const smallest = Math.floor(total / count);
-  const largest = Math.ceil(total / count);
+function Home() {
 
-  return smallest === largest
-    ? `${smallest} per grup`
-    : `${smallest}–${largest} per grup`;
-}
+  const [participants, setParticipants] =
+    useState(ORIGINAL_PARTICIPANTS);
 
+  const [groupCountInput, setGroupCountInput] =
+    useState('4');
 
-function copyText(text) {
-  if (!navigator.clipboard) {
-    const textarea = document.createElement('textarea');
+  const [groups, setGroups] =
+    useState([]);
 
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
+  const [inputBoxText, setInputBoxText] =
+    useState('');
 
-    document.body.appendChild(textarea);
+  const [editingIndex, setEditingIndex] =
+    useState(null);
 
-    textarea.focus();
-    textarea.select();
+  const [editingName, setEditingName] =
+    useState('');
 
-    try {
-      document.execCommand('copy');
-    } catch (error) {
-      console.error(error);
-    }
+  const [isShuffling, setIsShuffling] =
+    useState(false);
 
-    document.body.removeChild(textarea);
+  const [copied, setCopied] =
+    useState(false);
 
-    return Promise.resolve();
-  }
+  const [notice, setNotice] =
+    useState('');
 
-  return navigator.clipboard.writeText(text);
-}
+  // =======================================================
+  // AUTH
+  // =======================================================
 
+  const [user, setUser] =
+    useState(null);
 
-function createGroupText(groups) {
-  return groups
-    .map((group) => {
-      return `KELOMPOK ${group.id + 1}\n${group.people
-        .map((name) => `• ${name}`)
-        .join('\n')}`;
-    })
-    .join('\n\n');
-}
+  const [authEmail, setAuthEmail] =
+    useState('');
 
+  const [authPassword, setAuthPassword] =
+    useState('');
 
-/* =========================================================
-   ICON HELPER
-========================================================= */
+  const [isSignUp, setIsSignUp] =
+    useState(false);
 
-function Icon({
-  name,
-  size = 18,
-  strokeWidth = 2,
-  className = ''
-}) {
-  useEffect(() => {
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-  });
+  const [showAuthModal, setShowAuthModal] =
+    useState(false);
 
-  return React.createElement('i', {
-    'data-lucide': name,
-    width: size,
-    height: size,
-    'stroke-width': strokeWidth,
-    className
-  });
-}
+  // =======================================================
+  // HISTORY + TEMPLATE
+  // =======================================================
 
+  const [history, setHistory] =
+    useState([]);
 
-/* =========================================================
-   APP
-========================================================= */
-
-function App() {
-  const [people, setPeople] = useState(DEFAULT_PEOPLE);
-
-  const [activeTab, setActiveTab] = useState('groups');
-
-  const [groupCount, setGroupCount] = useState(4);
-
-  const [groups, setGroups] = useState([]);
-
-  const [history, setHistory] = useState([]);
-
-  const [newPeople, setNewPeople] = useState('');
-
-  const [editingIndex, setEditingIndex] = useState(null);
-
-  const [editingName, setEditingName] = useState('');
-
-  const [toast, setToast] = useState('');
-
-  const [wheelPeople, setWheelPeople] = useState(DEFAULT_PEOPLE);
-
-  const [wheelWinner, setWheelWinner] = useState(null);
-
-  const [removeWheelWinner, setRemoveWheelWinner] = useState(false);
-
-  const [duels, setDuels] = useState([]);
-
-  const [queue, setQueue] = useState([]);
-
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
-  const [isSignUp, setIsSignUp] = useState(false);
-
-  const [authEmail, setAuthEmail] = useState('');
-
-  const [authPassword, setAuthPassword] = useState('');
-
-  const [user, setUser] = useState(null);
-
-  const [cloudTemplates, setCloudTemplates] = useState([]);
-
-  const [templateName, setTemplateName] = useState('');
-
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-
-  const [loadingCloud, setLoadingCloud] = useState(false);
-
-
-  /* =======================================================
-     TOAST
-  ======================================================= */
-
-  const showNotice = (message) => {
-    setToast(message);
-
-    setTimeout(() => {
-      setToast('');
-    }, 2500);
-  };
-
-
-  /* =======================================================
-     SUPABASE AUTH
-  ======================================================= */
-
-  useEffect(() => {
-    if (!supabaseClient) return;
-
-    let mounted = true;
-
-    supabaseClient.auth.getSession().then(({ data }) => {
-      if (mounted) {
-        setUser(data?.session?.user || null);
+  const [templates, setTemplates] =
+    useState([
+      {
+        name: 'Arunika',
+        list: ORIGINAL_PARTICIPANTS
       }
-    });
-
-    const {
-      data: { subscription }
-    } = supabaseClient.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-
-    return () => {
-      mounted = false;
-      subscription?.unsubscribe();
-    };
-  }, []);
-
-
-  /* =======================================================
-     LUCIDE REFRESH
-  ======================================================= */
-
-  useEffect(() => {
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-  });
-
-
-  /* =======================================================
-     LOCAL STORAGE
-  ======================================================= */
-
-  useEffect(() => {
-    try {
-      const savedPeople = localStorage.getItem(
-        'arunikamix_people'
-      );
-
-      const savedGroups = localStorage.getItem(
-        'arunikamix_groups'
-      );
-
-      const savedHistory = localStorage.getItem(
-        'arunikamix_history'
-      );
-
-      if (savedPeople) {
-        const parsed = JSON.parse(savedPeople);
-
-        if (Array.isArray(parsed)) {
-          setPeople(parsed);
-          setWheelPeople(parsed);
-        }
-      }
-
-      if (savedGroups) {
-        const parsed = JSON.parse(savedGroups);
-
-        if (Array.isArray(parsed)) {
-          setGroups(parsed);
-        }
-      }
-
-      if (savedHistory) {
-        const parsed = JSON.parse(savedHistory);
-
-        if (Array.isArray(parsed)) {
-          setHistory(parsed);
-        }
-      }
-    } catch (error) {
-      console.error(
-        'Gagal membaca localStorage:',
-        error
-      );
-    }
-  }, []);
-
-
-  useEffect(() => {
-    localStorage.setItem(
-      'arunikamix_people',
-      JSON.stringify(people)
-    );
-
-    setWheelPeople((current) => {
-      if (
-        current.length === 0 ||
-        current.every((person) => people.includes(person))
-      ) {
-        return people;
-      }
-
-      return current.filter((person) =>
-        people.includes(person)
-      );
-    });
-  }, [people]);
-
-
-  useEffect(() => {
-    localStorage.setItem(
-      'arunikamix_groups',
-      JSON.stringify(groups)
-    );
-  }, [groups]);
-
-
-  useEffect(() => {
-    localStorage.setItem(
-      'arunikamix_history',
-      JSON.stringify(history)
-    );
-  }, [history]);
-
-
-  /* =======================================================
-     ADD PEOPLE
-  ======================================================= */
-
-  const addPeople = () => {
-    const names = newPeople
-      .split(/\n|,/)
-      .map((name) => name.trim())
-      .filter(Boolean);
-
-    if (!names.length) {
-      showNotice('Masukkan nama terlebih dahulu.');
-      return;
-    }
-
-    const existing = new Set(
-      people.map((person) => person.toLowerCase())
-    );
-
-    const uniqueNames = names.filter(
-      (name) => !existing.has(name.toLowerCase())
-    );
-
-    if (!uniqueNames.length) {
-      showNotice('Nama tersebut sudah ada.');
-      return;
-    }
-
-    setPeople((current) => [
-      ...current,
-      ...uniqueNames
     ]);
 
-    setNewPeople('');
+  const [templateNameInput, setTemplateNameInput] =
+    useState('');
 
-    showNotice(
-      `${uniqueNames.length} orang ditambahkan`
-    );
-  };
+  // =======================================================
+  // TAB
+  // =======================================================
 
+  const [activeTab, setActiveTab] =
+    useState('groups');
 
-  /* =======================================================
-     DELETE PERSON
-  ======================================================= */
+  // =======================================================
+  // WHEEL
+  // =======================================================
 
-  const deletePerson = (index) => {
-    const person = people[index];
+  const [spinning, setSpinning] =
+    useState(false);
 
-    if (!person) return;
+  const [wheelRotation, setWheelRotation] =
+    useState(0);
 
-    setPeople((current) =>
-      current.filter((_, personIndex) =>
-        personIndex !== index
-      )
-    );
+  const [selectedWinner, setSelectedWinner] =
+    useState(null);
 
-    setGroups((current) =>
-      current.map((group) => ({
-        ...group,
-        people: group.people.filter(
-          (name) => name !== person
-        )
-      }))
-    );
+  const [removeWinnerOnSelect, setRemoveWinnerOnSelect] =
+    useState(false);
 
-    setWheelPeople((current) =>
-      current.filter((name) => name !== person)
-    );
+  // =======================================================
+  // DUEL
+  // =======================================================
 
-    showNotice(`${person} dihapus`);
-  };
+  const [duels, setDuels] =
+    useState([]);
 
+  // =======================================================
+  // QUEUE
+  // =======================================================
 
-  /* =======================================================
-     EDIT PERSON
-  ======================================================= */
+  const [queueList, setQueueList] =
+    useState([]);
 
-  const startEditing = (index) => {
-    setEditingIndex(index);
-    setEditingName(people[index]);
-  };
+  const noticeTimer =
+    useRef(null);
 
 
-  const saveEditing = () => {
-    if (editingIndex === null) return;
+  // =======================================================
+  // SUPABASE AUTH STATUS
+  // =======================================================
 
-    const cleanName = editingName.trim();
+  useEffect(() => {
 
-    if (!cleanName) {
-      showNotice('Nama tidak boleh kosong.');
-      return;
-    }
+    if (!supabaseClient) return;
 
-    const duplicate = people.some(
-      (person, index) =>
-        index !== editingIndex &&
-        person.toLowerCase() ===
-          cleanName.toLowerCase()
-    );
+    supabaseClient.auth
+      .getSession()
+      .then(
+        ({
+          data: {
+            session
+          }
+        }) => {
 
-    if (duplicate) {
-      showNotice('Nama tersebut sudah ada.');
-      return;
-    }
+          setUser(
+            session?.user ?? null
+          );
 
-    const oldName = people[editingIndex];
-
-    setPeople((current) =>
-      current.map((person, index) =>
-        index === editingIndex
-          ? cleanName
-          : person
-      )
-    );
-
-    setGroups((current) =>
-      current.map((group) => ({
-        ...group,
-        people: group.people.map((name) =>
-          name === oldName ? cleanName : name
-        )
-      }))
-    );
-
-    setWheelPeople((current) =>
-      current.map((name) =>
-        name === oldName ? cleanName : name
-      )
-    );
-
-    setEditingIndex(null);
-    setEditingName('');
-
-    showNotice('Nama berhasil diperbarui');
-  };
-
-
-  /* =======================================================
-     CLEAR PEOPLE
-  ======================================================= */
-
-  const clearPeople = () => {
-    if (!people.length) {
-      showNotice('Daftar sudah kosong.');
-      return;
-    }
-
-    setPeople([]);
-    setGroups([]);
-    setWheelPeople([]);
-    setDuels([]);
-    setQueue([]);
-
-    showNotice('Semua nama dihapus');
-  };
-
-
-  /* =======================================================
-     RESET ORIGINAL
-  ======================================================= */
-
-  const resetPeople = () => {
-    setPeople(DEFAULT_PEOPLE);
-    setGroups([]);
-    setWheelPeople(DEFAULT_PEOPLE);
-    setDuels([]);
-    setQueue([]);
-    setHistory([]);
-
-    showNotice('Daftar dikembalikan ke awal');
-  };
-
-
-  /* =======================================================
-     MAKE GROUPS
-  ======================================================= */
-
-  const shuffleGroups = () => {
-    if (!people.length) {
-      showNotice('Tambahkan nama terlebih dahulu.');
-      return;
-    }
-
-    const count = Math.max(
-      1,
-      Math.min(groupCount, people.length)
-    );
-
-    const result = makeGroups(
-      people,
-      count
-    );
-
-    setGroups(result);
-
-    setHistory((current) => [
-      {
-        id: Date.now(),
-        groups: result,
-        createdAt: new Date().toISOString()
-      },
-      ...current
-    ].slice(0, 10));
-
-    showNotice(
-      `Berhasil membagi ${people.length} orang`
-    );
-  };
-
-
-  /* =======================================================
-     COPY GROUPS
-  ======================================================= */
-
-  const copyGroups = () => {
-    if (!groups.length) {
-      showNotice('Belum ada pembagian kelompok.');
-      return;
-    }
-
-    const text = createGroupText(groups);
-
-    copyText(text)
-      .then(() => {
-        showNotice('Pembagian disalin');
-      })
-      .catch(() => {
-        showNotice('Gagal menyalin');
-      });
-  };
-
-
-  /* =======================================================
-     WHEEL
-  ======================================================= */
-
-  const spinWheel = () => {
-    if (!wheelPeople.length) {
-      showNotice('Tidak ada nama di roda putar.');
-      return;
-    }
-
-    const winner =
-      wheelPeople[
-        Math.floor(
-          Math.random() * wheelPeople.length
-        )
-      ];
-
-    setWheelWinner(winner);
-
-    if (removeWheelWinner) {
-      setWheelPeople((current) =>
-        current.filter(
-          (person) => person !== winner
-        )
+          if (session?.user) {
+            fetchUserTemplates(
+              session.user.id
+            );
+          }
+        }
       );
-    }
 
-    showNotice(`${winner} terpilih!`);
-  };
+    const {
+      data: {
+        subscription
+      }
+    } =
+      supabaseClient.auth.onAuthStateChange(
+        (_event, session) => {
 
+          setUser(
+            session?.user ?? null
+          );
 
-  const resetWheel = () => {
-    setWheelPeople(people);
-    setWheelWinner(null);
+          if (session?.user) {
 
-    showNotice('Roda dikembalikan');
-  };
+            fetchUserTemplates(
+              session.user.id
+            );
 
+          } else {
 
-  /* =======================================================
-     DUELS
-  ======================================================= */
+            setTemplates([
+              {
+                name: 'Arunika',
+                list: ORIGINAL_PARTICIPANTS
+              }
+            ]);
+          }
+        }
+      );
 
-  const createDuels = () => {
-    if (!people.length) {
-      showNotice('Tambahkan nama terlebih dahulu.');
-      return;
-    }
+    return () =>
+      subscription.unsubscribe();
 
-    const shuffled = shuffleArray(people);
-
-    const result = [];
-
-    for (
-      let index = 0;
-      index < shuffled.length;
-      index += 2
-    ) {
-      result.push({
-        id: result.length,
-        first: shuffled[index],
-        second:
-          shuffled[index + 1] || null
-      });
-    }
-
-    setDuels(result);
-
-    showNotice(
-      `${result.length} pasangan dibuat`
-    );
-  };
+  }, []);
 
 
-  /* =======================================================
-     QUEUE
-  ======================================================= */
+  // =======================================================
+  // FETCH TEMPLATE CLOUD
+  // =======================================================
 
-  const createQueue = () => {
-    if (!people.length) {
-      showNotice('Tambahkan nama terlebih dahulu.');
-      return;
-    }
+  const fetchUserTemplates =
+    async (userId) => {
 
-    setQueue(shuffleArray(people));
+      if (!supabaseClient) return;
 
-    showNotice('Urutan baru dibuat');
-  };
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from('templates')
+          .select('*')
+          .eq(
+            'user_id',
+            userId
+          );
+
+      if (!error && data) {
+
+        const cloudTemplates =
+          data.map(
+            item => ({
+              id: item.id,
+              name: item.name,
+              list: item.list
+            })
+          );
+
+        setTemplates([
+          {
+            name: 'Arunika',
+            list: ORIGINAL_PARTICIPANTS
+          },
+          ...cloudTemplates
+        ]);
+      }
+    };
 
 
-  /* =======================================================
-     AUTH
-  ======================================================= */
+  // =======================================================
+  // NOTICE / TOAST
+  // =======================================================
 
-  const handleAuth = async (event) => {
-    event.preventDefault();
+  const showNotice =
+    (message) => {
 
-    if (!supabaseClient) {
-      showNotice('Supabase belum tersedia.');
-      return;
-    }
+      setNotice(message);
 
-    if (!authEmail || !authPassword) {
-      showNotice('Email dan password wajib diisi.');
-      return;
-    }
+      if (noticeTimer.current) {
+        clearTimeout(
+          noticeTimer.current
+        );
+      }
 
-    setLoadingCloud(true);
+      noticeTimer.current =
+        window.setTimeout(
+          () => setNotice(''),
+          2800
+        );
+    };
 
-    try {
+
+  // =======================================================
+  // LOGIN / REGISTER
+  // =======================================================
+
+  const handleAuth =
+    async (e) => {
+
+      e.preventDefault();
+
+      if (!supabaseClient) {
+        showNotice(
+          'Supabase tidak tersedia.'
+        );
+        return;
+      }
+
       if (isSignUp) {
+
         const redirectUrl =
           window.location.origin +
           window.location.pathname;
 
-        const { error } =
+        const {
+          error
+        } =
           await supabaseClient.auth.signUp({
             email: authEmail,
             password: authPassword,
             options: {
-              emailRedirectTo: redirectUrl
+              emailRedirectTo:
+                redirectUrl
             }
           });
 
         if (error) {
-          showNotice(error.message);
+
+          showNotice(
+            error.message
+          );
+
         } else {
+
           showNotice(
             'Pendaftaran berhasil! Cek email untuk konfirmasi.'
           );
 
           setIsSignUp(false);
         }
+
       } else {
-        const { error } =
+
+        const {
+          error
+        } =
           await supabaseClient.auth.signInWithPassword({
             email: authEmail,
             password: authPassword
           });
 
         if (error) {
-          showNotice(error.message);
+
+          showNotice(
+            error.message
+          );
+
         } else {
-          showNotice('Berhasil masuk akun!');
+
+          showNotice(
+            'Berhasil masuk akun!'
+          );
 
           setShowAuthModal(false);
         }
       }
-    } catch (error) {
-      console.error(error);
+    };
+
+
+  // =======================================================
+  // LOGOUT
+  // =======================================================
+
+  const handleLogout =
+    async () => {
+
+      if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+      }
+
+      setTemplates([
+        {
+          name: 'Arunika',
+          list: ORIGINAL_PARTICIPANTS
+        }
+      ]);
 
       showNotice(
-        'Terjadi kesalahan saat menghubungi server.'
+        'Berhasil keluar akun'
       );
-    } finally {
-      setLoadingCloud(false);
-    }
-  };
+    };
 
 
-  /* =======================================================
-     LOGOUT
-  ======================================================= */
+  // =======================================================
+  // TAMBAH NAMA
+  // =======================================================
 
-  const logout = async () => {
-    if (!supabaseClient) return;
+  const handleAddNames =
+    () => {
 
-    const { error } =
-      await supabaseClient.auth.signOut();
+      const text =
+        inputBoxText.trim();
 
-    if (error) {
-      showNotice(error.message);
-      return;
-    }
+      if (!text) return;
 
-    setUser(null);
-    setCloudTemplates([]);
+      const lines =
+        text
+          .split('\n')
+          .map(
+            l => l.trim()
+          )
+          .filter(
+            l =>
+              l.length > 0
+          );
 
-    showNotice('Berhasil keluar');
-  };
+      const existing =
+        new Set(
+          participants.map(
+            p =>
+              p.toLowerCase()
+          )
+        );
 
+      const added = [];
 
-  /* =======================================================
-     LOAD CLOUD TEMPLATES
-  ======================================================= */
+      lines.forEach(
+        name => {
 
-  const loadCloudTemplates = async () => {
-    if (!supabaseClient || !user) {
-      return;
-    }
+          if (
+            !existing.has(
+              name.toLowerCase()
+            )
+          ) {
 
-    setLoadingCloud(true);
+            added.push(name);
 
-    try {
-      const { data, error } =
-        await supabaseClient
-          .from('templates')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', {
-            ascending: false
-          });
+            existing.add(
+              name.toLowerCase()
+            );
+          }
+        }
+      );
 
-      if (error) {
-        console.error(error);
+      if (!added.length) {
 
         showNotice(
-          'Gagal memuat template cloud.'
+          'Nama tersebut sudah ada di daftar'
+        );
+
+      } else {
+
+        setParticipants(
+          prev => [
+            ...prev,
+            ...added
+          ]
+        );
+
+        setInputBoxText('');
+
+        setGroups([]);
+
+        showNotice(
+          `${added.length} nama berhasil ditambahkan`
+        );
+      }
+    };
+
+
+  // =======================================================
+  // HAPUS PESERTA
+  // =======================================================
+
+  const removeParticipant =
+    (index) => {
+
+      const person =
+        participants[index];
+
+      setParticipants(
+        current =>
+          current.filter(
+            (_, personIndex) =>
+              personIndex !== index
+          )
+      );
+
+      setGroups([]);
+
+      showNotice(
+        `${person} dihapus`
+      );
+    };
+
+
+  // =======================================================
+  // HAPUS SEMUA
+  // =======================================================
+
+  const clearAllParticipants =
+    () => {
+
+      if (
+        window.confirm(
+          'Hapus seluruh daftar peserta?'
+        )
+      ) {
+
+        setParticipants([]);
+
+        setGroups([]);
+
+        setDuels([]);
+
+        setQueueList([]);
+
+        showNotice(
+          'Semua nama dihapus'
+        );
+      }
+    };
+
+
+  // =======================================================
+  // EDIT NAMA
+  // =======================================================
+
+  const saveEdit =
+    (index) => {
+
+      const cleanName =
+        editingName.trim();
+
+      if (!cleanName) return;
+
+      if (
+        participants.some(
+          (
+            person,
+            personIndex
+          ) =>
+            personIndex !== index &&
+            person.toLowerCase() ===
+              cleanName.toLowerCase()
+        )
+      ) {
+
+        showNotice(
+          'Nama itu sudah ada di daftar'
         );
 
         return;
       }
 
-      setCloudTemplates(data || []);
-    } catch (error) {
-      console.error(error);
+      setParticipants(
+        current =>
+          current.map(
+            (
+              person,
+              personIndex
+            ) =>
+              personIndex === index
+                ? cleanName
+                : person
+          )
+      );
+
+      setEditingIndex(null);
+
+      setGroups([]);
 
       showNotice(
-        'Gagal memuat template cloud.'
+        'Nama diperbarui'
       );
-    } finally {
-      setLoadingCloud(false);
-    }
-  };
+    };
 
 
-  useEffect(() => {
-    if (user) {
-      loadCloudTemplates();
-    } else {
-      setCloudTemplates([]);
-    }
-  }, [user]);
+  // =======================================================
+  // RESET
+  // =======================================================
+
+  const resetList =
+    () => {
+
+      setParticipants(
+        ORIGINAL_PARTICIPANTS
+      );
+
+      setGroups([]);
+
+      setDuels([]);
+
+      setQueueList([]);
+
+      setGroupCountInput('4');
+
+      setEditingIndex(null);
+
+      showNotice(
+        'Daftar awal dikembalikan'
+      );
+    };
 
 
-  /* =======================================================
-     SAVE CLOUD TEMPLATE
-  ======================================================= */
+  // =======================================================
+  // JUMLAH KELOMPOK
+  // =======================================================
 
-  const saveCloudTemplate = async () => {
-    if (!supabaseClient || !user) {
-      setShowAuthModal(true);
-      return;
-    }
+  const effectiveGroupCount =
+    useMemo(() => {
 
-    const cleanName = templateName.trim();
+      const parsed =
+        parseInt(
+          groupCountInput,
+          10
+        );
 
-    if (!cleanName) {
-      showNotice('Masukkan nama template.');
-      return;
-    }
+      if (
+        isNaN(parsed) ||
+        parsed < 2
+      ) {
+        return 2;
+      }
 
-    if (!people.length) {
-      showNotice('Daftar nama masih kosong.');
-      return;
-    }
+      return Math.min(
+        parsed,
+        Math.max(
+          2,
+          participants.length
+        )
+      );
 
-    setLoadingCloud(true);
+    }, [
+      groupCountInput,
+      participants.length
+    ]);
 
-    try {
-      const { error } =
-        await supabaseClient
-          .from('templates')
-          .insert({
-            user_id: user.id,
-            name: cleanName,
-            people: people
-          });
 
-      if (error) {
-        console.error(error);
+  // =======================================================
+  // LABEL UKURAN KELOMPOK
+  // =======================================================
+
+  const groupSizeLabel =
+    useMemo(() => {
+
+      if (!participants.length) {
+        return 'Belum ada yang dibagi';
+      }
+
+      const smallest =
+        Math.floor(
+          participants.length /
+            effectiveGroupCount
+        );
+
+      const largest =
+        Math.ceil(
+          participants.length /
+            effectiveGroupCount
+        );
+
+      return smallest === largest
+        ? `${smallest} per grup`
+        : `${smallest}–${largest} per grup`;
+
+    }, [
+      effectiveGroupCount,
+      participants.length
+    ]);
+
+
+  // =======================================================
+  // ACAK KELOMPOK
+  // =======================================================
+
+  const shuffleGroups =
+    () => {
+
+      if (
+        !participants.length ||
+        isShuffling
+      ) {
+        return;
+      }
+
+      setIsShuffling(true);
+
+      setCopied(false);
+
+      window.setTimeout(
+        () => {
+
+          const generated =
+            createGroups(
+              participants,
+              effectiveGroupCount
+            );
+
+          setGroups(
+            generated
+          );
+
+          setIsShuffling(false);
+
+          showNotice(
+            'Kelompok siap!'
+          );
+
+          const timeString =
+            new Date().toLocaleTimeString(
+              [],
+              {
+                hour: '2-digit',
+                minute: '2-digit'
+              }
+            );
+
+          setHistory(
+            prev => [
+              {
+                id: Date.now(),
+                time: timeString,
+                data: generated
+              },
+              ...prev
+            ]
+          );
+
+        },
+        420
+      );
+    };
+
+
+  // =======================================================
+  // DUEL
+  // =======================================================
+
+  const makeDuels =
+    () => {
+
+      if (
+        participants.length < 2
+      ) {
+        return;
+      }
+
+      const shuffled =
+        [...participants].sort(
+          () =>
+            Math.random() -
+            0.5
+        );
+
+      const pairs = [];
+
+      for (
+        let i = 0;
+        i < shuffled.length;
+        i += 2
+      ) {
+
+        if (
+          i + 1 <
+          shuffled.length
+        ) {
+
+          pairs.push([
+            shuffled[i],
+            shuffled[i + 1]
+          ]);
+
+        } else {
+
+          pairs[
+            pairs.length - 1
+          ].push(
+            shuffled[i]
+          );
+        }
+      }
+
+      setDuels(pairs);
+
+      showNotice(
+        'Pasangan duel dibentuk!'
+      );
+    };
+
+
+  // =======================================================
+  // QUEUE
+  // =======================================================
+
+  const makeQueue =
+    () => {
+
+      if (!participants.length) {
+        return;
+      }
+
+      const shuffled =
+        [...participants].sort(
+          () =>
+            Math.random() -
+            0.5
+        );
+
+      setQueueList(
+        shuffled
+      );
+
+      showNotice(
+        'Urutan giliran diacak!'
+      );
+    };
+
+
+  // =======================================================
+  // SAVE TEMPLATE
+  // =======================================================
+
+  const saveAsTemplate =
+    async () => {
+
+      if (!user) {
 
         showNotice(
-          error.message ||
-            'Gagal menyimpan template.'
+          'Silakan login akun terlebih dahulu'
+        );
+
+        setShowAuthModal(true);
+
+        return;
+      }
+
+      const name =
+        templateNameInput.trim();
+
+      if (!name) {
+
+        showNotice(
+          'Ketik nama template terlebih dahulu'
         );
 
         return;
       }
 
-      setTemplateName('');
-      setShowTemplateModal(false);
+      if (!participants.length) {
 
-      await loadCloudTemplates();
+        showNotice(
+          'Daftar nama masih kosong'
+        );
 
-      showNotice('Template tersimpan');
-    } catch (error) {
-      console.error(error);
+        return;
+      }
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from('templates')
+          .insert([
+            {
+              user_id:
+                user.id,
+              name,
+              list:
+                participants
+            }
+          ])
+          .select();
+
+      if (error) {
+
+        showNotice(
+          'Gagal menyimpan: ' +
+            error.message
+        );
+
+      } else if (data) {
+
+        setTemplates(
+          prev => [
+            ...prev,
+            {
+              id:
+                data[0].id,
+              name,
+              list:
+                participants
+            }
+          ]
+        );
+
+        setTemplateNameInput('');
+
+        showNotice(
+          `Template "${name}" tersimpan di Cloud!`
+        );
+      }
+    };
+
+
+  // =======================================================
+  // LOAD TEMPLATE
+  // =======================================================
+
+  const loadTemplate =
+    (list) => {
+
+      setParticipants([
+        ...list
+      ]);
+
+      setGroups([]);
 
       showNotice(
-        'Gagal menyimpan template.'
+        'Template dimuat ke daftar'
       );
-    } finally {
-      setLoadingCloud(false);
-    }
-  };
+    };
 
 
-  /* =======================================================
-     LOAD TEMPLATE
-  ======================================================= */
+  // =======================================================
+  // DELETE TEMPLATE
+  // =======================================================
 
-  const loadTemplate = (template) => {
-    if (!template) return;
+  const deleteTemplate =
+    async (
+      e,
+      id,
+      index
+    ) => {
 
-    const templatePeople =
-      Array.isArray(template.people)
-        ? template.people
-        : [];
+      e.stopPropagation();
 
-    setPeople(templatePeople);
-    setWheelPeople(templatePeople);
-    setGroups([]);
-    setDuels([]);
-    setQueue([]);
+      if (!user) return;
 
-    showNotice(
-      `Template "${template.name}" dimuat`
-    );
-  };
+      if (
+        window.confirm(
+          'Hapus template ini dari Cloud?'
+        )
+      ) {
+
+        if (id) {
+
+          await supabaseClient
+            .from('templates')
+            .delete()
+            .eq(
+              'id',
+              id
+            );
+        }
+
+        setTemplates(
+          prev =>
+            prev.filter(
+              (_, i) =>
+                i !== index
+            )
+        );
+
+        showNotice(
+          'Template dihapus'
+        );
+      }
+    };
 
 
-  /* =======================================================
-     DELETE TEMPLATE
-  ======================================================= */
+  // =======================================================
+  // SPIN WHEEL
+  // =======================================================
 
-  const deleteTemplate = async (template) => {
-    if (!supabaseClient || !user) return;
+  const startSpin =
+    () => {
 
-    const { error } =
-      await supabaseClient
-        .from('templates')
-        .delete()
-        .eq('id', template.id)
-        .eq('user_id', user.id);
+      if (
+        spinning ||
+        participants.length < 2
+      ) {
+        return;
+      }
 
-    if (error) {
-      showNotice(
-        error.message ||
-          'Gagal menghapus template.'
+      setSpinning(true);
+
+      setSelectedWinner(null);
+
+      const randomIndex =
+        Math.floor(
+          Math.random() *
+            participants.length
+        );
+
+      const sliceAngle =
+        360 /
+        participants.length;
+
+      const extraTurns =
+        6 * 360;
+
+      const targetDegree =
+        wheelRotation +
+        extraTurns +
+        (
+          360 -
+          (
+            randomIndex *
+            sliceAngle
+          ) -
+          sliceAngle / 2
+        );
+
+      setWheelRotation(
+        targetDegree
       );
 
-      return;
-    }
+      setTimeout(
+        () => {
 
-    setCloudTemplates((current) =>
-      current.filter(
-        (item) => item.id !== template.id
-      )
-    );
+          setSpinning(false);
 
-    showNotice('Template dihapus');
-  };
+          const winner =
+            participants[
+              randomIndex
+            ];
+
+          setSelectedWinner(
+            winner
+          );
+
+          if (
+            removeWinnerOnSelect
+          ) {
+
+            setParticipants(
+              current =>
+                current.filter(
+                  (
+                    _,
+                    i
+                  ) =>
+                    i !==
+                    randomIndex
+                )
+            );
+
+            showNotice(
+              `Pemenang ${winner} terpilih dan dihapus!`
+            );
+
+          } else {
+
+            showNotice(
+              `Terpilih: ${winner}!`
+            );
+          }
+
+        },
+        3800
+      );
+    };
 
 
-  /* =======================================================
-     COMPUTED
-  ======================================================= */
+  // =======================================================
+  // COPY GROUP
+  // =======================================================
 
-  const groupSizeText = useMemo(
-    () =>
-      getGroupSizeText(
-        people.length,
-        groupCount
-      ),
-    [people.length, groupCount]
-  );
+  const copyGroups =
+    async () => {
+
+      if (!groups.length) {
+        return;
+      }
+
+      const text =
+        groups
+          .map(
+            group =>
+              `KELOMPOK ${group.id + 1}\n${group.names
+                .map(
+                  name =>
+                    `• ${name}`
+                )
+                .join('\n')}`
+          )
+          .join('\n\n');
+
+      try {
+
+        await navigator.clipboard.writeText(
+          text
+        );
+
+        setCopied(true);
+
+        showNotice(
+          'Kelompok disalin ke clipboard'
+        );
+
+        window.setTimeout(
+          () =>
+            setCopied(false),
+          2400
+        );
+
+      } catch {
+
+        showNotice(
+          'Clipboard tidak dapat diakses'
+        );
+      }
+    };
 
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  // =======================================================
+  // RENDER
+  // =======================================================
 
   return React.createElement(
-    React.Fragment,
-    null,
+    'main',
+    {
+      className:
+        'app-shell'
+    },
 
-    /* =====================================================
-       HEADER
-    ===================================================== */
+    React.createElement(
+      'div',
+      {
+        className:
+          'ambient-orb ambient-orb-one'
+      }
+    ),
+
+    React.createElement(
+      'div',
+      {
+        className:
+          'ambient-orb ambient-orb-two'
+      }
+    ),
+
+
+    // =====================================================
+    // HEADER
+    // =====================================================
 
     React.createElement(
       'header',
-      { className: 'topbar' },
+      {
+        className:
+          'site-header'
+      },
 
       React.createElement(
         'div',
-        { className: 'brand-lockup' },
+        {
+          className:
+            'brand-lockup'
+        },
 
         React.createElement(
           'div',
-          { className: 'brand-mark' },
+          {
+            className:
+              'brand-mark'
+          },
 
-          React.createElement('span', {
-            key: 'one'
-          }),
+          React.createElement(
+            'span'
+          ),
 
-          React.createElement('span', {
-            key: 'two'
-          }),
+          React.createElement(
+            'span'
+          ),
 
-          React.createElement('span', {
-            key: 'three'
-          })
+          React.createElement(
+            'span'
+          )
         ),
 
         React.createElement(
           'span',
           null,
-          'ArunikaMix'
+          'Arunika',
+
+          React.createElement(
+            'span',
+            {
+              className:
+                'brand-light'
+            },
+            'Mix'
+          )
         )
       ),
 
       React.createElement(
         'div',
-        { className: 'topbar-actions' },
+        {
+          className:
+            'header-note',
+          style: {
+            gap: '10px'
+          }
+        },
 
         user
-          ? React.createElement(
-              React.Fragment,
-              null,
 
-              React.createElement(
-                'span',
-                {
-                  className: 'user-email'
-                },
-                user.email
-              ),
+          ?
 
-              React.createElement(
-                'button',
-                {
-                  className: 'btn btn-ghost',
-                  onClick: logout
-                },
-                React.createElement(Icon, {
-                  name: 'log-out',
-                  size: 16
-                }),
-                'Keluar'
-              )
-            )
-          : React.createElement(
-              'button',
+          React.createElement(
+            'div',
+            {
+              style: {
+                display:
+                  'flex',
+                alignItems:
+                  'center',
+                gap: '8px'
+              }
+            },
+
+            React.createElement(
+              'span',
               {
-                className: 'btn btn-ghost',
-                onClick: () => {
-                  setIsSignUp(false);
-                  setShowAuthModal(true);
+                style: {
+                  fontSize:
+                    '12px',
+                  fontWeight:
+                    'bold'
                 }
               },
-              React.createElement(Icon, {
-                name: 'cloud',
-                size: 16
-              }),
-              'Cloud'
+
+              user.email.split(
+                '@'
+              )[0]
+            ),
+
+            React.createElement(
+              'button',
+              {
+                type:
+                  'button',
+                className:
+                  'copy-button',
+                onClick:
+                  handleLogout,
+                style: {
+                  padding:
+                    '4px 8px',
+                  fontSize:
+                    '11px'
+                }
+              },
+              'Keluar'
             )
+          )
+
+          :
+
+          React.createElement(
+            'button',
+            {
+              type:
+                'button',
+              className:
+                'copy-button',
+              onClick: () => {
+                setIsSignUp(
+                  false
+                );
+
+                setShowAuthModal(
+                  true
+                );
+              },
+              style: {
+                padding:
+                  '4px 10px',
+                fontSize:
+                  '12px'
+              }
+            },
+
+            'Masuk / Daftar Akun'
+          )
       )
     ),
 
 
-    /* =====================================================
-       HERO
-    ===================================================== */
+    // =====================================================
+    // HERO
+    // =====================================================
 
     React.createElement(
       'section',
-      { className: 'hero-wrap' },
+      {
+        className:
+          'hero-wrap'
+      },
 
       React.createElement(
         'div',
-        { className: 'hero-copy' },
+        {
+          className:
+            'hero-copy'
+        },
 
         React.createElement(
           'div',
           {
-            className: 'eyebrow'
+            className:
+              'eyebrow'
           },
+
+          React.createElement(
+            Icon,
+            {
+              name:
+                'sparkles',
+              size:
+                14
+            }
+          ),
+
           'PEMBAGI KELOMPOK ACAK & MINI GAMES'
         ),
 
         React.createElement(
           'h1',
           null,
-          'Beri ruang untuk ',
+
+          'Beri ruang',
+
+          React.createElement(
+            'br'
+          ),
+
           React.createElement(
             'em',
             null,
-            'kejutan.'
+            'untuk kejutan.'
           )
         ),
 
         React.createElement(
           'p',
           null,
-          'Satu daftar nama, banyak kemungkinan. ',
-          'Bagi kelompok, putar roda, adu pasangan, ',
-          'atau tentukan urutan giliran secara acak.'
+          'Ubah kerumunan menjadi tim-tim kecil atau undian seru secara adil tanpa repot.'
         )
-      ),
-
-      React.createElement(
-        'div',
-        { className: 'hero-stamp' },
-
-        React.createElement(
-          'div',
-          { className: 'stamp-number' },
-          people.length
-        ),
-
-        React.createElement(
-          'div',
-          { className: 'stamp-caption' },
-          'orang di dalamnya'
-        ),
-
-        React.createElement(
-          'div',
-          { className: 'stamp-line' }
-        ),
-
-        React.createElement(
-          'div',
-          { className: 'stamp-caption' },
-          'satu titik awal yang adil'
-        )
-      )
-    ),
-
-
-    /* =====================================================
-       TABS
-    ===================================================== */
-
-    React.createElement(
-      'nav',
-      { className: 'tabs' },
-
-      TABS.map((tab) =>
-        React.createElement(
-          'button',
-          {
-            key: tab.id,
-            className:
-              activeTab === tab.id
-                ? 'tab active'
-                : 'tab',
-            onClick: () =>
-              setActiveTab(tab.id)
-          },
-
-          React.createElement(Icon, {
-            name: tab.icon,
-            size: 17
-          }),
-
-          tab.label
-        )
-      )
-    ),
-
-
-    /* =====================================================
-       MAIN
-    ===================================================== */
-
-    React.createElement(
-      'main',
-      { className: 'app-grid' },
-
-      /* ===================================================
-         SIDEBAR
-      =================================================== */
-
-      React.createElement(
-        'aside',
-        { className: 'sidebar' },
-
-        React.createElement(
-          'div',
-          { className: 'panel-heading' },
-
-          React.createElement(
-            'div',
-            null,
-
-            React.createElement(
-              'div',
-              {
-                className: 'section-kicker'
-              },
-              'DAFTAR PESERTA'
-            ),
-
-            React.createElement(
-              'h2',
-              null,
-              `${people.length} orang`
-            )
-          )
-        ),
-
-        /* Add names */
-
-        React.createElement(
-          'div',
-          {
-            className:
-              'add-people-box'
-          },
-
-          React.createElement(
-            'textarea',
-            {
-              value: newPeople,
-              onChange: (event) =>
-                setNewPeople(
-                  event.target.value
-                ),
-              placeholder:
-                'Tambah nama...\nSatu nama per baris'
-            }
-          ),
-
-          React.createElement(
-            'button',
-            {
-              className:
-                'btn btn-primary full',
-              onClick: addPeople
-            },
-
-            React.createElement(Icon, {
-              name: 'plus',
-              size: 17
-            }),
-
-            'Tambah'
-          )
-        ),
-
-        /* Person list */
-
-        React.createElement(
-          'div',
-          {
-            className:
-              'people-list'
-          },
-
-          people.length
-            ? people.map(
-                (person, index) =>
-                  React.createElement(
-                    'div',
-                    {
-                      className:
-                        'person-row',
-                      key:
-                        `${person}-${index}`
-                    },
-
-                    editingIndex === index
-                      ? React.createElement(
-                          React.Fragment,
-                          null,
-
-                          React.createElement(
-                            'input',
-                            {
-                              className:
-                                'person-edit-input',
-                              value:
-                                editingName,
-                              onChange:
-                                (event) =>
-                                  setEditingName(
-                                    event.target
-                                      .value
-                                  ),
-                              autoFocus: true,
-                              onKeyDown:
-                                (event) => {
-                                  if (
-                                    event.key ===
-                                    'Enter'
-                                  ) {
-                                    saveEditing();
-                                  }
-
-                                  if (
-                                    event.key ===
-                                    'Escape'
-                                  ) {
-                                    setEditingIndex(
-                                      null
-                                    );
-                                    setEditingName(
-                                      ''
-                                    );
-                                  }
-                                }
-                            }
-                          ),
-
-                          React.createElement(
-                            'button',
-                            {
-                              className:
-                                'icon-btn',
-                              onClick:
-                                saveEditing
-                            },
-                            React.createElement(
-                              Icon,
-                              {
-                                name: 'check',
-                                size: 15
-                              }
-                            )
-                          )
-                        )
-                      : React.createElement(
-                          React.Fragment,
-                          null,
-
-                          React.createElement(
-                            'span',
-                            {
-                              className:
-                                'person-index'
-                            },
-                            String(
-                              index + 1
-                            ).padStart(2, '0')
-                          ),
-
-                          React.createElement(
-                            'span',
-                            {
-                              className:
-                                'person-name'
-                            },
-                            person
-                          ),
-
-                          React.createElement(
-                            'div',
-                            {
-                              className:
-                                'person-actions'
-                            },
-
-                            React.createElement(
-                              'button',
-                              {
-                                className:
-                                  'icon-btn',
-                                title:
-                                  'Edit',
-                                onClick: () =>
-                                  startEditing(
-                                    index
-                                  )
-                              },
-
-                              React.createElement(
-                                Icon,
-                                {
-                                  name: 'pencil',
-                                  size: 14
-                                }
-                              )
-                            ),
-
-                            React.createElement(
-                              'button',
-                              {
-                                className:
-                                  'icon-btn danger',
-                                title:
-                                  'Hapus',
-                                onClick: () =>
-                                  deletePerson(
-                                    index
-                                  )
-                              },
-
-                              React.createElement(
-                                Icon,
-                                {
-                                  name: 'x',
-                                  size: 14
-                                }
-                              )
-                            )
-                          )
-                        )
-                  )
-              )
-            : React.createElement(
-                'div',
-                {
-                  className:
-                    'empty-state small'
-                },
-                'Belum ada peserta.'
-              )
-        ),
-
-        /* Sidebar bottom actions */
-
-        React.createElement(
-          'div',
-          {
-            className:
-              'sidebar-actions'
-          },
-
-          React.createElement(
-            'button',
-            {
-              className:
-                'btn btn-secondary',
-              onClick: resetPeople
-            },
-
-            React.createElement(Icon, {
-              name: 'rotate-ccw',
-              size: 15
-            }),
-
-            'Reset'
-          ),
-
-          React.createElement(
-            'button',
-            {
-              className:
-                'btn btn-secondary danger-text',
-              onClick: clearPeople
-            },
-
-            React.createElement(Icon, {
-              name: 'trash-2',
-              size: 15
-            }),
-
-            'Kosongkan'
-          )
-        )
-      ),
-
-
-      /* ===================================================
-         CONTENT
-      =================================================== */
-
-      React.createElement(
-        'section',
-        {
-          className:
-            'content-panel'
-        },
-
-        /* =================================================
-           GROUPS TAB
-        ================================================= */
-
-        activeTab === 'groups' &&
-          React.createElement(
-            React.Fragment,
-            null,
-
-            React.createElement(
-              'div',
-              {
-                className:
-                  'content-header'
-              },
-
-              React.createElement(
-                'div',
-                null,
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'section-kicker'
-                  },
-                  'PEMBAGI KELOMPOK'
-                ),
-
-                React.createElement(
-                  'h2',
-                  null,
-                  'Kelompok yang seimbang'
-                ),
-
-                React.createElement(
-                  'p',
-                  null,
-                  'Tentukan jumlah kelompok, ',
-                  'lalu biarkan ArunikaMix ',
-                  'mengacak pembagiannya.'
-                )
-              ),
-
-              React.createElement(
-                'div',
-                {
-                  className:
-                    'group-controls'
-                },
-
-                React.createElement(
-                  'label',
-                  null,
-                  'Jumlah grup',
-
-                  React.createElement(
-                    'select',
-                    {
-                      value: groupCount,
-                      onChange: (
-                        event
-                      ) =>
-                        setGroupCount(
-                          Number(
-                            event.target
-                              .value
-                          )
-                        )
-                    },
-
-                    Array.from(
-                      {
-                        length:
-                          Math.max(
-                            1,
-                            people.length
-                          )
-                      },
-                      (_, index) =>
-                        React.createElement(
-                          'option',
-                          {
-                            key:
-                              index + 1,
-                            value:
-                              index + 1
-                          },
-                          index + 1
-                        )
-                    )
-                  )
-                ),
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'group-size-note'
-                  },
-                  groupSizeText
-                ),
-
-                React.createElement(
-                  'button',
-                  {
-                    className:
-                      'btn btn-primary',
-                    onClick:
-                      shuffleGroups
-                  },
-
-                  React.createElement(
-                    Icon,
-                    {
-                      name: 'shuffle',
-                      size: 17
-                    }
-                  ),
-
-                  'Acak kelompok'
-                )
-              )
-            ),
-
-            groups.length
-              ? React.createElement(
-                  'div',
-                  {
-                    className:
-                      'groups-grid'
-                  },
-
-                  groups.map(
-                    (group) =>
-                      React.createElement(
-                        'article',
-                        {
-                          key:
-                            group.id,
-                          className:
-                            `group-card group-${GROUP_COLORS[
-                              group.id %
-                                GROUP_COLORS.length
-                            ]}`
-                        },
-
-                        React.createElement(
-                          'div',
-                          {
-                            className:
-                              'group-card-head'
-                          },
-
-                          React.createElement(
-                            'div',
-                            {
-                              className:
-                                'group-label'
-                            },
-                            `KELOMPOK ${group.id + 1}`
-                          ),
-
-                          React.createElement(
-                            'span',
-                            {
-                              className:
-                                'group-count'
-                            },
-                            group.people.length
-                          )
-                        ),
-
-                        React.createElement(
-                          'div',
-                          {
-                            className:
-                              'group-members'
-                          },
-
-                          group.people.map(
-                            (
-                              name,
-                              index
-                            ) =>
-                              React.createElement(
-                                'div',
-                                {
-                                  className:
-                                    'group-member',
-                                  key:
-                                    `${name}-${index}`
-                                },
-
-                                React.createElement(
-                                  'span',
-                                  {
-                                    className:
-                                      'member-number'
-                                  },
-                                  String(
-                                    index +
-                                      1
-                                  ).padStart(
-                                    2,
-                                    '0'
-                                  )
-                                ),
-
-                                React.createElement(
-                                  'span',
-                                  null,
-                                  name
-                                )
-                              )
-                          )
-                        )
-                      )
-                  )
-                )
-              : React.createElement(
-                  'div',
-                  {
-                    className:
-                      'groups-empty'
-                  },
-
-                  React.createElement(
-                    'div',
-                    {
-                      className:
-                        'empty-graphic'
-                    },
-
-                    React.createElement(
-                      Icon,
-                      {
-                        name: 'shuffle',
-                        size: 30
-                      }
-                    )
-                  ),
-
-                  React.createElement(
-                    'h3',
-                    null,
-                    'Belum ada kelompok'
-                  ),
-
-                  React.createElement(
-                    'p',
-                    null,
-                    'Pilih jumlah grup dan ',
-                    'tekan tombol acak untuk ',
-                    'memulai.'
-                  )
-                ),
-
-            groups.length &&
-              React.createElement(
-                'div',
-                {
-                  className:
-                    'result-actions'
-                },
-
-                React.createElement(
-                  'button',
-                  {
-                    className:
-                      'btn btn-secondary',
-                    onClick:
-                      copyGroups
-                  },
-
-                  React.createElement(
-                    Icon,
-                    {
-                      name: 'copy',
-                      size: 15
-                    }
-                  ),
-
-                  'Salin hasil'
-                )
-              )
-          ),
-
-
-        /* =================================================
-           WHEEL TAB
-        ================================================= */
-
-        activeTab === 'wheel' &&
-          React.createElement(
-            React.Fragment,
-            null,
-
-            React.createElement(
-              'div',
-              {
-                className:
-                  'content-header'
-              },
-
-              React.createElement(
-                'div',
-                null,
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'section-kicker'
-                  },
-                  'RODA PUTAR'
-                ),
-
-                React.createElement(
-                  'h2',
-                  null,
-                  'Siapa yang terpilih?'
-                ),
-
-                React.createElement(
-                  'p',
-                  null,
-                  'Biarkan keberuntungan ',
-                  'menentukan satu nama.'
-                )
-              )
-            ),
-
-            React.createElement(
-              'div',
-              {
-                className:
-                  'wheel-layout'
-              },
-
-              React.createElement(
-                'div',
-                {
-                  className:
-                    'wheel-placeholder'
-                },
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'wheel-circle'
-                  },
-
-                  React.createElement(
-                    'div',
-                    {
-                      className:
-                        'wheel-inner'
-                    },
-
-                    React.createElement(
-                      Icon,
-                      {
-                        name: 'shuffle',
-                        size: 34
-                      }
-                    ),
-
-                    React.createElement(
-                      'span',
-                      null,
-                      'ARUNIKA'
-                    )
-                  )
-                ),
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'wheel-pointer'
-                  }
-                )
-              ),
-
-              React.createElement(
-                'div',
-                {
-                  className:
-                    'wheel-controls'
-                },
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'wheel-count'
-                  },
-
-                  React.createElement(
-                    'strong',
-                    null,
-                    wheelPeople.length
-                  ),
-
-                  React.createElement(
-                    'span',
-                    null,
-                    'nama tersisa'
-                  )
-                ),
-
-                wheelWinner &&
-                  React.createElement(
-                    'div',
-                    {
-                      className:
-                        'winner-card'
-                    },
-
-                    React.createElement(
-                      'div',
-                      {
-                        className:
-                          'section-kicker'
-                      },
-                      'TERPILIH'
-                    ),
-
-                    React.createElement(
-                      'h3',
-                      null,
-                      wheelWinner
-                    )
-                  ),
-
-                React.createElement(
-                  'label',
-                  {
-                    className:
-                      'checkbox-row'
-                  },
-
-                  React.createElement(
-                    'input',
-                    {
-                      type: 'checkbox',
-                      checked:
-                        removeWheelWinner,
-                      onChange: (
-                        event
-                      ) =>
-                        setRemoveWheelWinner(
-                          event.target
-                            .checked
-                        )
-                    }
-                  ),
-
-                  React.createElement(
-                    'span',
-                    null,
-                    'Hapus nama setelah terpilih'
-                  )
-                ),
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'button-row'
-                  },
-
-                  React.createElement(
-                    'button',
-                    {
-                      className:
-                        'btn btn-primary large',
-                      onClick:
-                        spinWheel
-                    },
-
-                    React.createElement(
-                      Icon,
-                      {
-                        name: 'refresh-cw',
-                        size: 18
-                      }
-                    ),
-
-                    'PUTAR'
-                  ),
-
-                  React.createElement(
-                    'button',
-                    {
-                      className:
-                        'btn btn-secondary',
-                      onClick:
-                        resetWheel
-                    },
-
-                    'Reset'
-                  )
-                )
-              )
-            )
-          ),
-
-
-        /* =================================================
-           DUEL TAB
-        ================================================= */
-
-        activeTab === 'duel' &&
-          React.createElement(
-            React.Fragment,
-            null,
-
-            React.createElement(
-              'div',
-              {
-                className:
-                  'content-header'
-              },
-
-              React.createElement(
-                'div',
-                null,
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'section-kicker'
-                  },
-                  'UNDian BERPASANGAN'
-                ),
-
-                React.createElement(
-                  'h2',
-                  null,
-                  'Duel acak'
-                ),
-
-                React.createElement(
-                  'p',
-                  null,
-                  'Pasangkan peserta secara ',
-                  'acak untuk menentukan lawan.'
-                )
-              ),
-
-              React.createElement(
-                'button',
-                {
-                  className:
-                    'btn btn-primary',
-                  onClick:
-                    createDuels
-                },
-
-                React.createElement(
-                  Icon,
-                  {
-                    name: 'shuffle',
-                    size: 17
-                  }
-                ),
-
-                'Buat pasangan'
-              )
-            ),
-
-            duels.length
-              ? React.createElement(
-                  'div',
-                  {
-                    className:
-                      'duels-grid'
-                  },
-
-                  duels.map(
-                    (duel) =>
-                      React.createElement(
-                        'article',
-                        {
-                          className:
-                            'duel-card',
-                          key:
-                            duel.id
-                        },
-
-                        React.createElement(
-                          'div',
-                          {
-                            className:
-                              'duel-number'
-                          },
-                          `DUEL ${String(
-                            duel.id + 1
-                          ).padStart(2, '0')}`
-                        ),
-
-                        React.createElement(
-                          'div',
-                          {
-                            className:
-                              'duel-names'
-                          },
-
-                          React.createElement(
-                            'div',
-                            {
-                              className:
-                                'duel-person'
-                            },
-                            duel.first
-                          ),
-
-                          React.createElement(
-                            'div',
-                            {
-                              className:
-                                'duel-vs'
-                            },
-                            'VS'
-                          ),
-
-                          React.createElement(
-                            'div',
-                            {
-                              className:
-                                'duel-person'
-                            },
-                            duel.second ||
-                              'BYE'
-                          )
-                        )
-                      )
-                  )
-                )
-              : React.createElement(
-                  'div',
-                  {
-                    className:
-                      'groups-empty'
-                  },
-
-                  React.createElement(
-                    'div',
-                    {
-                      className:
-                        'empty-graphic'
-                    },
-
-                    React.createElement(
-                      Icon,
-                      {
-                        name: 'swords',
-                        size: 30
-                      }
-                    )
-                  ),
-
-                  React.createElement(
-                    'h3',
-                    null,
-                    'Belum ada pasangan'
-                  ),
-
-                  React.createElement(
-                    'p',
-                    null,
-                    'Tekan tombol untuk ',
-                    'mengacak pasangan.'
-                  )
-                )
-          ),
-
-
-        /* =================================================
-           QUEUE TAB
-        ================================================= */
-
-        activeTab === 'queue' &&
-          React.createElement(
-            React.Fragment,
-            null,
-
-            React.createElement(
-              'div',
-              {
-                className:
-                  'content-header'
-              },
-
-              React.createElement(
-                'div',
-                null,
-
-                React.createElement(
-                  'div',
-                  {
-                    className:
-                      'section-kicker'
-                  },
-                  'URUTAN ANTREAN'
-                ),
-
-                React.createElement(
-                  'h2',
-                  null,
-                  'Siapa duluan?'
-                ),
-
-                React.createElement(
-                  'p',
-                  null,
-                  'Acak urutan giliran secara ',
-                  'cepat dan adil.'
-                )
-              ),
-
-              React.createElement(
-                'button',
-                {
-                  className:
-                    'btn btn-primary',
-                  onClick:
-                    createQueue
-                },
-
-                React.createElement(
-                  Icon,
-                  {
-                    name: 'shuffle',
-                    size: 17
-                  }
-                ),
-
-                'Acak urutan'
-              )
-            ),
-
-            queue.length
-              ? React.createElement(
-                  'div',
-                  {
-                    className:
-                      'queue-list'
-                  },
-
-                  queue.map(
-                    (person, index) =>
-                      React.createElement(
-                        'div',
-                        {
-                          className:
-                            'queue-item',
-                          key:
-                            `${person}-${index}`
-                        },
-
-                        React.createElement(
-                          'div',
-                          {
-                            className:
-                              'queue-number'
-                          },
-                          String(
-                            index + 1
-                          ).padStart(2, '0')
-                        ),
-
-                        React.createElement(
-                          'div',
-                          {
-                            className:
-                              'queue-name'
-                          },
-                          person
-                        )
-                      )
-                  )
-                )
-              : React.createElement(
-                  'div',
-                  {
-                    className:
-                      'groups-empty'
-                  },
-
-                  React.createElement(
-                    'div',
-                    {
-                      className:
-                        'empty-graphic'
-                    },
-
-                    React.createElement(
-                      Icon,
-                      {
-                        name: 'list-ordered',
-                        size: 30
-                      }
-                    )
-                  ),
-
-                  React.createElement(
-                    'h3',
-                    null,
-                    'Belum ada urutan'
-                  ),
-
-                  React.createElement(
-                    'p',
-                    null,
-                    'Tekan tombol untuk ',
-                    'membuat antrean acak.'
-                  )
-                )
-          )
-      )
-    ),
-
-
-    /* =====================================================
-       CLOUD SECTION
-    ===================================================== */
-
-    React.createElement(
-      'section',
-      {
-        className:
-          'cloud-section'
-      },
-
-      React.createElement(
-        'div',
-        {
-          className:
-            'cloud-section-header'
-        },
-
-        React.createElement(
-          'div',
-          null,
-
-          React.createElement(
-            'div',
-            {
-              className:
-                'section-kicker'
-            },
-            'SUPABASE CLOUD'
-          ),
-
-          React.createElement(
-            'h2',
-            null,
-            'Simpan daftar kamu'
-          ),
-
-          React.createElement(
-            'p',
-            null,
-            user
-              ? 'Template tersimpan di akunmu.'
-              : 'Masuk untuk menyimpan template dan membukanya kembali.'
-          )
-        ),
-
-        user
-          ? React.createElement(
-              'button',
-              {
-                className:
-                  'btn btn-primary',
-                onClick: () =>
-                  setShowTemplateModal(
-                    true
-                  )
-              },
-
-              React.createElement(
-                Icon,
-                {
-                  name: 'plus',
-                  size: 16
-                }
-              ),
-
-              'Simpan template'
-            )
-          : React.createElement(
-              'button',
-              {
-                className:
-                  'btn btn-primary',
-                onClick: () => {
-                  setIsSignUp(false);
-                  setShowAuthModal(true);
-                }
-              },
-
-              React.createElement(
-                Icon,
-                {
-                  name: 'log-in',
-                  size: 16
-                }
-              ),
-
-              'Masuk'
-            )
-      ),
-
-      user &&
-        React.createElement(
-          'div',
-          {
-            className:
-              'template-list'
-          },
-
-          loadingCloud
-            ? React.createElement(
-                'div',
-                {
-                  className:
-                    'empty-state small'
-                },
-                'Memuat template...'
-              )
-            : cloudTemplates.length
-              ? cloudTemplates.map(
-                  (template) =>
-                    React.createElement(
-                      'div',
-                      {
-                        className:
-                          'template-card',
-                        key:
-                          template.id
-                      },
-
-                      React.createElement(
-                        'div',
-                        null,
-
-                        React.createElement(
-                          'strong',
-                          null,
-                          template.name
-                        ),
-
-                        React.createElement(
-                          'span',
-                          null,
-                          Array.isArray(
-                            template.people
-                          )
-                            ? `${template.people.length} orang`
-                            : 'Template'
-                        )
-                      ),
-
-                      React.createElement(
-                        'div',
-                        {
-                          className:
-                            'template-actions'
-                        },
-
-                        React.createElement(
-                          'button',
-                          {
-                            className:
-                              'icon-btn',
-                            onClick: () =>
-                              loadTemplate(
-                                template
-                              ),
-                            title:
-                              'Muat template'
-                          },
-
-                          React.createElement(
-                            Icon,
-                            {
-                              name: 'download',
-                              size: 15
-                            }
-                          )
-                        ),
-
-                        React.createElement(
-                          'button',
-                          {
-                            className:
-                              'icon-btn danger',
-                            onClick: () =>
-                              deleteTemplate(
-                                template
-                              ),
-                            title:
-                              'Hapus template'
-                          },
-
-                          React.createElement(
-                            Icon,
-                            {
-                              name: 'trash-2',
-                              size: 15
-                            }
-                          )
-                        )
-                      )
-                    )
-                )
-              : React.createElement(
-                  'div',
-                  {
-                    className:
-                      'empty-state small'
-                  },
-                  'Belum ada template cloud.'
-                )
-        )
-    ),
-
-
-    /* =====================================================
-       HISTORY
-    ===================================================== */
-
-    history.length > 0 &&
-      React.createElement(
-        'section',
-        {
-          className:
-            'history-section'
-        },
-
-        React.createElement(
-          'div',
-          {
-            className:
-              'section-kicker'
-          },
-          'RIWAYAT'
-        ),
-
-        React.createElement(
-          'h2',
-          null,
-          'Pembagian sebelumnya'
-        ),
-
-        React.createElement(
-          'div',
-          {
-            className:
-              'history-list'
-          },
-
-          history.map(
-            (item) =>
-              React.createElement(
-                'div',
-                {
-                  className:
-                    'history-item',
-                  key:
-                    item.id
-                },
-
-                React.createElement(
-                  'div',
-                  null,
-                  `${item.groups.length} kelompok`
-                ),
-
-                React.createElement(
-                  'span',
-                  null,
-                  new Date(
-                    item.createdAt
-                  ).toLocaleTimeString(
-                    'id-ID',
-                    {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    }
-                  )
-                )
-              )
-          )
-        )
-      ),
-
-
-    /* =====================================================
-       FOOTER
-    ===================================================== */
-
-    React.createElement(
-      'footer',
-      {
-        className:
-          'site-footer'
-      },
-
-      React.createElement(
-        'div',
-        null,
-        'ArunikaMix • alat kecil untuk menyatukan orang'
       ),
 
       React.createElement(
         'div',
         {
           className:
-            'footer-status'
+            'hero-stamp'
         },
-        'SUPABASE CLOUD ACTIVE'
+
+        React.createElement(
+          'span',
+          {
+            className:
+              'stamp-number'
+          },
+          participants.length
+        ),
+
+        React.createElement(
+          'span',
+          {
+            className:
+              'stamp-caption'
+          },
+
+          'orang',
+
+          React.createElement(
+            'br'
+          ),
+
+          'di dalamnya'
+        ),
+
+        React.createElement(
+          'div',
+          {
+            className:
+              'stamp-line'
+          }
+        ),
+
+        React.createElement(
+          'span',
+          {
+            className:
+              'stamp-caption'
+          },
+
+          'satu titik awal',
+
+          React.createElement(
+            'br'
+          ),
+
+          'yang adil'
+        )
       )
     ),
 
 
-    /* =====================================================
-       AUTH MODAL
-    ===================================================== */
+    // =====================================================
+    // AUTH MODAL
+    // =====================================================
 
     showAuthModal &&
       React.createElement(
         'div',
         {
-          className:
-            'modal-backdrop',
-          onMouseDown: (
-            event
-          ) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              setShowAuthModal(false);
-            }
+          style: {
+            position:
+              'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              'rgba(0,0,0,0.5)',
+            zIndex:
+              999,
+            display:
+              'grid',
+            placeItems:
+              'center',
+            padding:
+              '15px'
           }
         },
 
@@ -2666,51 +1537,34 @@ function App() {
           'div',
           {
             className:
-              'modal-card'
+              'panel',
+            style: {
+              width:
+                '100%',
+              maxWidth:
+                '380px',
+              background:
+                'var(--paper-light)'
+            }
           },
 
           React.createElement(
-            'button',
-            {
-              className:
-                'modal-close',
-              onClick: () =>
-                setShowAuthModal(false)
-            },
-
-            React.createElement(
-              Icon,
-              {
-                name: 'x',
-                size: 18
-              }
-            )
-          ),
-
-          React.createElement(
-            'div',
-            {
-              className:
-                'section-kicker'
-            },
-            isSignUp
-              ? 'BUAT AKUN'
-              : 'MASUK'
-          ),
-
-          React.createElement(
-            'h2',
+            'h3',
             null,
+
             isSignUp
-              ? 'Buat akun ArunikaMix'
+              ? 'Daftar Akun Baru'
               : 'Masuk ke ArunikaMix'
           ),
 
           React.createElement(
             'p',
-            null,
-            'Simpan daftar peserta dan template ',
-            'agar bisa digunakan lagi.'
+            {
+              className:
+                'panel-intro'
+            },
+
+            'Simpan template nama milikmu di Cloud agar tidak hilang.'
           ),
 
           React.createElement(
@@ -2721,52 +1575,419 @@ function App() {
             },
 
             React.createElement(
-              'label',
-              null,
-              'Email',
-
-              React.createElement(
-                'input',
-                {
-                  type: 'email',
-                  value:
-                    authEmail,
-                  onChange: (
-                    event
-                  ) =>
+              'input',
+              {
+                type:
+                  'email',
+                required:
+                  true,
+                placeholder:
+                  'Email kamu...',
+                value:
+                  authEmail,
+                onChange:
+                  e =>
                     setAuthEmail(
-                      event.target
+                      e.target
                         .value
                     ),
-                  placeholder:
-                    'nama@email.com',
-                  required: true
+                style: {
+                  width:
+                    '100%',
+                  padding:
+                    '10px',
+                  borderRadius:
+                    '8px',
+                  border:
+                    '1px solid var(--line)',
+                  marginBottom:
+                    '8px'
                 }
-              )
+              }
             ),
 
             React.createElement(
-              'label',
-              null,
-              'Password',
-
-              React.createElement(
-                'input',
-                {
-                  type: 'password',
-                  value:
-                    authPassword,
-                  onChange: (
-                    event
-                  ) =>
+              'input',
+              {
+                type:
+                  'password',
+                required:
+                  true,
+                placeholder:
+                  'Kata sandi...',
+                value:
+                  authPassword,
+                onChange:
+                  e =>
                     setAuthPassword(
-                      event.target
+                      e.target
                         .value
                     ),
-                  placeholder:
-                    '••••••••',
-                  required: true,
-                  minLength: 6
+                style: {
+                  width:
+                    '100%',
+                  padding:
+                    '10px',
+                  borderRadius:
+                    '8px',
+                  border:
+                    '1px solid var(--line)',
+                  marginBottom:
+                    '12px'
+                }
+              }
+            ),
+
+            React.createElement(
+              'button',
+              {
+                type:
+                  'submit',
+                className:
+                  'shuffle-button',
+                style: {
+                  width:
+                    '100%',
+                  padding:
+                    '10px'
+                }
+              },
+
+              isSignUp
+                ? 'Daftar Sekarang'
+                : 'Masuk Akun'
+            )
+          ),
+
+          React.createElement(
+            'div',
+            {
+              style: {
+                marginTop:
+                  '12px',
+                fontSize:
+                  '12px',
+                textAlign:
+                  'center',
+                cursor:
+                  'pointer',
+                color:
+                  'var(--coral-deep)'
+              },
+
+              onClick: () =>
+                setIsSignUp(
+                  !isSignUp
+                )
+            },
+
+            isSignUp
+              ? 'Sudah punya akun? Masuk'
+              : 'Belum punya akun? Daftar'
+          ),
+
+          React.createElement(
+            'button',
+            {
+              type:
+                'button',
+              className:
+                'copy-button',
+              onClick:
+                () =>
+                  setShowAuthModal(
+                    false
+                  ),
+              style: {
+                width:
+                  '100%',
+                marginTop:
+                  '10px'
+              }
+            },
+
+            'Batal'
+          )
+        )
+      ),
+
+
+    // =====================================================
+    // TABS
+    // =====================================================
+
+    React.createElement(
+      'div',
+      {
+        style: {
+          display:
+            'flex',
+          gap:
+            '8px',
+          marginBottom:
+            '22px',
+          flexWrap:
+            'wrap'
+        }
+      },
+
+      React.createElement(
+        'button',
+        {
+          type:
+            'button',
+          className:
+            'copy-button',
+          onClick:
+            () =>
+              setActiveTab(
+                'groups'
+              ),
+          style: {
+            background:
+              activeTab ===
+              'groups'
+                ? 'var(--plum)'
+                : 'var(--paper-light)',
+            color:
+              activeTab ===
+              'groups'
+                ? '#fff'
+                : 'var(--ink)'
+          }
+        },
+
+        React.createElement(
+          Icon,
+          {
+            name:
+              'users',
+            size:
+              16
+          }
+        ),
+
+        ' Pembagi Kelompok'
+      ),
+
+      React.createElement(
+        'button',
+        {
+          type:
+            'button',
+          className:
+            'copy-button',
+          onClick:
+            () =>
+              setActiveTab(
+                'wheel'
+              ),
+          style: {
+            background:
+              activeTab ===
+              'wheel'
+                ? 'var(--plum)'
+                : 'var(--paper-light)',
+            color:
+              activeTab ===
+              'wheel'
+                ? '#fff'
+                : 'var(--ink)'
+          }
+        },
+
+        React.createElement(
+          Icon,
+          {
+            name:
+              'disc',
+            size:
+              16
+          }
+        ),
+
+        ' Roda Putar (Spin Wheel)'
+      ),
+
+      React.createElement(
+        'button',
+        {
+          type:
+            'button',
+          className:
+            'copy-button',
+          onClick:
+            () =>
+              setActiveTab(
+                'duel'
+              ),
+          style: {
+            background:
+              activeTab ===
+              'duel'
+                ? 'var(--plum)'
+                : 'var(--paper-light)',
+            color:
+              activeTab ===
+              'duel'
+                ? '#fff'
+                : 'var(--ink)'
+          }
+        },
+
+        React.createElement(
+          Icon,
+          {
+            name:
+              'git-pull-request',
+            size:
+              16
+          }
+        ),
+
+        ' Undian Berpasangan (Duel)'
+      ),
+
+      React.createElement(
+        'button',
+        {
+          type:
+            'button',
+          className:
+            'copy-button',
+          onClick:
+            () =>
+              setActiveTab(
+                'queue'
+              ),
+          style: {
+            background:
+              activeTab ===
+              'queue'
+                ? 'var(--plum)'
+                : 'var(--paper-light)',
+            color:
+              activeTab ===
+              'queue'
+                ? '#fff'
+                : 'var(--ink)'
+          }
+        },
+
+        React.createElement(
+          Icon,
+          {
+            name:
+              'list-ordered',
+            size:
+              16
+          }
+        ),
+
+        ' Urutan Antrean / Giliran'
+      )
+    ),
+
+
+    // =====================================================
+    // WORKSPACE
+    // =====================================================
+
+    React.createElement(
+      'div',
+      {
+        className:
+          'workspace'
+      },
+
+
+      // ===================================================
+      // PESERTA PANEL
+      // ===================================================
+
+      React.createElement(
+        'div',
+        {
+          className:
+            'panel'
+        },
+
+        React.createElement(
+          'div',
+          {
+            className:
+              'panel-heading'
+          },
+
+          React.createElement(
+            'div',
+            null,
+
+            React.createElement(
+              'div',
+              {
+                className:
+                  'section-kicker'
+              },
+
+              React.createElement(
+                Icon,
+                {
+                  name:
+                    'users',
+                  size:
+                    15
+                }
+              ),
+
+              ' PESERTA'
+            ),
+
+            React.createElement(
+              'h2',
+              null,
+
+              'Daftar peserta ',
+
+              React.createElement(
+                'span',
+                null,
+                `(${participants.length})`
+              )
+            )
+          ),
+
+          React.createElement(
+            'div',
+            {
+              style: {
+                display:
+                  'flex',
+                gap:
+                  '4px'
+              }
+            },
+
+            React.createElement(
+              'button',
+              {
+                type:
+                  'button',
+                className:
+                  'icon-button delete-action',
+                onClick:
+                  clearAllParticipants,
+                title:
+                  'Hapus Semua Nama'
+              },
+
+              React.createElement(
+                Icon,
+                {
+                  name:
+                    'trash-2',
+                  size:
+                    16
                 }
               )
             ),
@@ -2774,187 +1995,103 @@ function App() {
             React.createElement(
               'button',
               {
-                type: 'submit',
+                type:
+                  'button',
                 className:
-                  'btn btn-primary full',
-                disabled:
-                  loadingCloud
+                  'icon-button',
+                onClick:
+                  resetList,
+                title:
+                  'Kembalikan ke daftar awal'
               },
-              loadingCloud
-                ? 'Memproses...'
-                : isSignUp
-                  ? 'Daftar'
-                  : 'Masuk'
+
+              React.createElement(
+                Icon,
+                {
+                  name:
+                    'rotate-ccw',
+                  size:
+                    16
+                }
+              )
             )
-          ),
-
-          React.createElement(
-            'button',
-            {
-              className:
-                'auth-switch',
-              onClick: () =>
-                setIsSignUp(
-                  (current) =>
-                    !current
-                )
-            },
-            isSignUp
-              ? 'Sudah punya akun? Masuk'
-              : 'Belum punya akun? Daftar'
           )
-        )
-      ),
+        ),
 
+        React.createElement(
+          'p',
+          {
+            className:
+              'panel-intro'
+          },
 
-    /* =====================================================
-       TEMPLATE MODAL
-    ===================================================== */
-
-    showTemplateModal &&
-      React.createElement(
-        'div',
-        {
-          className:
-            'modal-backdrop',
-          onMouseDown: (
-            event
-          ) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              setShowTemplateModal(
-                false
-              );
-            }
-          }
-        },
+          'Ketik satu nama atau tempel daftar nama panjang sekaligus di bawah ini (baris baru otomatis jadi nama terpisah).'
+        ),
 
         React.createElement(
           'div',
           {
-            className:
-              'modal-card'
+            style: {
+              marginBottom:
+                '14px'
+            }
           },
 
           React.createElement(
-            'button',
+            'textarea',
             {
-              className:
-                'modal-close',
-              onClick: () =>
-                setShowTemplateModal(
-                  false
-                )
-            },
-
-            React.createElement(
-              Icon,
-              {
-                name: 'x',
-                size: 18
-              }
-            )
-          ),
-
-          React.createElement(
-            'div',
-            {
-              className:
-                'section-kicker'
-            },
-            'CLOUD TEMPLATE'
-          ),
-
-          React.createElement(
-            'h2',
-            null,
-            'Simpan daftar'
-          ),
-
-          React.createElement(
-            'p',
-            null,
-            'Beri nama agar daftar ini mudah ditemukan.'
-          ),
-
-          React.createElement(
-            'label',
-            null,
-            'Nama template',
-
-            React.createElement(
-              'input',
-              {
-                value:
-                  templateName,
-                onChange: (
-                  event
-                ) =>
-                  setTemplateName(
-                    event.target
+              rows:
+                3,
+              value:
+                inputBoxText,
+              onChange:
+                e =>
+                  setInputBoxText(
+                    e.target
                       .value
                   ),
-                placeholder:
-                  'Contoh: Kelas 8A'
+              placeholder:
+                'Ketik atau tempel daftar nama di sini...',
+              style: {
+                width:
+                  '100%',
+                border:
+                  '1px solid var(--line)',
+                borderRadius:
+                  '8px',
+                padding:
+                  '10px 12px',
+                background:
+                  'rgba(246, 240, 228, 0.68)',
+                color:
+                  'var(--ink)',
+                fontSize:
+                  '13px',
+                fontFamily:
+                  'inherit',
+                resize:
+                  'vertical'
               }
-            )
+            }
           ),
 
           React.createElement(
             'button',
             {
+              type:
+                'button',
               className:
-                'btn btn-primary full',
+                'shuffle-button',
               onClick:
-                saveCloudTemplate,
-              disabled:
-                loadingCloud
+                handleAddNames,
+              style: {
+                marginTop:
+                  '8px',
+                padding:
+                  '10px',
+                fontSize:
+                  '13px'
+              }
             },
-            loadingCloud
-              ? 'Menyimpan...'
-              : 'Simpan template'
-          )
-        )
-      ),
 
-
-    /* =====================================================
-       TOAST
-    ===================================================== */
-
-    toast &&
-      React.createElement(
-        'div',
-        {
-          className:
-            'toast-notice'
-        },
-        toast
-      )
-  );
-}
-
-
-/* =========================================================
-   MOUNT APP
-========================================================= */
-
-const rootElement =
-  document.getElementById('root');
-
-if (rootElement) {
-  const root =
-    ReactDOM.createRoot(
-      rootElement
-    );
-
-  root.render(
-    React.createElement(App)
-  );
-} else {
-  console.error(
-    'Elemen #root tidak ditemukan.'
-  );
-    }
+            React.createElement
