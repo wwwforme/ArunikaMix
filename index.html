@@ -6,7 +6,7 @@
 
     <title>ArunikaMix</title>
 
-    <!-- Google Fonts -->
+    <!-- Font Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -15,34 +15,29 @@
         rel="stylesheet"
     >
 
-    <!-- React 18 -->
-    <script
-        crossorigin
-        src="https://unpkg.com/react@18/umd/react.development.js">
-    </script>
-
-    <script
-        crossorigin
-        src="https://unpkg.com/react-dom@18/umd/react-dom.development.js">
-    </script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- ArunikaMix CSS -->
-    <link rel="stylesheet" href="./style.css?v=3">
+    <!-- Babel: supaya JSX di script.js bisa dijalankan browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="./style.css?v=4">
 </head>
 
 <body>
 
-    <!-- React App -->
     <div id="root"></div>
 
-    <!-- ArunikaMix JavaScript -->
-    <script src="./script.js?v=3"></script>
+    <!-- script.js menggunakan JSX, jadi HARUS type="text/babel" -->
+    <script
+        type="text/babel"
+        src="./script.js?v=4"
+    ></script>
 
 </body>
 </html>
