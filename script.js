@@ -1031,7 +1031,7 @@ function AttendanceManager({
 
             <div className="panel-heading">
 
-                <div>
+                <div className="panel-heading-main">
 
                     <div className="eyebrow">
                         DAFTAR PESERTA
@@ -1845,7 +1845,6 @@ function GroupMode({
                     </button>
 
                 </div>
-
             )}
 
 
@@ -1950,46 +1949,6 @@ function SpinWheel({
             : 360;
 
 
-    function shortWheelName(name) {
-        const parts =
-            name
-                .trim()
-                .split(/\s+/);
-
-        if (parts.length === 1) {
-            return parts[0];
-        }
-
-        if (
-            parts[0] === "La" &&
-            parts[1] === "Ode"
-        ) {
-            return (
-                `La Ode ${
-                    parts[2] || ""
-                }`
-            ).trim();
-        }
-
-        if (
-            parts[0] === "Wa" &&
-            parts[1] === "Ode"
-        ) {
-            return (
-                `Wa Ode ${
-                    parts[2] || ""
-                }`
-            ).trim();
-        }
-
-        return (
-            `${parts[0]} ${
-                parts[1]?.[0] || ""
-            }`
-        ).trim();
-    }
-
-
     function spin() {
         if (
             spinning ||
@@ -2006,47 +1965,40 @@ function SpinWheel({
         const targetName =
             names[targetIndex];
 
-        /*
-         * Karena pointer berada di posisi
-         * 12 o'clock, pusat sektor target
-         * diarahkan tepat ke atas.
-         */
+        const sectorCenter =
+            targetIndex * sector +
+            sector / 2;
 
-        const targetCenter =
+        const currentMod =
             (
-                targetIndex +
-                0.5
-            ) * sector;
+                rotation % 360 +
+                360
+            ) % 360;
 
-        const targetAngle =
-            -targetCenter;
+        const desiredMod =
+            (
+                360 -
+                sectorCenter
+            ) % 360;
+
+        let delta =
+            desiredMod -
+            currentMod;
+
+        if (delta < 0) {
+            delta += 360;
+        }
 
         const extraSpins =
             7 * 360;
 
-        /*
-         * Gunakan rotation terakhir sebagai
-         * titik awal agar arah visual tetap
-         * konsisten walaupun roda sudah pernah
-         * diputar sebelumnya.
-         */
-
-        const normalized =
-            rotation % 360;
-
-        const correction =
-            targetAngle -
-            normalized;
-
         const finalRotation =
             rotation +
             extraSpins +
-            correction;
+            delta;
 
         setWinner(null);
-
         setSpinning(true);
-
         setRotation(
             finalRotation
         );
@@ -2194,44 +2146,6 @@ function SpinWheel({
                                     `rotate(${rotation}deg)`
                             }}
                         >
-
-                            {names.map(
-                                (
-                                    name,
-                                    index
-                                ) => {
-
-                                    const angle =
-                                        (
-                                            index +
-                                            0.5
-                                        ) *
-                                        sector;
-
-                                    return (
-                                        <div
-                                            key={`${name}-${index}`}
-                                            className="wheel-label"
-                                            style={{
-                                                transform:
-                                                    `rotate(${angle}deg) translateY(-38%)`
-                                            }}
-                                        >
-
-                                            <span>
-                                                {
-                                                    shortWheelName(
-                                                        name
-                                                    )
-                                                }
-                                            </span>
-
-                                        </div>
-                                    );
-
-                                }
-                            )}
-
 
                             <div className="wheel-center">
 
@@ -2743,7 +2657,7 @@ function QueueTool({
 
 
 /* =========================================================
-   AUTH PANEL
+   AUTH PANEL — LOGIN MODAL
 ========================================================= */
 
 function AuthPanel({
@@ -2765,6 +2679,38 @@ function AuthPanel({
         loading,
         setLoading
     ] = useState(false);
+
+    const [
+        showLogin,
+        setShowLogin
+    ] = useState(false);
+
+
+    useEffect(() => {
+        if (!showLogin) {
+            return;
+        }
+
+        function handleKeyDown(event) {
+            if (
+                event.key === "Escape"
+            ) {
+                setShowLogin(false);
+            }
+        }
+
+        document.addEventListener(
+            "keydown",
+            handleKeyDown
+        );
+
+        return () => {
+            document.removeEventListener(
+                "keydown",
+                handleKeyDown
+            );
+        };
+    }, [showLogin]);
 
 
     async function signIn() {
@@ -2808,6 +2754,10 @@ function AuthPanel({
         onUserChange(
             data.user
         );
+
+        setShowLogin(false);
+
+        setPassword("");
 
         showToast(
             "Berhasil masuk.",
@@ -2869,6 +2819,10 @@ function AuthPanel({
             );
         }
 
+        setShowLogin(false);
+
+        setPassword("");
+
         showToast(
             "Pendaftaran berhasil. Cek email jika konfirmasi diperlukan.",
             "success"
@@ -2916,56 +2870,171 @@ function AuthPanel({
 
 
     return (
-        <div className="auth-panel">
-
-            <div className="auth-fields">
-
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={e =>
-                        setEmail(
-                            e.target.value
-                        )
-                    }
-                />
-
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={e =>
-                        setPassword(
-                            e.target.value
-                        )
-                    }
-                />
-
-            </div>
+        <>
+            <button
+                className="auth-button login-trigger"
+                onClick={() =>
+                    setShowLogin(true)
+                }
+            >
+                Masuk
+            </button>
 
 
-            <div className="auth-actions">
+            {showLogin && (
 
-                <button
-                    className="auth-button"
-                    onClick={signIn}
-                    disabled={loading}
+                <div
+                    className="login-modal-backdrop"
+                    onMouseDown={event => {
+
+                        if (
+                            event.target ===
+                            event.currentTarget
+                        ) {
+                            setShowLogin(false);
+                        }
+
+                    }}
                 >
-                    Masuk
-                </button>
 
-                <button
-                    className="auth-button secondary"
-                    onClick={signUp}
-                    disabled={loading}
-                >
-                    Daftar
-                </button>
+                    <div
+                        className="login-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="login-modal-title"
+                    >
 
-            </div>
+                        <button
+                            className="login-modal-close"
+                            onClick={() =>
+                                setShowLogin(false)
+                            }
+                            aria-label="Tutup"
+                        >
+                            <Icon
+                                name="x"
+                                size={17}
+                            />
+                        </button>
 
-        </div>
+
+                        <div className="login-modal-mark">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+
+                        <div className="login-modal-heading">
+
+                            <div className="eyebrow">
+                                ARUNIKAMIX
+                            </div>
+
+                            <h2 id="login-modal-title">
+                                Masuk ke akunmu
+                            </h2>
+
+                            <p>
+                                Simpan daftar peserta
+                                dan gunakan kembali
+                                kapan saja.
+                            </p>
+
+                        </div>
+
+
+                        <div className="auth-fields">
+
+                            <label className="auth-field">
+
+                                <span>
+                                    Email
+                                </span>
+
+                                <input
+                                    type="email"
+                                    placeholder="nama@email.com"
+                                    value={email}
+                                    autoComplete="email"
+                                    onChange={e =>
+                                        setEmail(
+                                            e.target.value
+                                        )
+                                    }
+                                />
+
+                            </label>
+
+
+                            <label className="auth-field">
+
+                                <span>
+                                    Password
+                                </span>
+
+                                <input
+                                    type="password"
+                                    placeholder="Masukkan password"
+                                    value={password}
+                                    autoComplete="current-password"
+                                    onChange={e =>
+                                        setPassword(
+                                            e.target.value
+                                        )
+                                    }
+                                    onKeyDown={event => {
+
+                                        if (
+                                            event.key ===
+                                            "Enter"
+                                        ) {
+                                            signIn();
+                                        }
+
+                                    }}
+                                />
+
+                            </label>
+
+                        </div>
+
+
+                        <div className="auth-actions">
+
+                            <button
+                                className="auth-button modal-primary"
+                                onClick={signIn}
+                                disabled={loading}
+                            >
+                                {loading
+                                    ? "Memproses..."
+                                    : "Masuk"}
+                            </button>
+
+                            <button
+                                className="auth-button secondary modal-secondary"
+                                onClick={signUp}
+                                disabled={loading}
+                            >
+                                Daftar akun
+                            </button>
+
+                        </div>
+
+
+                        <div className="login-modal-note">
+                            Akun digunakan untuk menyimpan
+                            daftar peserta secara pribadi.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
+
+        </>
     );
 }
 
@@ -3242,10 +3311,6 @@ function App() {
 
 
                 <div className="header-right">
-
-                    <div className="header-local">
-                        LOKAL SAJA
-                    </div>
 
                     <AuthPanel
                         user={user}
