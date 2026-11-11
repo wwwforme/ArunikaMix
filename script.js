@@ -26,8 +26,7 @@ const supabaseClient =
    DEFAULT DATA
 ========================================================= */
 
-const DEFAULT_TEMPLATE_NAME =
-    "Arunika";
+const DEFAULT_TEMPLATE_NAME = "Arunika";
 
 const DEFAULT_NAMES = [
     "Agung Pranaja",
@@ -60,7 +59,6 @@ const DEFAULT_NAMES = [
     "Zakiyah Khoirunnisa"
 ];
 
-
 const GROUP_COLORS = [
     "#e87868",
     "#e8b34d",
@@ -74,17 +72,15 @@ const GROUP_COLORS = [
 
 
 /* =========================================================
-   LOCAL STORAGE
+   STORAGE
 ========================================================= */
 
 const STORAGE_KEYS = {
-
     currentAttendance:
         "arunikamix_current_attendance_v4",
 
     history:
         "arunikamix_shuffle_history_v5"
-
 };
 
 
@@ -92,49 +88,34 @@ const STORAGE_KEYS = {
    STORAGE HELPERS
 ========================================================= */
 
-function readStorage(
-    key,
-    fallback
-) {
-
+function readStorage(key, fallback) {
     try {
-
-        const value =
+        const raw =
             localStorage.getItem(key);
 
-        if (!value) {
+        if (!raw) {
             return fallback;
         }
 
-        return JSON.parse(value);
-
-    } catch {
-
+        return JSON.parse(raw);
+    } catch (error) {
         return fallback;
-
     }
-
 }
 
 
-function writeStorage(
-    key,
-    value
-) {
-
+function writeStorage(key, value) {
     try {
-
         localStorage.setItem(
             key,
             JSON.stringify(value)
         );
-
-    } catch {
-
-        // Ignore localStorage errors
-
+    } catch (error) {
+        console.error(
+            "Gagal menyimpan localStorage:",
+            error
+        );
     }
-
 }
 
 
@@ -142,26 +123,18 @@ function writeStorage(
    GENERAL HELPERS
 ========================================================= */
 
-function shuffleArray(
-    array
-) {
-
-    const result =
-        [...array];
-
+function shuffleArray(array) {
+    const result = [...array];
 
     for (
         let i = result.length - 1;
         i > 0;
         i--
     ) {
-
         const j =
             Math.floor(
-                Math.random() *
-                (i + 1)
+                Math.random() * (i + 1)
             );
-
 
         [
             result[i],
@@ -170,27 +143,94 @@ function shuffleArray(
             result[j],
             result[i]
         ];
-
     }
 
-
     return result;
-
 }
 
 
-function cleanNames(
-    text
-) {
-
+function cleanNames(text) {
     return text
-        .split(/\r?\n/)
-        .map(
-            name =>
-                name.trim()
-        )
+        .split("\n")
+        .map(name => name.trim())
         .filter(Boolean);
+}
 
+
+async function copyText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch (error) {
+        try {
+            const textarea =
+                document.createElement("textarea");
+
+            textarea.value = text;
+            textarea.style.position = "fixed";
+            textarea.style.opacity = "0";
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.select();
+            document.execCommand("copy");
+
+            textarea.remove();
+
+            return true;
+        } catch (fallbackError) {
+            return false;
+        }
+    }
+}
+
+
+/* =========================================================
+   GROUP HELPERS
+========================================================= */
+
+function splitIntoGroups(names, count) {
+    const shuffled =
+        shuffleArray(names);
+
+    const groups =
+        Array.from(
+            { length: count },
+            () => []
+        );
+
+    shuffled.forEach(
+        (name, index) => {
+            groups[
+                index % count
+            ].push(name);
+        }
+    );
+
+    return groups;
+}
+
+
+function makeDuelPairs(names) {
+    const shuffled =
+        shuffleArray(names);
+
+    const pairs = [];
+
+    for (
+        let i = 0;
+        i < shuffled.length;
+        i += 2
+    ) {
+        pairs.push([
+            shuffled[i],
+            shuffled[i + 1] || null
+        ]);
+    }
+
+    return pairs;
 }
 
 
@@ -203,16 +243,13 @@ function saveHistory(
     title,
     data
 ) {
-
     const history =
         readStorage(
             STORAGE_KEYS.history,
             []
         );
 
-
     const newItem = {
-
         id:
             Date.now() +
             Math.random(),
@@ -225,275 +262,117 @@ function saveHistory(
 
         createdAt:
             new Date().toISOString()
-
     };
-
 
     const updated =
         [
             newItem,
             ...history
-        ].slice(
-            0,
-            50
-        );
-
+        ].slice(0, 50);
 
     writeStorage(
         STORAGE_KEYS.history,
         updated
     );
-
 }
 
 
-function formatHistoryDate(
-    date
-) {
-
+function formatHistoryDate(date) {
     try {
-
         return new Intl.DateTimeFormat(
             "id-ID",
             {
-                dateStyle:
-                    "medium",
-                timeStyle:
-                    "short"
+                dateStyle: "medium",
+                timeStyle: "short"
             }
         ).format(
             new Date(date)
         );
-
-    } catch {
-
+    } catch (error) {
         return "";
-
     }
-
 }
 
 
-function getHistoryIcon(
-    type
-) {
-
-    if (
-        type === "groups"
-    ) {
+function getHistoryIcon(type) {
+    if (type === "groups") {
         return "users";
     }
 
-    if (
-        type === "duel"
-    ) {
+    if (type === "duel") {
         return "shuffle";
     }
 
-    if (
-        type === "queue"
-    ) {
+    if (type === "queue") {
         return "list";
     }
 
-    if (
-        type === "wheel"
-    ) {
+    if (type === "wheel") {
         return "rotate";
     }
 
     return "list";
-
 }
 
 
-/* =========================================================
-   SHORT WHEEL NAME
-========================================================= */
-
-function shortWheelName(
-    name
-) {
-
-    const parts =
-        name
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
-
-
-    if (
-        parts.length === 0
-    ) {
+function getHistoryPreview(item) {
+    if (!item || !item.data) {
         return "";
     }
 
-
     if (
-        parts.length === 1
+        item.type === "groups" &&
+        Array.isArray(item.data)
     ) {
-        return parts[0];
+        return item.data
+            .map(
+                (group, index) =>
+                    `Kelompok ${index + 1}: ${
+                        group.join(", ")
+                    }`
+            )
+            .join(" • ");
     }
 
+    if (
+        item.type === "duel" &&
+        Array.isArray(item.data)
+    ) {
+        return item.data
+            .map(
+                (pair, index) =>
+                    `Duel ${index + 1}: ${
+                        pair[0]
+                    }${
+                        pair[1]
+                            ? ` vs ${pair[1]}`
+                            : " — bye"
+                    }`
+            )
+            .join(" • ");
+    }
 
     if (
-        parts[0] === "La" &&
-        parts[1] === "Ode"
+        item.type === "queue" &&
+        Array.isArray(item.data)
     ) {
+        return item.data
+            .map(
+                (name, index) =>
+                    `${index + 1}. ${name}`
+            )
+            .join(" • ");
+    }
 
-        return `La Ode ${
-            parts[2]
-                ? parts[2][0]
-                : ""
+    if (
+        item.type === "wheel"
+    ) {
+        return `Pemenang: ${
+            item.data.winner || "-"
         }`;
-
     }
 
-
-    if (
-        parts[0] === "Wa" &&
-        parts[1] === "Ode"
-    ) {
-
-        return `Wa Ode ${
-            parts[2]
-                ? parts[2][0]
-                : ""
-        }`;
-
-    }
-
-
-    return `${
-        parts[0]
-    } ${
-        parts[1][0]
-    }`;
-
-}
-
-
-/* =========================================================
-   GROUPING
-========================================================= */
-
-function splitIntoGroups(
-    names,
-    groupCount
-) {
-
-    const shuffled =
-        shuffleArray(
-            names
-        );
-
-
-    const groups =
-        Array.from(
-            {
-                length:
-                    groupCount
-            },
-            () => []
-        );
-
-
-    shuffled.forEach(
-        (
-            name,
-            index
-        ) => {
-
-            groups[
-                index %
-                groupCount
-            ].push(
-                name
-            );
-
-        }
-    );
-
-
-    return groups;
-
-}
-
-
-/* =========================================================
-   DUEL PAIRS
-========================================================= */
-
-function makeDuelPairs(
-    names
-) {
-
-    const shuffled =
-        shuffleArray(
-            names
-        );
-
-
-    const pairs = [];
-
-
-    for (
-        let i = 0;
-        i < shuffled.length;
-        i += 2
-    ) {
-
-        if (
-            i + 1 <
-            shuffled.length
-        ) {
-
-            pairs.push([
-                shuffled[i],
-                shuffled[i + 1]
-            ]);
-
-        } else {
-
-            pairs.push([
-                shuffled[i],
-                null
-            ]);
-
-        }
-
-    }
-
-
-    return pairs;
-
-}
-
-
-/* =========================================================
-   COPY
-========================================================= */
-
-async function copyText(
-    text
-) {
-
-    try {
-
-        await navigator
-            .clipboard
-            .writeText(
-                text
-            );
-
-        return true;
-
-    } catch {
-
-        return false;
-
-    }
-
+    return "";
 }
 
 
@@ -505,163 +384,98 @@ function Icon({
     name,
     size = 18
 }) {
-
     const icons = {
 
         users: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
+            <circle cx="9" cy="8" r="3"></circle>
+            <path d="M3 19c0-3.2 2.5-5 6-5s6 1.8 6 5"></path>
+            <path d="M16 5.5c2.2.2 3.5 1.6 3.5 3.6"></path>
+            <path d="M16.5 14.2c1.9.7 3 2.2 3.2 4.8"></path>
         `,
 
         rotate: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M21 12a9 9 0 0 0-15.3-6.4L3 8"/>
-                <path d="M3 3v5h5"/>
-                <path d="M3 12a9 9 0 0 0 15.3 6.4L21 16"/>
-                <path d="M21 21v-5h-5"/>
-            </svg>
+            <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+            <path d="M21 3v6h-6"></path>
         `,
 
         shuffle: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M16 3h5v5"/>
-                <path d="M4 20L21 3"/>
-                <path d="M21 16v5h-5"/>
-                <path d="M15 15l6 6"/>
-                <path d="M4 4l5 5"/>
-            </svg>
+            <path d="M16 3h5v5"></path>
+            <path d="M4 20L21 3"></path>
+            <path d="M21 16v5h-5"></path>
+            <path d="M15 15l6 6"></path>
+            <path d="M4 4l5 5"></path>
         `,
 
         list: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
         `,
 
         trash: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14H6L5 6"/>
-                <path d="M10 11v6"/>
-                <path d="M14 11v6"/>
-                <path d="M9 6V4h6v2"/>
-            </svg>
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14H6L5 6"></path>
+            <path d="M10 11v5"></path>
+            <path d="M14 11v5"></path>
+            <path d="M9 6V3h6v3"></path>
         `,
 
         plus: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
         `,
 
         edit: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-            </svg>
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
         `,
 
         save: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-            </svg>
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
         `,
 
         copy: `
-            <svg viewBox="0 0 24 24"
-                width="${size}"
-                height="${size}"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-        `
+            <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        `,
 
+        chevron: `
+            <polyline points="6 9 12 15 18 9"></polyline>
+        `,
+
+        x: `
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        `,
+
+        check: `
+            <polyline points="20 6 9 17 4 12"></polyline>
+        `
     };
 
-
     return (
-        <span
-            className="icon-wrap"
+        <svg
+            className="icon"
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             dangerouslySetInnerHTML={{
                 __html:
                     icons[name] ||
-                    icons.users
+                    icons.list
             }}
         />
     );
-
 }
 
 
@@ -670,155 +484,117 @@ function Icon({
 ========================================================= */
 
 function useToast() {
-
     const [
         toast,
         setToast
     ] = useState(null);
 
-
     function showToast(
         message,
         type = "default"
     ) {
-
         setToast({
             message,
             type
         });
 
-
-        setTimeout(
+        window.setTimeout(
             () => {
                 setToast(null);
             },
             2600
         );
-
     }
-
 
     return {
         toast,
         showToast
     };
-
 }
 
 
 function Toast({
     toast
 }) {
-
     if (!toast) {
         return null;
     }
 
-
     return (
-
         <div
             className={
                 `toast toast-${toast.type}`
             }
         >
-            {toast.message}
+            <span className="toast-dot"></span>
+            <span>
+                {toast.message}
+            </span>
         </div>
-
     );
-
 }
 
 
 /* =========================================================
-   MODE NAVIGATION
+   MODE NAV
 ========================================================= */
 
-function ModeNavigation({
+const MODES = [
+    {
+        id: "groups",
+        label: "Pembagi Kelompok",
+        icon: "users"
+    },
+    {
+        id: "wheel",
+        label: "Roda Putar",
+        icon: "rotate"
+    },
+    {
+        id: "duel",
+        label: "Undian Berpasangan",
+        icon: "shuffle"
+    },
+    {
+        id: "queue",
+        label: "Urutan Antrean",
+        icon: "list"
+    }
+];
+
+
+function ModeNav({
     mode,
     setMode
 }) {
-
-    const modes = [
-
-        {
-            id: "groups",
-            label:
-                "Pembagi Kelompok",
-            icon: "users"
-        },
-
-        {
-            id: "wheel",
-            label:
-                "Roda Putar",
-            icon: "rotate"
-        },
-
-        {
-            id: "duel",
-            label:
-                "Undian Berpasangan",
-            icon: "shuffle"
-        },
-
-        {
-            id: "queue",
-            label:
-                "Urutan Antrean",
-            icon: "list"
-        }
-
-    ];
-
-
     return (
+        <nav className="mode-nav">
+            {MODES.map(item => (
+                <button
+                    key={item.id}
+                    className={
+                        `mode-tab ${
+                            mode === item.id
+                                ? "active"
+                                : ""
+                        }`
+                    }
+                    onClick={() =>
+                        setMode(item.id)
+                    }
+                >
+                    <Icon
+                        name={item.icon}
+                        size={16}
+                    />
 
-        <div className="mode-navigation">
-
-            {modes.map(
-                item => (
-
-                    <button
-                        key={
-                            item.id
-                        }
-                        className={
-                            `mode-button ${
-                                mode === item.id
-                                    ? "active"
-                                    : ""
-                            }`
-                        }
-                        onClick={() =>
-                            setMode(
-                                item.id
-                            )
-                        }
-                    >
-
-                        <Icon
-                            name={
-                                item.icon
-                            }
-                            size={17}
-                        />
-
-                        <span>
-                            {
-                                item.label
-                            }
-                        </span>
-
-                    </button>
-
-                )
-            )}
-
-        </div>
-
+                    <span>
+                        {item.label}
+                    </span>
+                </button>
+            ))}
+        </nav>
     );
-
 }
 
 
@@ -834,1092 +610,657 @@ function AttendanceManager({
     setSelectedList,
     showToast
 }) {
-
     const [
         input,
         setInput
     ] = useState("");
 
-
     const [
-        lists,
-        setLists
+        savedLists,
+        setSavedLists
     ] = useState([]);
 
+    const [
+        showSaved,
+        setShowSaved
+    ] = useState(false);
 
     const [
         loading,
         setLoading
     ] = useState(false);
 
-
-    const [
-        showLists,
-        setShowLists
-    ] = useState(false);
-
-
     async function loadLists() {
-
         if (!user) {
-
-            setLists([]);
-
+            setSavedLists([]);
             return;
-
         }
 
-
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "attendance_lists"
-                    )
-                    .select("*")
-                    .eq(
-                        "user_id",
-                        user.id
-                    )
-                    .order(
-                        "updated_at",
-                        {
-                            ascending:
-                                false
-                        }
-                    );
-
-
-            if (error) {
-
-                console.error(
-                    "LOAD LIST ERROR:",
-                    error
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("attendance_lists")
+                .select("*")
+                .order(
+                    "updated_at",
+                    {
+                        ascending: false
+                    }
                 );
 
-
-                if (
-                    error.code ===
-                        "PGRST205"
-                ) {
-
-                    showToast(
-                        "Tabel attendance_lists belum dibuat di Supabase.",
-                        "error"
-                    );
-
-                } else {
-
-                    showToast(
-                        "Gagal mengambil daftar tersimpan.",
-                        "error"
-                    );
-
-                }
-
-
-                return;
-
-            }
-
-
-            setLists(
-                data || []
-            );
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                error
-            );
-
-            showToast(
-                "Gagal mengambil daftar tersimpan.",
-                "error"
-            );
-
-        }
-
-    }
-
-
-    useEffect(
-        () => {
-
-            loadLists();
-
-        },
-        [user]
-    );
-
-
-    async function saveCurrentList() {
-
-        if (!user) {
-
-            showToast(
-                "Login terlebih dahulu untuk menyimpan daftar.",
-                "error"
-            );
-
+        if (error) {
+            console.error(error);
             return;
-
         }
 
-
-        const name =
-            selectedList?.name ||
-            DEFAULT_TEMPLATE_NAME;
-
-
-        setLoading(
-            true
+        setSavedLists(
+            data || []
         );
-
-
-        try {
-
-            if (
-                selectedList?.id
-            ) {
-
-                const {
-                    data,
-                    error
-                } =
-                    await supabaseClient
-                        .from(
-                            "attendance_lists"
-                        )
-                        .update({
-
-                            name,
-
-                            names,
-
-                            updated_at:
-                                new Date()
-                                    .toISOString()
-
-                        })
-                        .eq(
-                            "id",
-                            selectedList.id
-                        )
-                        .eq(
-                            "user_id",
-                            user.id
-                        )
-                        .select()
-                        .single();
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                setSelectedList(
-                    data
-                );
-
-
-                showToast(
-                    "Daftar berhasil diperbarui."
-                );
-
-            } else {
-
-                const {
-                    data,
-                    error
-                } =
-                    await supabaseClient
-                        .from(
-                            "attendance_lists"
-                        )
-                        .insert({
-
-                            user_id:
-                                user.id,
-
-                            name,
-
-                            names
-
-                        })
-                        .select()
-                        .single();
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                setSelectedList(
-                    data
-                );
-
-
-                showToast(
-                    "Daftar berhasil disimpan."
-                );
-
-            }
-
-
-            await loadLists();
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                "SAVE LIST ERROR:",
-                error
-            );
-
-
-            if (
-                error.code ===
-                    "PGRST205"
-            ) {
-
-                showToast(
-                    "Tabel attendance_lists belum dibuat di Supabase.",
-                    "error"
-                );
-
-            } else {
-
-                showToast(
-                    error.message ||
-                    "Gagal menyimpan daftar.",
-                    "error"
-                );
-
-            }
-
-        } finally {
-
-            setLoading(
-                false
-            );
-
-        }
-
     }
+
+
+    useEffect(() => {
+        loadLists();
+    }, [user]);
 
 
     function addNames() {
+        const added =
+            cleanNames(input);
 
-        const newNames =
-            cleanNames(
-                input
-            );
-
-
-        if (
-            !newNames.length
-        ) {
-
+        if (!added.length) {
             showToast(
-                "Masukkan minimal satu nama.",
+                "Belum ada nama yang ditambahkan.",
                 "error"
             );
-
             return;
-
         }
 
-
-        setNames(
-            previous => [
-                ...previous,
-                ...newNames
-            ]
-        );
-
+        setNames(current => [
+            ...current,
+            ...added
+        ]);
 
         setInput("");
 
-
         showToast(
-            `${newNames.length} nama ditambahkan.`
+            `${added.length} nama ditambahkan.`,
+            "success"
         );
-
     }
 
 
-    function deleteName(
-        index
-    ) {
-
-        setNames(
-            previous =>
-                previous.filter(
-                    (
-                        _,
-                        i
-                    ) =>
-                        i !== index
-                )
-        );
-
-    }
-
-
-    function clearAll() {
-
-        if (
-            !window.confirm(
-                "Hapus semua peserta dari daftar ini?"
+    function deleteName(index) {
+        setNames(current =>
+            current.filter(
+                (_, i) =>
+                    i !== index
             )
-        ) {
+        );
+    }
+
+
+    function clearNames() {
+        if (!names.length) {
             return;
         }
 
+        const confirmed =
+            window.confirm(
+                "Hapus semua nama dari daftar?"
+            );
+
+        if (!confirmed) {
+            return;
+        }
 
         setNames([]);
 
-
         showToast(
-            "Semua peserta dihapus."
+            "Daftar nama dikosongkan.",
+            "success"
         );
-
     }
 
 
-    function resetArunika() {
-
-        if (
-            !window.confirm(
-                "Kembalikan daftar ke template Arunika?"
-            )
-        ) {
-            return;
-        }
-
-
+    function resetDefault() {
         setNames([
             ...DEFAULT_NAMES
         ]);
 
+        setSelectedList(null);
 
         showToast(
-            "Daftar dikembalikan ke Arunika."
+            "Daftar dikembalikan ke Arunika.",
+            "success"
         );
-
     }
 
 
     async function createNewList() {
-
         if (!user) {
-
             showToast(
-                "Login terlebih dahulu.",
+                "Masuk terlebih dahulu untuk menyimpan daftar.",
                 "error"
             );
-
             return;
-
         }
-
 
         const name =
             window.prompt(
                 "Nama daftar baru:",
-                "Kelas 8A"
+                "Daftar Baru"
             );
 
-
         if (
-            !name?.trim()
+            !name ||
+            !name.trim()
         ) {
             return;
         }
 
+        setLoading(true);
 
-        setLoading(
-            true
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("attendance_lists")
+                .insert({
+                    user_id: user.id,
+                    name: name.trim(),
+                    names: []
+                })
+                .select("*")
+                .single();
+
+        setLoading(false);
+
+        if (error) {
+            console.error(error);
+
+            showToast(
+                `Gagal membuat daftar: ${error.message}`,
+                "error"
+            );
+
+            return;
+        }
+
+        setSelectedList(data);
+        setNames([]);
+
+        await loadLists();
+
+        showToast(
+            "Daftar baru dibuat.",
+            "success"
         );
+    }
 
 
-        try {
+    async function saveCurrentList() {
+        if (!user) {
+            showToast(
+                "Masuk terlebih dahulu untuk menyimpan daftar.",
+                "error"
+            );
+            return;
+        }
 
-            const {
+        setLoading(true);
+
+        let data;
+        let error;
+
+        if (
+            selectedList &&
+            selectedList.id
+        ) {
+            ({
                 data,
                 error
             } =
                 await supabaseClient
-                    .from(
-                        "attendance_lists"
-                    )
-                    .insert({
-
-                        user_id:
-                            user.id,
-
+                    .from("attendance_lists")
+                    .update({
                         name:
-                            name.trim(),
-
-                        names: []
-
+                            selectedList.name,
+                        names: names,
+                        updated_at:
+                            new Date().toISOString()
+                    })
+                    .eq(
+                        "id",
+                        selectedList.id
+                    )
+                    .select("*")
+                    .single());
+        } else {
+            ({
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("attendance_lists")
+                    .insert({
+                        user_id: user.id,
+                        name:
+                            DEFAULT_TEMPLATE_NAME,
+                        names: names
                     })
                     .select("*")
-                    .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            setSelectedList(
-                data
-            );
-
-
-            setNames([]);
-
-
-            await loadLists();
-
-
-            showToast(
-                `Daftar "${name.trim()}" berhasil dibuat.`
-            );
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                "CREATE LIST ERROR:",
-                error
-            );
-
-
-            if (
-                error.code ===
-                    "PGRST205"
-            ) {
-
-                showToast(
-                    "Tabel attendance_lists belum dibuat di Supabase.",
-                    "error"
-                );
-
-            } else {
-
-                showToast(
-                    error.message ||
-                    "Gagal membuat daftar.",
-                    "error"
-                );
-
-            }
-
-        } finally {
-
-            setLoading(
-                false
-            );
-
+                    .single());
         }
 
+        setLoading(false);
+
+        if (error) {
+            console.error(error);
+
+            showToast(
+                `Gagal menyimpan: ${error.message}`,
+                "error"
+            );
+
+            return;
+        }
+
+        setSelectedList(data);
+
+        await loadLists();
+
+        showToast(
+            "Daftar berhasil disimpan.",
+            "success"
+        );
     }
 
 
-    function openList(
-        list
-    ) {
+    async function renameList(list) {
+        const name =
+            window.prompt(
+                "Nama daftar:",
+                list.name
+            );
 
-        setSelectedList(
-            list
+        if (
+            !name ||
+            !name.trim()
+        ) {
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("attendance_lists")
+                .update({
+                    name: name.trim(),
+                    updated_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "id",
+                    list.id
+                )
+                .select("*")
+                .single();
+
+        if (error) {
+            showToast(
+                `Gagal mengubah nama: ${error.message}`,
+                "error"
+            );
+            return;
+        }
+
+        if (
+            selectedList &&
+            selectedList.id === list.id
+        ) {
+            setSelectedList(data);
+        }
+
+        await loadLists();
+
+        showToast(
+            "Nama daftar diperbarui.",
+            "success"
         );
+    }
 
+
+    async function deleteList(list) {
+        const confirmed =
+            window.confirm(
+                `Hapus daftar "${list.name}"?`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const {
+            error
+        } =
+            await supabaseClient
+                .from("attendance_lists")
+                .delete()
+                .eq(
+                    "id",
+                    list.id
+                );
+
+        if (error) {
+            showToast(
+                `Gagal menghapus: ${error.message}`,
+                "error"
+            );
+            return;
+        }
+
+        if (
+            selectedList &&
+            selectedList.id === list.id
+        ) {
+            setSelectedList(null);
+            setNames([]);
+        }
+
+        await loadLists();
+
+        showToast(
+            "Daftar dihapus.",
+            "success"
+        );
+    }
+
+
+    function openList(list) {
+        setSelectedList(list);
 
         setNames(
-            Array.isArray(
-                list.names
-            )
+            Array.isArray(list.names)
                 ? list.names
                 : []
         );
 
-
-        setShowLists(
-            false
-        );
-
+        setShowSaved(false);
 
         showToast(
-            `Daftar "${list.name}" dibuka.`
+            `"${list.name}" dibuka.`,
+            "success"
         );
-
-    }
-
-
-    async function renameList(
-        list
-    ) {
-
-        if (!user) {
-            return;
-        }
-
-
-        const newName =
-            window.prompt(
-                "Nama baru:",
-                list.name
-            );
-
-
-        if (
-            !newName?.trim()
-        ) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "attendance_lists"
-                    )
-                    .update({
-
-                        name:
-                            newName.trim(),
-
-                        updated_at:
-                            new Date()
-                                .toISOString()
-
-                    })
-                    .eq(
-                        "id",
-                        list.id
-                    )
-                    .eq(
-                        "user_id",
-                        user.id
-                    );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (
-                selectedList?.id ===
-                list.id
-            ) {
-
-                setSelectedList({
-                    ...list,
-                    name:
-                        newName.trim()
-                });
-
-            }
-
-
-            await loadLists();
-
-
-            showToast(
-                "Nama daftar diubah."
-            );
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                error
-            );
-
-
-            showToast(
-                error.message ||
-                "Gagal mengganti nama.",
-                "error"
-            );
-
-        }
-
-    }
-
-
-    async function deleteList(
-        list
-    ) {
-
-        if (!user) {
-            return;
-        }
-
-
-        if (
-            !window.confirm(
-                `Hapus daftar "${list.name}"?`
-            )
-        ) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "attendance_lists"
-                    )
-                    .delete()
-                    .eq(
-                        "id",
-                        list.id
-                    )
-                    .eq(
-                        "user_id",
-                        user.id
-                    );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (
-                selectedList?.id ===
-                list.id
-            ) {
-
-                setSelectedList(
-                    null
-                );
-
-                setNames([]);
-
-            }
-
-
-            await loadLists();
-
-
-            showToast(
-                "Daftar berhasil dihapus."
-            );
-
-        } catch (
-            error
-        ) {
-
-            console.error(
-                error
-            );
-
-
-            showToast(
-                error.message ||
-                "Gagal menghapus daftar.",
-                "error"
-            );
-
-        }
-
     }
 
 
     return (
-
-        <div className="participant-panel">
+        <aside className="attendance-panel">
 
             <div className="panel-heading">
-
                 <div>
-
                     <div className="eyebrow">
-
-                        <Icon
-                            name="users"
-                            size={15}
-                        />
-
-                        PESERTA
-
+                        DAFTAR PESERTA
                     </div>
 
-
-                    <h2>
-
-                        Daftar peserta
-
-                        <span className="count">
-                            ({names.length})
-                        </span>
-
-                    </h2>
-
+                    <h3>
+                        {selectedList?.name ||
+                            DEFAULT_TEMPLATE_NAME}
+                    </h3>
                 </div>
 
-
-                <div className="panel-actions">
-
-                    <button
-                        className="icon-button"
-                        onClick={
-                            clearAll
-                        }
-                        title="Hapus semua"
-                    >
-
-                        <Icon
-                            name="trash"
-                            size={18}
-                        />
-
-                    </button>
-
-
-                    <button
-                        className="icon-button"
-                        onClick={
-                            resetArunika
-                        }
-                        title="Reset Arunika"
-                    >
-
-                        <Icon
-                            name="rotate"
-                            size={18}
-                        />
-
-                    </button>
-
+                <div className="participant-count">
+                    {names.length}
                 </div>
-
             </div>
 
 
-            <p className="panel-description">
-
-                Ketik satu nama atau tempel
-                daftar nama. Setiap baris
-                menjadi satu peserta.
-
-            </p>
-
-
-            <textarea
-                className="name-input"
-                value={input}
-                onChange={e =>
-                    setInput(
-                        e.target.value
-                    )
-                }
-                placeholder={
-                    "Ketik atau tempel daftar nama di sini..."
-                }
-            />
-
-
-            <button
-                className="primary-button full"
-                onClick={
-                    addNames
-                }
-            >
-
-                <Icon
-                    name="plus"
-                    size={18}
-                />
-
-                Tambahkan ke Daftar
-
-            </button>
-
-
-            <div className="saved-lists-section">
-
-                <button
-                    className="saved-lists-toggle"
-                    onClick={() =>
-                        setShowLists(
-                            previous =>
-                                !previous
+            <div className="attendance-input">
+                <textarea
+                    value={input}
+                    onChange={e =>
+                        setInput(
+                            e.target.value
                         )
                     }
+                    placeholder={
+                        "Tambahkan nama...\nSatu nama per baris"
+                    }
+                    rows={4}
+                />
+
+                <button
+                    className="btn btn-secondary"
+                    onClick={addNames}
                 >
+                    <Icon
+                        name="plus"
+                        size={16}
+                    />
 
-                    <span>
-                        Daftar tersimpan
-                    </span>
-
-
-                    <span>
-                        {
-                            showLists
-                                ? "▲"
-                                : "▼"
-                        }
-                    </span>
-
+                    Tambahkan
                 </button>
-
-
-                {showLists && (
-
-                    <div className="saved-lists">
-
-                        <button
-                            className="saved-list-new"
-                            onClick={
-                                createNewList
-                            }
-                            disabled={
-                                loading ||
-                                !user
-                            }
-                        >
-
-                            <Icon
-                                name="plus"
-                                size={16}
-                            />
-
-                            Daftar Baru
-
-                        </button>
-
-
-                        {!user && (
-
-                            <div className="login-hint">
-                                Login untuk melihat
-                                daftar cloud.
-                            </div>
-
-                        )}
-
-
-                        {user &&
-                            !lists.length && (
-
-                                <div className="empty-saved">
-                                    Belum ada daftar
-                                    tersimpan.
-                                </div>
-
-                            )}
-
-
-                        {lists.map(
-                            list => (
-
-                                <div
-                                    className={
-                                        `saved-list ${
-                                            selectedList?.id ===
-                                            list.id
-                                                ? "selected"
-                                                : ""
-                                        }`
-                                    }
-                                    key={
-                                        list.id
-                                    }
-                                >
-
-                                    <button
-                                        className="saved-list-main"
-                                        onClick={() =>
-                                            openList(
-                                                list
-                                            )
-                                        }
-                                    >
-
-                                        <strong>
-                                            {
-                                                list.name
-                                            }
-                                        </strong>
-
-
-                                        <small>
-
-                                            {
-                                                Array.isArray(
-                                                    list.names
-                                                )
-                                                    ? list.names.length
-                                                    : 0
-                                            }{" "}
-                                            peserta
-
-                                        </small>
-
-                                    </button>
-
-
-                                    <button
-                                        className="small-icon-button"
-                                        onClick={() =>
-                                            renameList(
-                                                list
-                                            )
-                                        }
-                                    >
-
-                                        <Icon
-                                            name="edit"
-                                            size={15}
-                                        />
-
-                                    </button>
-
-
-                                    <button
-                                        className="small-icon-button danger"
-                                        onClick={() =>
-                                            deleteList(
-                                                list
-                                            )
-                                        }
-                                    >
-
-                                        <Icon
-                                            name="trash"
-                                            size={15}
-                                        />
-
-                                    </button>
-
-                                </div>
-
-                            )
-                        )}
-
-                    </div>
-
-                )}
-
             </div>
 
 
-            <button
-                className="secondary-button full"
-                onClick={
-                    saveCurrentList
-                }
-                disabled={
-                    loading ||
-                    !user ||
-                    names.length === 0
-                }
-            >
+            <div className="attendance-actions">
 
-                <Icon
-                    name="save"
-                    size={17}
-                />
+                <button
+                    className="small-action"
+                    onClick={resetDefault}
+                >
+                    <Icon
+                        name="rotate"
+                        size={14}
+                    />
+                    Reset awal
+                </button>
 
-                {
-                    loading
-                        ? "Menyimpan..."
-                        : "Simpan Daftar"
-                }
+                <button
+                    className="small-action danger"
+                    onClick={clearNames}
+                >
+                    <Icon
+                        name="trash"
+                        size={14}
+                    />
+                    Hapus semua
+                </button>
 
-            </button>
-
-
-            {!user && (
-
-                <small className="login-hint">
-
-                    Login untuk menyimpan daftar
-                    ke cloud.
-
-                </small>
-
-            )}
+            </div>
 
 
             <div className="participant-list">
 
-                {names.map(
-                    (
-                        name,
-                        index
-                    ) => (
-
-                        <div
-                            className="participant-row"
-                            key={
-                                `${name}-${index}`
-                            }
-                        >
-
-                            <span className="participant-number">
-                                {index + 1}
-                            </span>
-
-
-                            <span className="participant-name">
-                                {name}
-                            </span>
-
-
-                            <button
-                                className="small-icon-button danger"
-                                onClick={() =>
-                                    deleteName(
-                                        index
-                                    )
-                                }
+                {names.length === 0 ? (
+                    <div className="empty-participants">
+                        Belum ada nama.
+                    </div>
+                ) : (
+                    names.map(
+                        (name, index) => (
+                            <div
+                                className="participant-row"
+                                key={`${name}-${index}`}
                             >
+                                <span className="participant-number">
+                                    {String(
+                                        index + 1
+                                    ).padStart(
+                                        2,
+                                        "0"
+                                    )}
+                                </span>
 
-                                <Icon
-                                    name="trash"
-                                    size={15}
-                                />
+                                <span className="participant-name">
+                                    {name}
+                                </span>
 
-                            </button>
-
-                        </div>
-
+                                <button
+                                    className="participant-delete"
+                                    onClick={() =>
+                                        deleteName(
+                                            index
+                                        )
+                                    }
+                                    aria-label={
+                                        `Hapus ${name}`
+                                    }
+                                >
+                                    <Icon
+                                        name="x"
+                                        size={14}
+                                    />
+                                </button>
+                            </div>
+                        )
                     )
                 )}
 
             </div>
 
-        </div>
 
+            <div className="saved-area">
+
+                <button
+                    className="saved-toggle"
+                    onClick={() =>
+                        setShowSaved(
+                            value => !value
+                        )
+                    }
+                >
+                    <span>
+                        Daftar tersimpan
+                    </span>
+
+                    <Icon
+                        name="chevron"
+                        size={15}
+                    />
+                </button>
+
+
+                {showSaved && (
+                    <div className="saved-list">
+
+                        <div className="saved-list-actions">
+
+                            <button
+                                className="small-action"
+                                onClick={
+                                    createNewList
+                                }
+                                disabled={loading}
+                            >
+                                <Icon
+                                    name="plus"
+                                    size={14}
+                                />
+                                Baru
+                            </button>
+
+                            <button
+                                className="small-action"
+                                onClick={
+                                    saveCurrentList
+                                }
+                                disabled={loading}
+                            >
+                                <Icon
+                                    name="save"
+                                    size={14}
+                                />
+                                Simpan
+                            </button>
+
+                        </div>
+
+
+                        {!user ? (
+                            <div className="saved-empty">
+                                Masuk untuk menyimpan daftar.
+                            </div>
+                        ) : savedLists.length === 0 ? (
+                            <div className="saved-empty">
+                                Belum ada daftar tersimpan.
+                            </div>
+                        ) : (
+                            savedLists.map(
+                                list => (
+                                    <div
+                                        className="saved-item"
+                                        key={list.id}
+                                    >
+
+                                        <button
+                                            className="saved-item-main"
+                                            onClick={() =>
+                                                openList(
+                                                    list
+                                                )
+                                            }
+                                        >
+                                            <span>
+                                                {list.name}
+                                            </span>
+
+                                            <small>
+                                                {Array.isArray(
+                                                    list.names
+                                                )
+                                                    ? list.names.length
+                                                    : 0}{" "}
+                                                nama
+                                            </small>
+                                        </button>
+
+                                        <button
+                                            className="saved-item-icon"
+                                            onClick={() =>
+                                                renameList(
+                                                    list
+                                                )
+                                            }
+                                        >
+                                            <Icon
+                                                name="edit"
+                                                size={14}
+                                            />
+                                        </button>
+
+                                        <button
+                                            className="saved-item-icon danger"
+                                            onClick={() =>
+                                                deleteList(
+                                                    list
+                                                )
+                                            }
+                                        >
+                                            <Icon
+                                                name="trash"
+                                                size={14}
+                                            />
+                                        </button>
+
+                                    </div>
+                                )
+                            )
+                        )}
+
+                    </div>
+                )}
+
+            </div>
+
+        </aside>
     );
-
 }
 
 
@@ -1930,155 +1271,153 @@ function AttendanceManager({
 function HistoryPanel({
     showToast
 }) {
-
-    const [
-        history,
-        setHistory
-    ] = useState(
-        () =>
-            readStorage(
-                STORAGE_KEYS.history,
-                []
-            )
-    );
-
-
     const [
         open,
         setOpen
     ] = useState(false);
 
+    const [
+        history,
+        setHistory
+    ] = useState(() =>
+        readStorage(
+            STORAGE_KEYS.history,
+            []
+        )
+    );
+
 
     function refreshHistory() {
-
         setHistory(
             readStorage(
                 STORAGE_KEYS.history,
                 []
             )
         );
-
     }
 
 
-    useEffect(
-        () => {
+    useEffect(() => {
+        const handler =
+            () => refreshHistory();
 
-            refreshHistory();
+        window.addEventListener(
+            "arunikamix-history-updated",
+            handler
+        );
 
-
-            const handler =
-                () => {
-                    refreshHistory();
-                };
-
-
-            window.addEventListener(
+        return () => {
+            window.removeEventListener(
                 "arunikamix-history-updated",
                 handler
             );
+        };
+    }, []);
 
 
-            return () => {
-
-                window.removeEventListener(
-                    "arunikamix-history-updated",
-                    handler
-                );
-
-            };
-
-        },
-        []
-    );
-
-
-    function clearHistory() {
-
-        if (
-            !history.length
-        ) {
-            return;
-        }
-
-
-        if (
-            !window.confirm(
-                "Hapus semua riwayat?"
-            )
-        ) {
-            return;
-        }
-
-
-        writeStorage(
-            STORAGE_KEYS.history,
-            []
-        );
-
-
-        setHistory([]);
-
-
-        showToast(
-            "Riwayat berhasil dihapus."
-        );
-
-    }
-
-
-    function deleteItem(
-        id
-    ) {
-
+    function deleteHistory(id) {
         const updated =
             history.filter(
                 item =>
                     item.id !== id
             );
 
-
         writeStorage(
             STORAGE_KEYS.history,
             updated
         );
 
+        setHistory(updated);
 
-        setHistory(
-            updated
+        showToast(
+            "Riwayat dihapus.",
+            "success"
+        );
+    }
+
+
+    function clearHistory() {
+        if (!history.length) {
+            return;
+        }
+
+        const confirmed =
+            window.confirm(
+                "Hapus seluruh riwayat acakan?"
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        writeStorage(
+            STORAGE_KEYS.history,
+            []
         );
 
+        setHistory([]);
+
+        showToast(
+            "Semua riwayat dihapus.",
+            "success"
+        );
     }
 
 
     return (
-
-        <div className="history-section">
+        <section className="history-section">
 
             <button
-                className="saved-lists-toggle"
+                className="history-toggle"
                 onClick={() =>
                     setOpen(
-                        previous =>
-                            !previous
+                        value => !value
                     )
                 }
             >
 
-                <span>
-                    Riwayat Acakan
+                <span className="history-toggle-left">
+
+                    <span className="history-toggle-icon">
+                        <Icon
+                            name="rotate"
+                            size={17}
+                        />
+                    </span>
+
+                    <span>
+                        <span className="history-toggle-title">
+                            Riwayat Acakan
+                        </span>
+
+                        <span className="history-toggle-subtitle">
+                            {history.length} hasil tersimpan
+                        </span>
+                    </span>
+
                 </span>
 
 
-                <span>
+                <span className="history-toggle-right">
 
-                    {history.length}
+                    <span className="history-count">
+                        {history.length}
+                    </span>
 
-                    {" "}
-
-                    {open
-                        ? "▲"
-                        : "▼"}
+                    <span
+                        className={
+                            `history-toggle-arrow ${
+                                open
+                                    ? "open"
+                                    : ""
+                            }`
+                        }
+                    >
+                        <Icon
+                            name="chevron"
+                            size={16}
+                        />
+                    </span>
 
                 </span>
 
@@ -2086,229 +1425,113 @@ function HistoryPanel({
 
 
             {open && (
+                <div className="history-body">
 
-                <div className="history-list">
+                    {history.length === 0 ? (
 
-                    {!history.length && (
-
-                        <div className="empty-saved">
-
-                            Belum ada riwayat.
-                            Hasil kelompok,
-                            duel, dan antrean
-                            akan muncul di sini.
-
+                        <div className="history-empty">
+                            Belum ada hasil acakan.
                         </div>
 
-                    )}
+                    ) : (
 
+                        <>
 
-                    {history.map(
-                        item => (
+                            <div className="history-list">
 
-                            <div
-                                className="history-item"
-                                key={
-                                    item.id
-                                }
-                            >
+                                {history.map(
+                                    item => (
+                                        <div
+                                            className="history-item"
+                                            key={item.id}
+                                        >
 
-                                <div className="history-item-icon">
-
-                                    <Icon
-                                        name={
-                                            getHistoryIcon(
-                                                item.type
-                                            )
-                                        }
-                                        size={16}
-                                    />
-
-                                </div>
-
-
-                                <div className="history-item-content">
-
-                                    <strong>
-                                        {
-                                            item.title
-                                        }
-                                    </strong>
-
-
-                                    <small>
-                                        {
-                                            formatHistoryDate(
-                                                item.createdAt
-                                            )
-                                        }
-                                    </small>
-
-
-                                    <div className="history-item-preview">
-
-                                        {item.type ===
-                                            "groups" &&
-                                            Array.isArray(
-                                                item.data
-                                            ) && (
-
-                                                <>
-                                                    {
-                                                        item.data
-                                                            .map(
-                                                                (
-                                                                    group,
-                                                                    index
-                                                                ) =>
-                                                                    `Kelompok ${
-                                                                        index +
-                                                                        1
-                                                                    }: ${
-                                                                        group.join(
-                                                                            ", "
-                                                                        )
-                                                                    }`
-                                                            )
-                                                            .join(
-                                                                " • "
-                                                            )
+                                            <div className="history-item-icon">
+                                                <Icon
+                                                    name={
+                                                        getHistoryIcon(
+                                                            item.type
+                                                        )
                                                     }
-                                                </>
+                                                    size={16}
+                                                />
+                                            </div>
 
-                                            )}
 
+                                            <div className="history-item-content">
 
-                                        {item.type ===
-                                            "duel" &&
-                                            Array.isArray(
-                                                item.data
-                                            ) && (
+                                                <div className="history-item-title">
+                                                    {item.title}
+                                                </div>
 
-                                                <>
+                                                <div className="history-item-date">
                                                     {
-                                                        item.data
-                                                            .map(
-                                                                (
-                                                                    pair,
-                                                                    index
-                                                                ) =>
-                                                                    `Duel ${
-                                                                        index +
-                                                                        1
-                                                                    }: ${
-                                                                        pair[0]
-                                                                    } vs ${
-                                                                        pair[1] ||
-                                                                        "BYE"
-                                                                    }`
-                                                            )
-                                                            .join(
-                                                                " • "
-                                                            )
+                                                        formatHistoryDate(
+                                                            item.createdAt
+                                                        )
                                                     }
-                                                </>
+                                                </div>
 
-                                            )}
-
-
-                                        {item.type ===
-                                            "queue" &&
-                                            Array.isArray(
-                                                item.data
-                                            ) && (
-
-                                                <>
+                                                <div className="history-item-preview">
                                                     {
-                                                        item.data
-                                                            .map(
-                                                                (
-                                                                    name,
-                                                                    index
-                                                                ) =>
-                                                                    `${
-                                                                        index +
-                                                                        1
-                                                                    }. ${
-                                                                        name
-                                                                    }`
-                                                            )
-                                                            .join(
-                                                                " • "
-                                                            )
+                                                        getHistoryPreview(
+                                                            item
+                                                        )
                                                     }
-                                                </>
+                                                </div>
 
-                                            )}
+                                            </div>
 
 
-                                        {item.type ===
-                                            "wheel" && (
+                                            <button
+                                                className="history-item-delete"
+                                                onClick={() =>
+                                                    deleteHistory(
+                                                        item.id
+                                                    )
+                                                }
+                                                aria-label="Hapus riwayat"
+                                            >
+                                                <Icon
+                                                    name="trash"
+                                                    size={15}
+                                                />
+                                            </button>
 
-                                                <>
-                                                    Pemenang:{" "}
-                                                    {
-                                                        item.data
-                                                    }
-                                                </>
+                                        </div>
+                                    )
+                                )}
 
-                                            )}
+                            </div>
 
-                                    </div>
 
-                                </div>
-
+                            <div className="history-footer">
 
                                 <button
-                                    className="small-icon-button danger"
-                                    onClick={() =>
-                                        deleteItem(
-                                            item.id
-                                        )
+                                    className="history-clear"
+                                    onClick={
+                                        clearHistory
                                     }
                                 >
-
                                     <Icon
                                         name="trash"
-                                        size={15}
+                                        size={14}
                                     />
 
+                                    Hapus semua riwayat
                                 </button>
 
                             </div>
 
-                        )
-                    )}
-
-
-                    {history.length > 0 && (
-
-                        <button
-                            className="secondary-button full"
-                            onClick={
-                                clearHistory
-                            }
-                        >
-
-                            <Icon
-                                name="trash"
-                                size={16}
-                            />
-
-                            Hapus Semua Riwayat
-
-                        </button>
+                        </>
 
                     )}
 
                 </div>
-
             )}
 
-        </div>
-
+        </section>
     );
-
 }
 
 
@@ -2320,7 +1543,6 @@ function GroupMode({
     names,
     showToast
 }) {
-
     const [
         groupCount,
         setGroupCount
@@ -2331,65 +1553,57 @@ function GroupMode({
         )
     );
 
-
     const [
         groups,
         setGroups
     ] = useState([]);
 
 
-    useEffect(
-        () => {
+    useEffect(() => {
+        if (!names.length) {
+            setGroupCount(1);
+            setGroups([]);
+            return;
+        }
 
-            if (
-                names.length > 0 &&
-                groupCount >
+        setGroupCount(
+            current =>
+                Math.min(
+                    current,
                     names.length
-            ) {
-
-                setGroupCount(
-                    names.length
-                );
-
-            }
-
-        },
-        [names.length]
-    );
+                )
+        );
+    }, [names.length]);
 
 
     function mixGroups() {
-
         if (!names.length) {
-
             showToast(
-                "Tambahkan peserta terlebih dahulu.",
+                "Tambahkan nama terlebih dahulu.",
                 "error"
             );
-
             return;
-
         }
 
+        const count =
+            Math.min(
+                groupCount,
+                names.length
+            );
 
         const result =
             splitIntoGroups(
                 names,
-                groupCount
+                count
             );
 
-
-        setGroups(
-            result
-        );
-
+        setGroups(result);
 
         saveHistory(
             "groups",
-            `${groupCount} kelompok`,
+            `${count} kelompok`,
             result
         );
-
 
         window.dispatchEvent(
             new Event(
@@ -2397,288 +1611,205 @@ function GroupMode({
             )
         );
 
-
         showToast(
-            `${groupCount} kelompok berhasil dibuat.`
+            "Kelompok berhasil diacak.",
+            "success"
         );
-
     }
 
 
     async function copyGroups() {
-
         if (!groups.length) {
             return;
         }
 
-
         const text =
             groups
                 .map(
-                    (
-                        group,
-                        index
-                    ) =>
-                        `Kelompok ${
+                    (group, index) =>
+                        `KELOMPOK ${
                             index + 1
-                        }\n` +
-                        group
+                        }\n${group
                             .map(
                                 name =>
-                                    `- ${name}`
+                                    `• ${name}`
                             )
-                            .join(
-                                "\n"
-                            )
+                            .join("\n")}`
                 )
-                .join(
-                    "\n\n"
-                );
-
+                .join("\n\n");
 
         const success =
-            await copyText(
-                text
-            );
-
+            await copyText(text);
 
         showToast(
             success
-                ? "Hasil berhasil disalin."
-                : "Gagal menyalin.",
+                ? "Hasil kelompok disalin."
+                : "Gagal menyalin hasil.",
             success
-                ? "default"
+                ? "success"
                 : "error"
         );
-
     }
 
 
     return (
+        <section className="mode-panel">
 
-        <div className="tool-panel">
+            <div className="mode-heading">
 
-            <div className="tool-header">
+                <div className="eyebrow">
+                    PEMBAGI KELOMPOK
+                </div>
 
-                <div>
+                <h2>
+                    Bagi peserta secara adil
+                </h2>
 
-                    <div className="eyebrow">
+                <p>
+                    Acak semua nama dan sebarkan
+                    secara merata ke beberapa kelompok.
+                </p>
 
-                        <Icon
-                            name="users"
-                            size={15}
-                        />
-
-                        PEMBAGI KELOMPOK
-
-                    </div>
+            </div>
 
 
-                    <h2>
-                        Bagi peserta secara adil
-                    </h2>
+            <div className="group-controls">
+
+                <div className="control-field">
+
+                    <label>
+                        Jumlah kelompok
+                    </label>
+
+                    <select
+                        value={groupCount}
+                        onChange={e =>
+                            setGroupCount(
+                                Number(
+                                    e.target.value
+                                )
+                            )
+                        }
+                    >
+                        {Array.from(
+                            {
+                                length:
+                                    Math.max(
+                                        1,
+                                        names.length
+                                    )
+                            },
+                            (_, index) => (
+                                <option
+                                    value={
+                                        index + 1
+                                    }
+                                    key={
+                                        index + 1
+                                    }
+                                >
+                                    {index + 1}
+                                </option>
+                            )
+                        )}
+                    </select>
 
                 </div>
 
-            </div>
 
-
-            <div className="group-control">
-
-                <label>
-                    Jumlah kelompok
-                </label>
-
-
-                <select
-                    value={
-                        groupCount
-                    }
-                    onChange={e =>
-                        setGroupCount(
-                            Number(
-                                e.target.value
-                            )
-                        )
-                    }
-                    disabled={
-                        !names.length
-                    }
+                <button
+                    className="btn btn-primary group-mix-button"
+                    onClick={mixGroups}
                 >
+                    <Icon
+                        name="shuffle"
+                        size={17}
+                    />
 
-                    {Array.from(
-                        {
-                            length:
-                                names.length ||
-                                1
-                        },
-                        (
-                            _,
-                            i
-                        ) => (
-
-                            <option
-                                key={
-                                    i + 1
-                                }
-                                value={
-                                    i + 1
-                                }
-                            >
-
-                                {
-                                    i + 1
-                                }{" "}
-                                kelompok
-
-                            </option>
-
-                        )
-                    )}
-
-                </select>
-
-
-                <small>
-
-                    Maksimal{" "}
-                    {names.length}{" "}
-                    kelompok untuk{" "}
-                    {names.length}{" "}
-                    peserta.
-
-                </small>
+                    Acak & Bagi Kelompok
+                </button>
 
             </div>
-
-
-            <button
-                className="primary-button full"
-                onClick={
-                    mixGroups
-                }
-            >
-
-                <Icon
-                    name="shuffle"
-                    size={18}
-                />
-
-                Acak & Bagi Kelompok
-
-            </button>
 
 
             {groups.length > 0 && (
 
-                <div className="groups-results">
+                <div className="results-toolbar">
 
-                    <div className="results-heading">
+                    <span>
+                        Hasil acakan
+                    </span>
 
-                        <h3>
-                            Hasil pembagian
-                        </h3>
+                    <button
+                        className="small-action"
+                        onClick={copyGroups}
+                    >
+                        <Icon
+                            name="copy"
+                            size={14}
+                        />
 
-
-                        <button
-                            className="secondary-button"
-                            onClick={
-                                copyGroups
-                            }
-                        >
-
-                            <Icon
-                                name="copy"
-                                size={16}
-                            />
-
-                            Salin
-
-                        </button>
-
-                    </div>
-
-
-                    <div className="groups-grid">
-
-                        {groups.map(
-                            (
-                                group,
-                                index
-                            ) => (
-
-                                <div
-                                    className="group-card"
-                                    key={
-                                        index
-                                    }
-                                    style={{
-                                        borderTop:
-                                            `5px solid ${
-                                                GROUP_COLORS[
-                                                    index %
-                                                    GROUP_COLORS.length
-                                                ]
-                                            }`
-                                    }}
-                                >
-
-                                    <h4>
-
-                                        Kelompok{" "}
-                                        {index + 1}
-
-                                    </h4>
-
-
-                                    <ol>
-
-                                        {group.map(
-                                            (
-                                                name,
-                                                i
-                                            ) => (
-
-                                                <li
-                                                    key={
-                                                        `${name}-${i}`
-                                                    }
-                                                    style={{
-                                                        fontFamily:
-                                                            "DM Sans, sans-serif",
-                                                        fontSize:
-                                                            "13px",
-                                                        lineHeight:
-                                                            "1.55",
-                                                        color:
-                                                            "var(--ink-soft)",
-                                                        fontWeight:
-                                                            500
-                                                    }}
-                                                >
-                                                    {name}
-                                                </li>
-
-                                            )
-                                        )}
-
-                                    </ol>
-
-                                </div>
-
-                            )
-                        )}
-
-                    </div>
+                        Salin
+                    </button>
 
                 </div>
 
             )}
 
-        </div>
 
+            {groups.length > 0 && (
+
+                <div className="group-results">
+
+                    {groups.map(
+                        (group, index) => (
+                            <div
+                                className="group-card"
+                                key={index}
+                                style={{
+                                    "--group-color":
+                                        GROUP_COLORS[
+                                            index %
+                                            GROUP_COLORS.length
+                                        ]
+                                }}
+                            >
+
+                                <div className="group-card-accent"></div>
+
+                                <div className="group-card-title">
+                                    Kelompok{" "}
+                                    {index + 1}
+                                </div>
+
+                                <div className="group-card-list">
+
+                                    {group.map(
+                                        (
+                                            name,
+                                            memberIndex
+                                        ) => (
+                                            <div
+                                                className="group-card-member"
+                                                key={`${name}-${memberIndex}`}
+                                            >
+                                                {name}
+                                            </div>
+                                        )
+                                    )}
+
+                                </div>
+
+                            </div>
+                        )
+                    )}
+
+                </div>
+
+            )}
+
+        </section>
     );
-
 }
 
 
@@ -2691,24 +1822,20 @@ function SpinWheel({
     setNames,
     showToast
 }) {
-
     const [
         spinning,
         setSpinning
     ] = useState(false);
-
 
     const [
         rotation,
         setRotation
     ] = useState(0);
 
-
     const [
         winner,
         setWinner
     ] = useState(null);
-
 
     const [
         removeWinner,
@@ -2719,285 +1846,145 @@ function SpinWheel({
     const total =
         names.length;
 
-
     const sector =
         total > 0
             ? 360 / total
             : 360;
 
 
-    const gradient =
-        useMemo(
-            () => {
+    function shortWheelName(name) {
+        const parts =
+            name
+                .trim()
+                .split(/\s+/);
 
-                if (!total) {
+        if (parts.length === 1) {
+            return parts[0];
+        }
 
-                    return (
-                        "conic-gradient(#ddd 0deg 360deg)"
-                    );
+        if (
+            parts[0] === "La" &&
+            parts[1] === "Ode"
+        ) {
+            return (
+                `La Ode ${
+                    parts[2] || ""
+                }`
+            ).trim();
+        }
 
-                }
+        if (
+            parts[0] === "Wa" &&
+            parts[1] === "Ode"
+        ) {
+            return (
+                `Wa Ode ${
+                    parts[2] || ""
+                }`
+            ).trim();
+        }
 
-
-                const colors = [
-                    "#e87868",
-                    "#e8b34d",
-                    "#76a99a",
-                    "#4b304d",
-                    "#86abb4",
-                    "#d78b88",
-                    "#93b99d",
-                    "#ba8850"
-                ];
-
-
-                const stops = [];
-
-
-                names.forEach(
-                    (
-                        _,
-                        index
-                    ) => {
-
-                        const start =
-                            index *
-                            sector;
-
-
-                        const end =
-                            (index + 1) *
-                            sector;
-
-
-                        const color =
-                            colors[
-                                index %
-                                colors.length
-                            ];
-
-
-                        stops.push(
-                            `${color} ${start}deg ${end}deg`
-                        );
-
-                    }
-                );
-
-
-                return `
-                    conic-gradient(
-                        from -90deg,
-                        ${stops.join(",")}
-                    )
-                `;
-
-            },
-            [
-                names,
-                sector,
-                total
-            ]
-        );
-
-
-    const labelFontSize =
-        total <= 10
-            ? 12
-            : total <= 18
-                ? 9
-                : total <= 25
-                    ? 7
-                    : 5.5;
-
-
-    function labelStyle(
-        index
-    ) {
-
-        const center =
-            index *
-                sector +
-            sector / 2;
-
-
-        return {
-
-            position:
-                "absolute",
-
-            left:
-                "50%",
-
-            top:
-                "50%",
-
-            width:
-                "45%",
-
-            transform:
-                `rotate(${center}deg)`,
-
-            transformOrigin:
-                "0 50%",
-
-            fontSize:
-                `${labelFontSize}px`,
-
-            lineHeight:
-                "1",
-
-            textAlign:
-                "right",
-
-            color:
-                "#fff",
-
-            fontWeight:
-                700,
-
-            textShadow:
-                "0 1px 2px rgba(0,0,0,.45)",
-
-            whiteSpace:
-                "nowrap",
-
-            overflow:
-                "hidden",
-
-            textOverflow:
-                "ellipsis",
-
-            pointerEvents:
-                "none"
-
-        };
-
+        return (
+            `${parts[0]} ${
+                parts[1]?.[0] || ""
+            }`
+        ).trim();
     }
 
 
     function spin() {
-
         if (
             spinning ||
-            !total
+            total === 0
         ) {
             return;
         }
 
-
-        setSpinning(
-            true
-        );
-
-
-        setWinner(
-            null
-        );
-
-
         /*
-         * PENTING:
+         * SATU targetIndex menentukan
+         * seluruh hasil.
          *
-         * targetIndex adalah SATU-SATUNYA sumber
-         * penentuan pemenang.
-         *
-         * Sektor wheel dan nama pemenang memakai
-         * index yang sama.
+         * Tidak ada random kedua.
          */
 
         const targetIndex =
             Math.floor(
-                Math.random() *
-                total
+                Math.random() * total
             );
 
-
         const targetName =
-            names[
-                targetIndex
-            ];
-
-
-        const targetCenter =
-            targetIndex *
-                sector +
-            sector / 2;
+            names[targetIndex];
 
 
         /*
-         * Pointer berada di posisi -90deg.
-         * Karena gradient juga dimulai dari -90deg,
-         * kita menghitung target berdasarkan sektor
-         * yang sama.
+         * Wheel dibuat dengan:
+         *
+         * conic-gradient(from -90deg)
+         *
+         * Artinya sektor pertama
+         * dimulai dari posisi atas.
+         *
+         * Titik tengah sektor target:
+         *
+         * (index + 0.5) * sector
+         *
+         * Kita ingin titik tengah tersebut
+         * tepat berada di pointer atas.
          */
 
-        const targetRotation =
+        const targetAngle =
+            90 -
             (
-                360 -
-                targetCenter
-            ) % 360;
-
-
-        const currentNormalized =
-            (
-                rotation % 360 +
-                360
-            ) % 360;
-
-
-        const delta =
-            (
-                targetRotation -
-                currentNormalized +
-                360
-            ) % 360;
-
-
-        const extraTurns =
-            5 +
-            Math.floor(
-                Math.random() * 3
+                (targetIndex + 0.5) *
+                sector
             );
+
+
+        /*
+         * Tambahkan beberapa putaran penuh.
+         * Karena 360 derajat tidak mengubah
+         * sektor akhirnya, target tetap sama.
+         */
+
+        const extraSpins =
+            7 * 360;
 
 
         const finalRotation =
             rotation +
-            extraTurns * 360 +
-            delta;
+            extraSpins +
+            targetAngle;
 
 
+        setWinner(null);
+        setSpinning(true);
         setRotation(
             finalRotation
         );
 
 
-        setTimeout(
+        window.setTimeout(
             () => {
-
                 /*
-                 * targetName berasal langsung dari
-                 * targetIndex yang dipakai wheel.
+                 * targetName berasal dari
+                 * targetIndex yang sama persis
+                 * dengan sektor target.
                  */
 
                 setWinner(
                     targetName
                 );
 
+                setSpinning(false);
 
-                setSpinning(
-                    false
-                );
-
-
-                /*
-                 * Simpan history wheel juga.
-                 */
 
                 saveHistory(
                     "wheel",
                     "Roda Putar",
-                    targetName
+                    {
+                        winner:
+                            targetName
+                    }
                 );
 
 
@@ -3008,262 +1995,249 @@ function SpinWheel({
                 );
 
 
-                /*
-                 * Hapus pemenang jika opsi aktif.
-                 */
-
                 if (
                     removeWinner
                 ) {
-
                     setNames(
-                        previous =>
-                            previous.filter(
+                        current =>
+                            current.filter(
                                 (
-                                    name,
+                                    _,
                                     index
                                 ) =>
                                     index !==
                                     targetIndex
                             )
                     );
-
-
-                    showToast(
-                        `${targetName} terpilih dan dihapus dari daftar.`
-                    );
-
-                } else {
-
-                    showToast(
-                        `Pemenang: ${targetName}`
-                    );
-
                 }
 
+
+                showToast(
+                    `Terpilih: ${targetName}`,
+                    "success"
+                );
             },
             4600
         );
-
     }
 
 
+    const wheelBackground =
+        total > 0
+            ? `conic-gradient(
+                from -90deg,
+                ${names
+                    .map(
+                        (
+                            _,
+                            index
+                        ) => {
+                            const start =
+                                index *
+                                sector;
+
+                            const end =
+                                (
+                                    index +
+                                    1
+                                ) *
+                                sector;
+
+                            const color =
+                                GROUP_COLORS[
+                                    index %
+                                    GROUP_COLORS.length
+                                ];
+
+                            return (
+                                `${color} ${start}deg ${end}deg`
+                            );
+                        }
+                    )
+                    .join(", ")}
+            )`
+            : "var(--line)";
+
+
     return (
+        <section className="mode-panel">
 
-        <div className="tool-panel">
+            <div className="mode-heading">
 
-            <div className="tool-header">
-
-                <div>
-
-                    <div className="eyebrow">
-
-                        <Icon
-                            name="rotate"
-                            size={15}
-                        />
-
-                        RODA PUTAR
-
-                    </div>
-
-
-                    <h2>
-                        Putar Nama Peserta
-                    </h2>
-
-
-                    <p>
-                        Setiap nama memiliki
-                        satu sektor yang sama
-                        dengan hasil undian.
-                    </p>
-
+                <div className="eyebrow">
+                    RODA PUTAR
                 </div>
+
+                <h2>
+                    Biarkan roda memilih
+                </h2>
+
+                <p>
+                    Putar roda dan biarkan satu
+                    nama terpilih secara acak.
+                </p>
 
             </div>
 
 
-            <div className="wheel-wrapper">
+            {total === 0 ? (
 
-                <div className="wheel-pointer">
-                    ▼
+                <div className="mode-empty">
+                    Tambahkan peserta terlebih dahulu.
                 </div>
 
+            ) : (
 
-                <div
-                    className="spin-wheel"
-                    style={{
+                <div className="wheel-layout">
 
-                        background:
-                            gradient,
+                    <div className="wheel-stage">
 
-                        transform:
-                            `rotate(${rotation}deg)`,
+                        <div className="wheel-pointer">
+                            <span></span>
+                        </div>
 
-                        transition:
-                            spinning
-                                ? "transform 4.6s cubic-bezier(.12,.7,.18,1)"
-                                : "none"
+                        <div
+                            className={
+                                `wheel ${
+                                    spinning
+                                        ? "is-spinning"
+                                        : ""
+                                }`
+                            }
+                            style={{
+                                background:
+                                    wheelBackground,
 
-                    }}
-                >
+                                transform:
+                                    `rotate(${rotation}deg)`
+                            }}
+                        >
 
-                    {names.map(
-                        (
-                            name,
-                            index
-                        ) => (
+                            {names.map(
+                                (
+                                    name,
+                                    index
+                                ) => {
 
-                            <div
-                                key={
-                                    `${name}-${index}`
+                                    const angle =
+                                        index *
+                                            sector +
+                                        sector /
+                                            2;
+
+                                    return (
+                                        <div
+                                            key={`${name}-${index}`}
+                                            className="wheel-label"
+                                            style={{
+                                                transform:
+                                                    `rotate(${angle}deg)`
+                                            }}
+                                        >
+                                            <span>
+                                                {
+                                                    shortWheelName(
+                                                        name
+                                                    )
+                                                }
+                                            </span>
+                                        </div>
+                                    );
                                 }
-                                className="wheel-label"
-                                style={
-                                    labelStyle(
-                                        index
-                                    )
-                                }
-                            >
+                            )}
 
-                                {
-                                    shortWheelName(
-                                        name
-                                    )
-                                }
-
+                            <div className="wheel-center">
+                                <span>
+                                    ARUNIKA
+                                </span>
                             </div>
 
-                        )
-                    )}
+                        </div>
+
+                    </div>
 
 
-                    <div className="wheel-center">
-                        ◉
+                    <div className="wheel-controls">
+
+                        <button
+                            className="btn btn-primary"
+                            onClick={spin}
+                            disabled={
+                                spinning ||
+                                total === 0
+                            }
+                        >
+                            <Icon
+                                name="rotate"
+                                size={17}
+                            />
+
+                            {spinning
+                                ? "Memutar..."
+                                : "Putar Roda"}
+                        </button>
+
+
+                        <label className="wheel-option">
+
+                            <input
+                                type="checkbox"
+                                checked={
+                                    removeWinner
+                                }
+                                onChange={e =>
+                                    setRemoveWinner(
+                                        e.target.checked
+                                    )
+                                }
+                                disabled={
+                                    spinning
+                                }
+                            />
+
+                            <span>
+                                Hapus nama yang terpilih
+                            </span>
+
+                        </label>
+
+
+                        {winner &&
+                            !spinning && (
+
+                                <div className="wheel-winner">
+
+                                    <div className="wheel-winner-label">
+                                        TERPILIH
+                                    </div>
+
+                                    <div className="wheel-winner-name">
+                                        {winner}
+                                    </div>
+
+                                </div>
+
+                            )}
+
                     </div>
 
                 </div>
 
-            </div>
-
-
-            <button
-                className="primary-button full"
-                onClick={
-                    spin
-                }
-                disabled={
-                    spinning ||
-                    !names.length
-                }
-            >
-
-                <Icon
-                    name="rotate"
-                    size={18}
-                />
-
-                {
-                    spinning
-                        ? "Memutar..."
-                        : "Putar Roda"
-                }
-
-            </button>
-
-
-            <label
-                style={{
-                    display:
-                        "flex",
-                    alignItems:
-                        "center",
-                    gap:
-                        "9px",
-                    marginTop:
-                        "14px",
-                    fontFamily:
-                        "DM Sans, sans-serif",
-                    fontSize:
-                        "13px",
-                    color:
-                        "var(--ink-soft)",
-                    cursor:
-                        "pointer"
-                }}
-            >
-
-                <input
-                    type="checkbox"
-                    checked={
-                        removeWinner
-                    }
-                    onChange={e =>
-                        setRemoveWinner(
-                            e.target.checked
-                        )
-                    }
-                />
-
-                Hapus nama yang terpilih
-                dari daftar
-
-            </label>
-
-
-            {removeWinner && (
-
-                <small
-                    style={{
-                        display:
-                            "block",
-                        marginTop:
-                            "7px",
-                        color:
-                            "var(--ink-soft)"
-                    }}
-                >
-
-                    Jika aktif, nama pemenang akan
-                    otomatis dihapus setelah roda
-                    berhenti.
-
-                </small>
-
             )}
 
-
-            {winner && (
-
-                <div className="winner-box">
-
-                    🎉 Pemenang:{" "}
-
-                    <strong>
-                        {winner}
-                    </strong>
-
-                </div>
-
-            )}
-
-        </div>
-
+        </section>
     );
-
 }
 
 
 /* =========================================================
-   DUEL
+   DUEL TOOL
 ========================================================= */
 
 function DuelTool({
     names,
     showToast
 }) {
-
     const [
         pairs,
         setPairs
@@ -3271,31 +2245,18 @@ function DuelTool({
 
 
     function drawDuel() {
-
-        if (
-            names.length < 2
-        ) {
-
+        if (names.length < 2) {
             showToast(
-                "Minimal 2 peserta diperlukan.",
+                "Minimal 2 peserta.",
                 "error"
             );
-
             return;
-
         }
 
-
         const result =
-            makeDuelPairs(
-                names
-            );
+            makeDuelPairs(names);
 
-
-        setPairs(
-            result
-        );
-
+        setPairs(result);
 
         saveHistory(
             "duel",
@@ -3303,204 +2264,172 @@ function DuelTool({
             result
         );
 
-
         window.dispatchEvent(
             new Event(
                 "arunikamix-history-updated"
             )
         );
 
-
         showToast(
-            "Pasangan berhasil diundi."
+            "Pasangan berhasil diacak.",
+            "success"
         );
-
     }
 
 
     async function copyDuel() {
-
         if (!pairs.length) {
             return;
         }
 
-
         const text =
             pairs
                 .map(
-                    (
-                        pair,
-                        index
-                    ) =>
+                    (pair, index) =>
                         `Duel ${
                             index + 1
-                        }\n${
-                            pair[0]
-                        } VS ${
-                            pair[1] ||
-                            "BYE"
+                        }: ${pair[0]}${
+                            pair[1]
+                                ? ` vs ${pair[1]}`
+                                : " — bye"
                         }`
                 )
-                .join(
-                    "\n\n"
-                );
-
+                .join("\n");
 
         const success =
-            await copyText(
-                text
-            );
-
+            await copyText(text);
 
         showToast(
             success
-                ? "Hasil berhasil disalin."
-                : "Gagal menyalin.",
+                ? "Hasil pasangan disalin."
+                : "Gagal menyalin hasil.",
             success
-                ? "default"
+                ? "success"
                 : "error"
         );
-
     }
 
 
     return (
+        <section className="mode-panel">
 
-        <div className="tool-panel">
+            <div className="mode-heading">
 
-            <div className="eyebrow">
+                <div className="eyebrow">
+                    UNDIAN BERPASANGAN
+                </div>
 
-                <Icon
-                    name="shuffle"
-                    size={15}
-                />
+                <h2>
+                    Pasangkan peserta
+                </h2>
 
-                UNDIAN BERPASANGAN
+                <p>
+                    Acak nama menjadi pasangan
+                    secara otomatis.
+                </p>
 
             </div>
 
 
-            <h2>
-                Duel Antar Peserta
-            </h2>
-
-
-            <p className="panel-description">
-
-                Peserta diacak menjadi pasangan
-                secara otomatis.
-
-            </p>
-
-
             <button
-                className="primary-button"
-                onClick={
-                    drawDuel
-                }
+                className="btn btn-primary"
+                onClick={drawDuel}
             >
-
                 <Icon
                     name="shuffle"
-                    size={18}
+                    size={17}
                 />
 
-                Undi Pasangan
-
+                Acak Pasangan
             </button>
 
 
             {pairs.length > 0 && (
 
-                <div className="duel-results">
+                <>
 
-                    <div className="results-heading">
+                    <div className="results-toolbar">
 
-                        <h3>
+                        <span>
                             Hasil pasangan
-                        </h3>
-
+                        </span>
 
                         <button
-                            className="secondary-button"
-                            onClick={
-                                copyDuel
-                            }
+                            className="small-action"
+                            onClick={copyDuel}
                         >
-
                             <Icon
                                 name="copy"
-                                size={16}
+                                size={14}
                             />
 
                             Salin
-
                         </button>
 
                     </div>
 
 
-                    {pairs.map(
-                        (
-                            pair,
-                            index
-                        ) => (
+                    <div className="duel-results">
 
-                            <div
-                                className="duel-card"
-                                key={
-                                    index
-                                }
-                            >
+                        {pairs.map(
+                            (
+                                pair,
+                                index
+                            ) => (
+                                <div
+                                    className="duel-card"
+                                    key={index}
+                                >
 
-                                <span>
-                                    Duel{" "}
-                                    {index + 1}
-                                </span>
+                                    <div className="duel-number">
+                                        {String(
+                                            index + 1
+                                        ).padStart(
+                                            2,
+                                            "0"
+                                        )}
+                                    </div>
 
+                                    <div className="duel-names">
 
-                                <strong>
-                                    {pair[0]}
-                                </strong>
+                                        <span>
+                                            {pair[0]}
+                                        </span>
 
+                                        <b>
+                                            VS
+                                        </b>
 
-                                <div>
-                                    VS
+                                        <span>
+                                            {pair[1] ||
+                                                "BYE"}
+                                        </span>
+
+                                    </div>
+
                                 </div>
+                            )
+                        )}
 
+                    </div>
 
-                                <strong>
-                                    {
-                                        pair[1] ||
-                                        "BYE"
-                                    }
-                                </strong>
-
-                            </div>
-
-                        )
-                    )}
-
-                </div>
+                </>
 
             )}
 
-        </div>
-
+        </section>
     );
-
 }
 
 
 /* =========================================================
-   QUEUE
+   QUEUE TOOL
 ========================================================= */
 
 function QueueTool({
     names,
     showToast
 }) {
-
     const [
         queue,
         setQueue
@@ -3508,29 +2437,18 @@ function QueueTool({
 
 
     function makeQueue() {
-
         if (!names.length) {
-
             showToast(
-                "Tambahkan peserta terlebih dahulu.",
+                "Tambahkan nama terlebih dahulu.",
                 "error"
             );
-
             return;
-
         }
 
-
         const result =
-            shuffleArray(
-                names
-            );
+            shuffleArray(names);
 
-
-        setQueue(
-            result
-        );
-
+        setQueue(result);
 
         saveHistory(
             "queue",
@@ -3538,198 +2456,163 @@ function QueueTool({
             result
         );
 
-
         window.dispatchEvent(
             new Event(
                 "arunikamix-history-updated"
             )
         );
 
-
         showToast(
-            "Urutan antrean dibuat."
+            "Urutan berhasil diacak.",
+            "success"
         );
-
     }
 
 
     async function copyQueue() {
-
         if (!queue.length) {
             return;
         }
 
-
         const text =
             queue
                 .map(
-                    (
-                        name,
-                        index
-                    ) =>
+                    (name, index) =>
                         `${index + 1}. ${name}`
                 )
-                .join(
-                    "\n"
-                );
-
+                .join("\n");
 
         const success =
-            await copyText(
-                text
-            );
-
+            await copyText(text);
 
         showToast(
             success
-                ? "Urutan berhasil disalin."
-                : "Gagal menyalin.",
+                ? "Urutan disalin."
+                : "Gagal menyalin hasil.",
             success
-                ? "default"
+                ? "success"
                 : "error"
         );
-
     }
 
 
     return (
+        <section className="mode-panel">
 
-        <div className="tool-panel">
+            <div className="mode-heading">
 
-            <div className="eyebrow">
+                <div className="eyebrow">
+                    URUTAN ANTREAN
+                </div>
 
-                <Icon
-                    name="list"
-                    size={15}
-                />
+                <h2>
+                    Tentukan siapa duluan
+                </h2>
 
-                URUTAN ANTREAN / GILIRAN
+                <p>
+                    Acak semua peserta menjadi
+                    urutan antrean baru.
+                </p>
 
             </div>
 
 
-            <h2>
-                Acak urutan peserta
-            </h2>
-
-
-            <p className="panel-description">
-
-                Buat urutan giliran baru
-                tanpa mengubah daftar peserta.
-
-            </p>
-
-
             <button
-                className="primary-button"
-                onClick={
-                    makeQueue
-                }
+                className="btn btn-primary"
+                onClick={makeQueue}
             >
-
                 <Icon
                     name="shuffle"
-                    size={18}
+                    size={17}
                 />
 
-                Buat Urutan
-
+                Acak Urutan
             </button>
 
 
             {queue.length > 0 && (
 
-                <div className="queue-results">
+                <>
 
-                    <div className="results-heading">
+                    <div className="results-toolbar">
 
-                        <h3>
-                            Urutan Giliran
-                        </h3>
-
+                        <span>
+                            Hasil urutan
+                        </span>
 
                         <button
-                            className="secondary-button"
-                            onClick={
-                                copyQueue
-                            }
+                            className="small-action"
+                            onClick={copyQueue}
                         >
-
                             <Icon
                                 name="copy"
-                                size={16}
+                                size={14}
                             />
 
                             Salin
-
                         </button>
 
                     </div>
 
 
-                    <div className="queue-list">
+                    <div className="queue-results">
 
                         {queue.map(
                             (
                                 name,
                                 index
                             ) => (
-
                                 <div
-                                    className="queue-row"
-                                    key={
-                                        `${name}-${index}`
-                                    }
+                                    className="queue-item"
+                                    key={`${name}-${index}`}
                                 >
 
-                                    <span>
-                                        {index + 1}
+                                    <span className="queue-number">
+                                        {String(
+                                            index + 1
+                                        ).padStart(
+                                            2,
+                                            "0"
+                                        )}
                                     </span>
 
-
-                                    <strong>
+                                    <span className="queue-name">
                                         {name}
-                                    </strong>
+                                    </span>
 
                                 </div>
-
                             )
                         )}
 
                     </div>
 
-                </div>
+                </>
 
             )}
 
-        </div>
-
+        </section>
     );
-
 }
 
 
 /* =========================================================
-   AUTH
+   AUTH PANEL
 ========================================================= */
 
 function AuthPanel({
     user,
+    onUserChange,
     showToast
 }) {
-
     const [
         email,
         setEmail
     ] = useState("");
 
-
     const [
         password,
         setPassword
     ] = useState("");
-
 
     const [
         loading,
@@ -3738,243 +2621,197 @@ function AuthPanel({
 
 
     async function signIn() {
-
         if (
-            !email ||
+            !email.trim() ||
             !password
         ) {
-
             showToast(
-                "Masukkan email dan password.",
+                "Isi email dan password.",
                 "error"
             );
-
             return;
-
         }
 
-
-        setLoading(
-            true
-        );
-
+        setLoading(true);
 
         const {
+            data,
             error
         } =
-            await supabaseClient
-                .auth
+            await supabaseClient.auth
                 .signInWithPassword({
-                    email,
+                    email:
+                        email.trim(),
                     password
                 });
 
-
-        setLoading(
-            false
-        );
-
+        setLoading(false);
 
         if (error) {
-
             showToast(
                 error.message,
                 "error"
             );
-
             return;
-
         }
 
-
-        showToast(
-            "Berhasil masuk."
+        onUserChange(
+            data.user
         );
 
+        showToast(
+            "Berhasil masuk.",
+            "success"
+        );
     }
 
 
     async function signUp() {
-
         if (
-            !email ||
+            !email.trim() ||
             !password
         ) {
-
             showToast(
-                "Masukkan email dan password.",
+                "Isi email dan password.",
                 "error"
             );
-
             return;
-
         }
 
-
-        if (
-            password.length < 6
-        ) {
-
-            showToast(
-                "Password minimal 6 karakter.",
-                "error"
-            );
-
-            return;
-
-        }
-
-
-        setLoading(
-            true
-        );
-
+        setLoading(true);
 
         const redirectUrl =
             window.location.origin +
             window.location.pathname;
 
-
         const {
+            data,
             error
         } =
-            await supabaseClient
-                .auth
+            await supabaseClient.auth
                 .signUp({
-
-                    email,
+                    email:
+                        email.trim(),
                     password,
-
                     options: {
                         emailRedirectTo:
                             redirectUrl
                     }
-
                 });
 
-
-        setLoading(
-            false
-        );
-
+        setLoading(false);
 
         if (error) {
-
             showToast(
                 error.message,
                 "error"
             );
-
             return;
-
         }
 
+        if (data.user) {
+            onUserChange(
+                data.user
+            );
+        }
 
         showToast(
-            "Akun dibuat. Cek email untuk konfirmasi."
+            "Pendaftaran berhasil. Cek email jika konfirmasi diperlukan.",
+            "success"
         );
-
     }
 
 
     async function signOut() {
+        await supabaseClient.auth.signOut();
 
-        await supabaseClient
-            .auth
-            .signOut();
-
+        onUserChange(null);
 
         showToast(
-            "Berhasil keluar."
+            "Berhasil keluar.",
+            "success"
         );
-
     }
 
 
     if (user) {
-
         return (
+            <div className="auth-user">
 
-            <div className="auth-box logged-in">
+                <div className="auth-user-info">
 
-                <span>
-                    {user.email}
-                </span>
+                    <span className="auth-status-dot"></span>
 
+                    <span>
+                        {user.email}
+                    </span>
+
+                </div>
 
                 <button
-                    className="secondary-button"
-                    onClick={
-                        signOut
-                    }
+                    className="auth-button"
+                    onClick={signOut}
                 >
                     Keluar
                 </button>
 
             </div>
-
         );
-
     }
 
 
     return (
+        <div className="auth-panel">
 
-        <div className="auth-box">
+            <div className="auth-fields">
 
-            <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={e =>
-                    setEmail(
-                        e.target.value
-                    )
-                }
-            />
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={e =>
+                        setEmail(
+                            e.target.value
+                        )
+                    }
+                />
 
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={e =>
+                        setPassword(
+                            e.target.value
+                        )
+                    }
+                />
 
-            <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={e =>
-                    setPassword(
-                        e.target.value
-                    )
-                }
-            />
-
-
-            <button
-                className="primary-button"
-                onClick={
-                    signIn
-                }
-                disabled={
-                    loading
-                }
-            >
-                Masuk
-            </button>
+            </div>
 
 
-            <button
-                className="secondary-button"
-                onClick={
-                    signUp
-                }
-                disabled={
-                    loading
-                }
-            >
-                Daftar
-            </button>
+            <div className="auth-actions">
+
+                <button
+                    className="auth-button"
+                    onClick={signIn}
+                    disabled={loading}
+                >
+                    Masuk
+                </button>
+
+                <button
+                    className="auth-button secondary"
+                    onClick={signUp}
+                    disabled={loading}
+                >
+                    Daftar
+                </button>
+
+            </div>
 
         </div>
-
     );
-
 }
 
 
@@ -3983,38 +2820,30 @@ function AuthPanel({
 ========================================================= */
 
 function App() {
-
     const [
         user,
         setUser
     ] = useState(null);
 
-
     const [
         names,
         setNames
-    ] = useState(
-        () =>
-            readStorage(
-                STORAGE_KEYS.currentAttendance,
-                DEFAULT_NAMES
-            )
+    ] = useState(() =>
+        readStorage(
+            STORAGE_KEYS.currentAttendance,
+            DEFAULT_NAMES
+        )
     );
-
 
     const [
         selectedList,
         setSelectedList
     ] = useState(null);
 
-
     const [
         mode,
         setMode
-    ] = useState(
-        "groups"
-    );
-
+    ] = useState("groups");
 
     const {
         toast,
@@ -4022,241 +2851,224 @@ function App() {
     } = useToast();
 
 
-    useEffect(
-        () => {
+    /*
+     * SESSION
+     */
 
-            let mounted =
-                true;
+    useEffect(() => {
+        let mounted = true;
 
-
-            supabaseClient
-                .auth
-                .getSession()
-                .then(
-                    ({
-                        data
-                    }) => {
-
-                        if (
-                            !mounted
-                        ) {
-                            return;
-                        }
-
-
-                        setUser(
-                            data
-                                .session
-                                ?.user ||
-                            null
-                        );
-
-                    }
-                );
-
-
+        async function loadSession() {
             const {
-                data:
-                    listener
+                data
             } =
-                supabaseClient
-                    .auth
-                    .onAuthStateChange(
-                        (
-                            _event,
-                            session
-                        ) => {
+                await supabaseClient.auth.getSession();
 
-                            setUser(
-                                session
-                                    ?.user ||
-                                null
-                            );
+            if (
+                mounted &&
+                data.session
+            ) {
+                setUser(
+                    data.session.user
+                );
+            }
+        }
 
-                        }
+        loadSession();
+
+        const {
+            data: listener
+        } =
+            supabaseClient.auth.onAuthStateChange(
+                (
+                    _event,
+                    session
+                ) => {
+                    if (!mounted) {
+                        return;
+                    }
+
+                    setUser(
+                        session?.user ||
+                        null
                     );
-
-
-            return () => {
-
-                mounted =
-                    false;
-
-
-                listener
-                    ?.subscription
-                    ?.unsubscribe();
-
-            };
-
-        },
-        []
-    );
-
-
-    useEffect(
-        () => {
-
-            writeStorage(
-                STORAGE_KEYS.currentAttendance,
-                names
+                }
             );
 
-        },
-        [names]
-    );
+        return () => {
+            mounted = false;
+
+            listener.subscription.unsubscribe();
+        };
+    }, []);
 
 
-    useEffect(
-        () => {
+    /*
+     * LOCAL NAMES
+     */
 
-            if (!user) {
-
-                return;
-
-            }
-
-
-            async function loadUserLists() {
-
-                try {
-
-                    const {
-                        data,
-                        error
-                    } =
-                        await supabaseClient
-                            .from(
-                                "attendance_lists"
-                            )
-                            .select("*")
-                            .eq(
-                                "user_id",
-                                user.id
-                            )
-                            .order(
-                                "updated_at",
-                                {
-                                    ascending:
-                                        false
-                                }
-                            );
+    useEffect(() => {
+        writeStorage(
+            STORAGE_KEYS.currentAttendance,
+            names
+        );
+    }, [names]);
 
 
-                    if (error) {
+    /*
+     * LOAD USER LIST
+     */
 
-                        console.error(
-                            "USER LIST LOAD ERROR:",
-                            error
-                        );
+    useEffect(() => {
+        if (!user) {
+            setSelectedList(null);
+            return;
+        }
 
-                        return;
+        let cancelled = false;
 
-                    }
-
-
-                    if (
-                        data &&
-                        data.length > 0
-                    ) {
-
-                        const first =
-                            data[0];
-
-
-                        setSelectedList(
-                            first
-                        );
-
-
-                        if (
-                            Array.isArray(
-                                first.names
-                            )
-                        ) {
-
-                            setNames(
-                                first.names
-                            );
-
+        async function loadUserLists() {
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("attendance_lists")
+                    .select("*")
+                    .order(
+                        "updated_at",
+                        {
+                            ascending: false
                         }
-
-                    } else {
-
-                        const {
-                            data:
-                                created,
-                            error:
-                                createError
-                        } =
-                            await supabaseClient
-                                .from(
-                                    "attendance_lists"
-                                )
-                                .insert({
-
-                                    user_id:
-                                        user.id,
-
-                                    name:
-                                        DEFAULT_TEMPLATE_NAME,
-
-                                    names:
-                                        DEFAULT_NAMES
-
-                                })
-                                .select()
-                                .single();
-
-
-                        if (
-                            createError
-                        ) {
-
-                            console.error(
-                                "DEFAULT LIST ERROR:",
-                                createError
-                            );
-
-                            return;
-
-                        }
-
-
-                        setSelectedList(
-                            created
-                        );
-
-
-                        setNames([
-                            ...DEFAULT_NAMES
-                        ]);
-
-                    }
-
-                } catch (
-                    error
-                ) {
-
-                    console.error(
-                        error
                     );
 
+            if (
+                cancelled ||
+                error
+            ) {
+                return;
+            }
+
+            if (
+                data &&
+                data.length > 0
+            ) {
+                const first =
+                    data[0];
+
+                setSelectedList(
+                    first
+                );
+
+                if (
+                    Array.isArray(
+                        first.names
+                    )
+                ) {
+                    setNames(
+                        first.names
+                    );
                 }
 
+                return;
             }
 
 
-            loadUserLists();
+            /*
+             * Buat template Arunika
+             * otomatis untuk akun baru.
+             */
 
-        },
-        [user]
-    );
+            const {
+                data: created,
+                error: createError
+            } =
+                await supabaseClient
+                    .from("attendance_lists")
+                    .insert({
+                        user_id:
+                            user.id,
+
+                        name:
+                            DEFAULT_TEMPLATE_NAME,
+
+                        names:
+                            DEFAULT_NAMES
+                    })
+                    .select("*")
+                    .single();
+
+            if (
+                cancelled ||
+                createError
+            ) {
+                console.error(
+                    createError
+                );
+                return;
+            }
+
+            setSelectedList(
+                created
+            );
+
+            setNames(
+                DEFAULT_NAMES
+            );
+        }
+
+        loadUserLists();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [user]);
+
+
+    function renderMode() {
+        if (mode === "groups") {
+            return (
+                <GroupMode
+                    names={names}
+                    showToast={showToast}
+                />
+            );
+        }
+
+        if (mode === "wheel") {
+            return (
+                <SpinWheel
+                    names={names}
+                    setNames={setNames}
+                    showToast={showToast}
+                />
+            );
+        }
+
+        if (mode === "duel") {
+            return (
+                <DuelTool
+                    names={names}
+                    showToast={showToast}
+                />
+            );
+        }
+
+        if (mode === "queue") {
+            return (
+                <QueueTool
+                    names={names}
+                    showToast={showToast}
+                />
+            );
+        }
+
+        return null;
+    }
 
 
     return (
-
-        <>
+        <div className="app">
 
             <header className="site-header">
 
@@ -4270,85 +3082,92 @@ function App() {
 
                     </div>
 
-
-                    <div>
-
-                        <strong>
+                    <div className="brand-text">
+                        <div className="brand-name">
                             ArunikaMix
-                        </strong>
+                        </div>
 
-
-                        <small>
-                            PEMBAGI KELOMPOK ACAK
-                            & MINI GAMES
-                        </small>
-
+                        <div className="brand-caption">
+                            alat kecil untuk menyatukan orang
+                        </div>
                     </div>
 
                 </div>
 
 
-                <AuthPanel
-                    user={user}
-                    showToast={
-                        showToast
-                    }
-                />
+                <div className="header-right">
+
+                    <div className="header-local">
+                        LOKAL SAJA
+                    </div>
+
+                    <AuthPanel
+                        user={user}
+                        onUserChange={
+                            setUser
+                        }
+                        showToast={
+                            showToast
+                        }
+                    />
+
+                </div>
 
             </header>
 
 
-            <main className="app-shell">
+            <main className="main">
 
                 <section className="hero">
 
-                    <div>
+                    <div className="hero-copy">
 
                         <div className="eyebrow">
-                            ARUNIKA
+                            PEMBAGI KELOMPOK ACAK & MINI GAMES
                         </div>
 
-
                         <h1>
-
-                            Pembagi kelompok
+                            Beri ruang
                             <br />
-                            & mini games.
-
+                            untuk kejutan.
                         </h1>
 
-
                         <p>
-                            Beri ruang untuk kejutan.
+                            Acak peserta, bentuk kelompok,
+                            putar roda, atau tentukan urutan.
+                            Satu titik awal yang adil.
                         </p>
+
+                    </div>
+
+
+                    <div className="hero-stamp">
+
+                        <span className="stamp-number">
+                            {names.length}
+                        </span>
+
+                        <span className="stamp-label">
+                            orang di dalamnya
+                        </span>
 
                     </div>
 
                 </section>
 
 
-                <ModeNavigation
-                    mode={
-                        mode
-                    }
-                    setMode={
-                        setMode
-                    }
+                <ModeNav
+                    mode={mode}
+                    setMode={setMode}
                 />
 
 
                 <section className="workspace">
 
                     <AttendanceManager
-                        names={
-                            names
-                        }
-                        setNames={
-                            setNames
-                        }
-                        user={
-                            user
-                        }
+                        names={names}
+                        setNames={setNames}
+                        user={user}
                         selectedList={
                             selectedList
                         }
@@ -4361,137 +3180,57 @@ function App() {
                     />
 
 
-                    <div className="mode-content">
-
-                        {mode ===
-                            "groups" && (
-
-                            <GroupMode
-                                names={
-                                    names
-                                }
-                                showToast={
-                                    showToast
-                                }
-                            />
-
-                        )}
-
-
-                        {mode ===
-                            "wheel" && (
-
-                            <SpinWheel
-                                names={
-                                    names
-                                }
-                                setNames={
-                                    setNames
-                                }
-                                showToast={
-                                    showToast
-                                }
-                            />
-
-                        )}
-
-
-                        {mode ===
-                            "duel" && (
-
-                            <DuelTool
-                                names={
-                                    names
-                                }
-                                showToast={
-                                    showToast
-                                }
-                            />
-
-                        )}
-
-
-                        {mode ===
-                            "queue" && (
-
-                            <QueueTool
-                                names={
-                                    names
-                                }
-                                showToast={
-                                    showToast
-                                }
-                            />
-
-                        )}
-
-                    </div>
+                    <main className="tool-area">
+                        {renderMode()}
+                    </main>
 
                 </section>
 
 
                 <HistoryPanel
-                    showToast={
-                        showToast
-                    }
+                    showToast={showToast}
                 />
-
-
-                <footer className="site-footer">
-
-                    <span>
-                        LOKAL SAJA
-                    </span>
-
-                    <span>
-                        /
-                    </span>
-
-                    <span>
-                        DATA ACAKAN TERSIMPAN
-                        SECARA LOKAL
-                    </span>
-
-                </footer>
 
             </main>
 
 
+            <footer className="site-footer">
+
+                <div>
+                    ARUNIKAMIX
+                </div>
+
+                <div>
+                    LOKAL SAJA
+                </div>
+
+                <div>
+                    DATA ACAKAN TERSIMPAN SECARA LOKAL
+                </div>
+
+            </footer>
+
+
             <Toast
-                toast={
-                    toast
-                }
+                toast={toast}
             />
 
-        </>
-
+        </div>
     );
-
 }
 
 
 /* =========================================================
-   START APP
+   MOUNT
 ========================================================= */
 
-const rootElement =
-    document.getElementById(
-        "root"
-    );
-
-
-if (rootElement) {
-
-    const root =
-        ReactDOM.createRoot(
-            rootElement
-        );
-
-
-    root.render(
-        React.createElement(
-            App
+const root =
+    ReactDOM.createRoot(
+        document.getElementById(
+            "root"
         )
     );
 
-        }
+root.render(
+    <App />
+);
