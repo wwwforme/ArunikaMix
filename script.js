@@ -83,10 +83,14 @@ const STORAGE_KEYS = {
         "arunikamix_current_attendance_v4",
 
     history:
-        "arunikamix_shuffle_history_v4"
+        "arunikamix_shuffle_history_v5"
 
 };
 
+
+/* =========================================================
+   STORAGE HELPERS
+========================================================= */
 
 function readStorage(
     key,
@@ -109,6 +113,7 @@ function readStorage(
         return fallback;
 
     }
+
 }
 
 
@@ -126,9 +131,10 @@ function writeStorage(
 
     } catch {
 
-        // Ignore storage errors
+        // Ignore localStorage errors
 
     }
+
 }
 
 
@@ -143,6 +149,7 @@ function shuffleArray(
     const result =
         [...array];
 
+
     for (
         let i = result.length - 1;
         i > 0;
@@ -155,6 +162,7 @@ function shuffleArray(
                 (i + 1)
             );
 
+
         [
             result[i],
             result[j]
@@ -165,7 +173,9 @@ function shuffleArray(
 
     }
 
+
     return result;
+
 }
 
 
@@ -185,7 +195,120 @@ function cleanNames(
 
 
 /* =========================================================
-   SHORT NAME FOR WHEEL
+   HISTORY
+========================================================= */
+
+function saveHistory(
+    type,
+    title,
+    data
+) {
+
+    const history =
+        readStorage(
+            STORAGE_KEYS.history,
+            []
+        );
+
+
+    const newItem = {
+
+        id:
+            Date.now() +
+            Math.random(),
+
+        type,
+
+        title,
+
+        data,
+
+        createdAt:
+            new Date().toISOString()
+
+    };
+
+
+    const updated =
+        [
+            newItem,
+            ...history
+        ].slice(
+            0,
+            50
+        );
+
+
+    writeStorage(
+        STORAGE_KEYS.history,
+        updated
+    );
+
+}
+
+
+function formatHistoryDate(
+    date
+) {
+
+    try {
+
+        return new Intl.DateTimeFormat(
+            "id-ID",
+            {
+                dateStyle:
+                    "medium",
+                timeStyle:
+                    "short"
+            }
+        ).format(
+            new Date(date)
+        );
+
+    } catch {
+
+        return "";
+
+    }
+
+}
+
+
+function getHistoryIcon(
+    type
+) {
+
+    if (
+        type === "groups"
+    ) {
+        return "users";
+    }
+
+    if (
+        type === "duel"
+    ) {
+        return "shuffle";
+    }
+
+    if (
+        type === "queue"
+    ) {
+        return "list";
+    }
+
+    if (
+        type === "wheel"
+    ) {
+        return "rotate";
+    }
+
+    return "list";
+
+}
+
+
+/* =========================================================
+   SHORT WHEEL NAME
 ========================================================= */
 
 function shortWheelName(
@@ -198,11 +321,13 @@ function shortWheelName(
             .split(/\s+/)
             .filter(Boolean);
 
+
     if (
         parts.length === 0
     ) {
         return "";
     }
+
 
     if (
         parts.length === 1
@@ -258,7 +383,10 @@ function splitIntoGroups(
 ) {
 
     const shuffled =
-        shuffleArray(names);
+        shuffleArray(
+            names
+        );
+
 
     const groups =
         Array.from(
@@ -277,14 +405,18 @@ function splitIntoGroups(
         ) => {
 
             groups[
-                index % groupCount
-            ].push(name);
+                index %
+                groupCount
+            ].push(
+                name
+            );
 
         }
     );
 
 
     return groups;
+
 }
 
 
@@ -297,9 +429,13 @@ function makeDuelPairs(
 ) {
 
     const shuffled =
-        shuffleArray(names);
+        shuffleArray(
+            names
+        );
+
 
     const pairs = [];
+
 
     for (
         let i = 0;
@@ -328,7 +464,9 @@ function makeDuelPairs(
 
     }
 
+
     return pairs;
+
 }
 
 
@@ -342,9 +480,11 @@ async function copyText(
 
     try {
 
-        await navigator.clipboard.writeText(
-            text
-        );
+        await navigator
+            .clipboard
+            .writeText(
+                text
+            );
 
         return true;
 
@@ -370,13 +510,13 @@ function Icon({
 
         users: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
@@ -386,13 +526,13 @@ function Icon({
 
         rotate: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <path d="M21 12a9 9 0 0 0-15.3-6.4L3 8"/>
                 <path d="M3 3v5h5"/>
                 <path d="M3 12a9 9 0 0 0 15.3 6.4L21 16"/>
@@ -402,13 +542,13 @@ function Icon({
 
         shuffle: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <path d="M16 3h5v5"/>
                 <path d="M4 20L21 3"/>
                 <path d="M21 16v5h-5"/>
@@ -419,13 +559,13 @@ function Icon({
 
         list: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <line x1="8" y1="6" x2="21" y2="6"/>
                 <line x1="8" y1="12" x2="21" y2="12"/>
                 <line x1="8" y1="18" x2="21" y2="18"/>
@@ -437,13 +577,13 @@ function Icon({
 
         trash: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14H6L5 6"/>
                 <path d="M10 11v6"/>
@@ -454,12 +594,12 @@ function Icon({
 
         plus: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
@@ -467,13 +607,13 @@ function Icon({
 
         edit: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <path d="M12 20h9"/>
                 <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
             </svg>
@@ -481,13 +621,13 @@ function Icon({
 
         save: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>
                 <polyline points="17 21 17 13 7 13 7 21"/>
                 <polyline points="7 3 7 8 15 8"/>
@@ -496,13 +636,13 @@ function Icon({
 
         copy: `
             <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
+                width="${size}"
+                height="${size}"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2"/>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
@@ -511,18 +651,15 @@ function Icon({
     };
 
 
-    return React.createElement(
-        "span",
-        {
-            className:
-                "icon-wrap",
-
-            dangerouslySetInnerHTML: {
+    return (
+        <span
+            className="icon-wrap"
+            dangerouslySetInnerHTML={{
                 __html:
                     icons[name] ||
                     icons.users
-            }
-        }
+            }}
+        />
     );
 
 }
@@ -549,6 +686,7 @@ function useToast() {
             message,
             type
         });
+
 
         setTimeout(
             () => {
@@ -613,21 +751,21 @@ function ModeNavigation({
         {
             id: "wheel",
             label:
-                "Roda Putar (Spin Wheel)",
+                "Roda Putar",
             icon: "rotate"
         },
 
         {
             id: "duel",
             label:
-                "Undian Berpasangan (Duel)",
+                "Undian Berpasangan",
             icon: "shuffle"
         },
 
         {
             id: "queue",
             label:
-                "Urutan Antrean / Giliran",
+                "Urutan Antrean",
             icon: "list"
         }
 
@@ -642,7 +780,9 @@ function ModeNavigation({
                 item => (
 
                     <button
-                        key={item.id}
+                        key={
+                            item.id
+                        }
                         className={
                             `mode-button ${
                                 mode === item.id
@@ -658,12 +798,16 @@ function ModeNavigation({
                     >
 
                         <Icon
-                            name={item.icon}
+                            name={
+                                item.icon
+                            }
                             size={17}
                         />
 
                         <span>
-                            {item.label}
+                            {
+                                item.label
+                            }
                         </span>
 
                     </button>
@@ -722,46 +866,85 @@ function AttendanceManager({
             setLists([]);
 
             return;
+
         }
 
 
-        const {
-            data,
-            error
-        } = await supabaseClient
-            .from(
-                "attendance_lists"
-            )
-            .select("*")
-            .eq(
-                "user_id",
-                user.id
-            )
-            .order(
-                "updated_at",
-                {
-                    ascending:
-                        false
+        try {
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from(
+                        "attendance_lists"
+                    )
+                    .select("*")
+                    .eq(
+                        "user_id",
+                        user.id
+                    )
+                    .order(
+                        "updated_at",
+                        {
+                            ascending:
+                                false
+                        }
+                    );
+
+
+            if (error) {
+
+                console.error(
+                    "LOAD LIST ERROR:",
+                    error
+                );
+
+
+                if (
+                    error.code ===
+                        "PGRST205"
+                ) {
+
+                    showToast(
+                        "Tabel attendance_lists belum dibuat di Supabase.",
+                        "error"
+                    );
+
+                } else {
+
+                    showToast(
+                        "Gagal mengambil daftar tersimpan.",
+                        "error"
+                    );
+
                 }
+
+
+                return;
+
+            }
+
+
+            setLists(
+                data || []
             );
 
+        } catch (
+            error
+        ) {
 
-        if (error) {
-
-            console.error(error);
+            console.error(
+                error
+            );
 
             showToast(
                 "Gagal mengambil daftar tersimpan.",
                 "error"
             );
 
-            return;
         }
-
-
-        setLists(
-            data || []
-        );
 
     }
 
@@ -786,6 +969,7 @@ function AttendanceManager({
             );
 
             return;
+
         }
 
 
@@ -794,7 +978,9 @@ function AttendanceManager({
             DEFAULT_TEMPLATE_NAME;
 
 
-        setLoading(true);
+        setLoading(
+            true
+        );
 
 
         try {
@@ -804,31 +990,44 @@ function AttendanceManager({
             ) {
 
                 const {
+                    data,
                     error
-                } = await supabaseClient
-                    .from(
-                        "attendance_lists"
-                    )
-                    .update({
-                        name,
-                        names,
-                        updated_at:
-                            new Date()
-                                .toISOString()
-                    })
-                    .eq(
-                        "id",
-                        selectedList.id
-                    )
-                    .eq(
-                        "user_id",
-                        user.id
-                    );
+                } =
+                    await supabaseClient
+                        .from(
+                            "attendance_lists"
+                        )
+                        .update({
+
+                            name,
+
+                            names,
+
+                            updated_at:
+                                new Date()
+                                    .toISOString()
+
+                        })
+                        .eq(
+                            "id",
+                            selectedList.id
+                        )
+                        .eq(
+                            "user_id",
+                            user.id
+                        )
+                        .select()
+                        .single();
 
 
                 if (error) {
                     throw error;
                 }
+
+
+                setSelectedList(
+                    data
+                );
 
 
                 showToast(
@@ -840,18 +1039,23 @@ function AttendanceManager({
                 const {
                     data,
                     error
-                } = await supabaseClient
-                    .from(
-                        "attendance_lists"
-                    )
-                    .insert({
-                        user_id:
-                            user.id,
-                        name,
-                        names
-                    })
-                    .select()
-                    .single();
+                } =
+                    await supabaseClient
+                        .from(
+                            "attendance_lists"
+                        )
+                        .insert({
+
+                            user_id:
+                                user.id,
+
+                            name,
+
+                            names
+
+                        })
+                        .select()
+                        .single();
 
 
                 if (error) {
@@ -873,18 +1077,41 @@ function AttendanceManager({
 
             await loadLists();
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
-            console.error(error);
-
-            showToast(
-                "Gagal menyimpan daftar.",
-                "error"
+            console.error(
+                "SAVE LIST ERROR:",
+                error
             );
+
+
+            if (
+                error.code ===
+                    "PGRST205"
+            ) {
+
+                showToast(
+                    "Tabel attendance_lists belum dibuat di Supabase.",
+                    "error"
+                );
+
+            } else {
+
+                showToast(
+                    error.message ||
+                    "Gagal menyimpan daftar.",
+                    "error"
+                );
+
+            }
 
         } finally {
 
-            setLoading(false);
+            setLoading(
+                false
+            );
 
         }
 
@@ -894,7 +1121,9 @@ function AttendanceManager({
     function addNames() {
 
         const newNames =
-            cleanNames(input);
+            cleanNames(
+                input
+            );
 
 
         if (
@@ -907,6 +1136,7 @@ function AttendanceManager({
             );
 
             return;
+
         }
 
 
@@ -1000,6 +1230,7 @@ function AttendanceManager({
             );
 
             return;
+
         }
 
 
@@ -1010,49 +1241,44 @@ function AttendanceManager({
             );
 
 
-        if (!name?.trim()) {
+        if (
+            !name?.trim()
+        ) {
             return;
         }
 
 
-        setLoading(true);
+        setLoading(
+            true
+        );
 
 
         try {
 
-            const insertData = {
-
-                user_id:
-                    user.id,
-
-                name:
-                    name.trim(),
-
-                names: []
-
-            };
-
-
             const {
                 data,
                 error
-            } = await supabaseClient
-                .from(
-                    "attendance_lists"
-                )
-                .insert(
-                    insertData
-                )
-                .select("*")
-                .single();
+            } =
+                await supabaseClient
+                    .from(
+                        "attendance_lists"
+                    )
+                    .insert({
+
+                        user_id:
+                            user.id,
+
+                        name:
+                            name.trim(),
+
+                        names: []
+
+                    })
+                    .select("*")
+                    .single();
 
 
             if (error) {
-
-                console.error(
-                    error
-                );
-
                 throw error;
             }
 
@@ -1072,24 +1298,41 @@ function AttendanceManager({
                 `Daftar "${name.trim()}" berhasil dibuat.`
             );
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
                 "CREATE LIST ERROR:",
                 error
             );
 
-            showToast(
-                error?.message ||
-                error?.details ||
-                error?.hint ||
-                "Gagal membuat daftar.",
-                "error"
-            );
+
+            if (
+                error.code ===
+                    "PGRST205"
+            ) {
+
+                showToast(
+                    "Tabel attendance_lists belum dibuat di Supabase.",
+                    "error"
+                );
+
+            } else {
+
+                showToast(
+                    error.message ||
+                    "Gagal membuat daftar.",
+                    "error"
+                );
+
+            }
 
         } finally {
 
-            setLoading(false);
+            setLoading(
+                false
+            );
 
         }
 
@@ -1142,7 +1385,9 @@ function AttendanceManager({
             );
 
 
-        if (!newName?.trim()) {
+        if (
+            !newName?.trim()
+        ) {
             return;
         }
 
@@ -1151,26 +1396,29 @@ function AttendanceManager({
 
             const {
                 error
-            } = await supabaseClient
-                .from(
-                    "attendance_lists"
-                )
-                .update({
-                    name:
-                        newName.trim(),
+            } =
+                await supabaseClient
+                    .from(
+                        "attendance_lists"
+                    )
+                    .update({
 
-                    updated_at:
-                        new Date()
-                            .toISOString()
-                })
-                .eq(
-                    "id",
-                    list.id
-                )
-                .eq(
-                    "user_id",
-                    user.id
-                );
+                        name:
+                            newName.trim(),
+
+                        updated_at:
+                            new Date()
+                                .toISOString()
+
+                    })
+                    .eq(
+                        "id",
+                        list.id
+                    )
+                    .eq(
+                        "user_id",
+                        user.id
+                    );
 
 
             if (error) {
@@ -1199,13 +1447,17 @@ function AttendanceManager({
                 "Nama daftar diubah."
             );
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
                 error
             );
 
+
             showToast(
+                error.message ||
                 "Gagal mengganti nama.",
                 "error"
             );
@@ -1237,19 +1489,20 @@ function AttendanceManager({
 
             const {
                 error
-            } = await supabaseClient
-                .from(
-                    "attendance_lists"
-                )
-                .delete()
-                .eq(
-                    "id",
-                    list.id
-                )
-                .eq(
-                    "user_id",
-                    user.id
-                );
+            } =
+                await supabaseClient
+                    .from(
+                        "attendance_lists"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        list.id
+                    )
+                    .eq(
+                        "user_id",
+                        user.id
+                    );
 
 
             if (error) {
@@ -1278,13 +1531,17 @@ function AttendanceManager({
                 "Daftar berhasil dihapus."
             );
 
-        } catch (error) {
+        } catch (
+            error
+        ) {
 
             console.error(
                 error
             );
 
+
             showToast(
+                error.message ||
                 "Gagal menghapus daftar.",
                 "error"
             );
@@ -1319,9 +1576,7 @@ function AttendanceManager({
                         Daftar peserta
 
                         <span className="count">
-
                             ({names.length})
-
                         </span>
 
                     </h2>
@@ -1370,9 +1625,8 @@ function AttendanceManager({
             <p className="panel-description">
 
                 Ketik satu nama atau tempel
-                (*paste*) daftar nama panjang
-                (baris baru otomatis jadi nama
-                terpisah).
+                daftar nama. Setiap baris
+                menjadi satu peserta.
 
             </p>
 
@@ -1393,7 +1647,9 @@ function AttendanceManager({
 
             <button
                 className="primary-button full"
-                onClick={addNames}
+                onClick={
+                    addNames
+                }
             >
 
                 <Icon
@@ -1422,14 +1678,13 @@ function AttendanceManager({
                         Daftar tersimpan
                     </span>
 
-                    <span>
 
+                    <span>
                         {
                             showLists
                                 ? "▲"
                                 : "▼"
                         }
-
                     </span>
 
                 </button>
@@ -1444,6 +1699,10 @@ function AttendanceManager({
                             onClick={
                                 createNewList
                             }
+                            disabled={
+                                loading ||
+                                !user
+                            }
                         >
 
                             <Icon
@@ -1456,16 +1715,25 @@ function AttendanceManager({
                         </button>
 
 
-                        {!lists.length && (
+                        {!user && (
 
-                            <div className="empty-saved">
-
-                                Belum ada daftar
-                                tersimpan.
-
+                            <div className="login-hint">
+                                Login untuk melihat
+                                daftar cloud.
                             </div>
 
                         )}
+
+
+                        {user &&
+                            !lists.length && (
+
+                                <div className="empty-saved">
+                                    Belum ada daftar
+                                    tersimpan.
+                                </div>
+
+                            )}
 
 
                         {lists.map(
@@ -1499,6 +1767,7 @@ function AttendanceManager({
                                                 list.name
                                             }
                                         </strong>
+
 
                                         <small>
 
@@ -1592,7 +1861,7 @@ function AttendanceManager({
                 <small className="login-hint">
 
                     Login untuk menyimpan daftar
-                    ke akunmu.
+                    ke cloud.
 
                 </small>
 
@@ -1618,9 +1887,11 @@ function AttendanceManager({
                                 {index + 1}
                             </span>
 
+
                             <span className="participant-name">
                                 {name}
                             </span>
+
 
                             <button
                                 className="small-icon-button danger"
@@ -1644,6 +1915,395 @@ function AttendanceManager({
                 )}
 
             </div>
+
+        </div>
+
+    );
+
+}
+
+
+/* =========================================================
+   HISTORY PANEL
+========================================================= */
+
+function HistoryPanel({
+    showToast
+}) {
+
+    const [
+        history,
+        setHistory
+    ] = useState(
+        () =>
+            readStorage(
+                STORAGE_KEYS.history,
+                []
+            )
+    );
+
+
+    const [
+        open,
+        setOpen
+    ] = useState(false);
+
+
+    function refreshHistory() {
+
+        setHistory(
+            readStorage(
+                STORAGE_KEYS.history,
+                []
+            )
+        );
+
+    }
+
+
+    useEffect(
+        () => {
+
+            refreshHistory();
+
+
+            const handler =
+                () => {
+                    refreshHistory();
+                };
+
+
+            window.addEventListener(
+                "arunikamix-history-updated",
+                handler
+            );
+
+
+            return () => {
+
+                window.removeEventListener(
+                    "arunikamix-history-updated",
+                    handler
+                );
+
+            };
+
+        },
+        []
+    );
+
+
+    function clearHistory() {
+
+        if (
+            !history.length
+        ) {
+            return;
+        }
+
+
+        if (
+            !window.confirm(
+                "Hapus semua riwayat?"
+            )
+        ) {
+            return;
+        }
+
+
+        writeStorage(
+            STORAGE_KEYS.history,
+            []
+        );
+
+
+        setHistory([]);
+
+
+        showToast(
+            "Riwayat berhasil dihapus."
+        );
+
+    }
+
+
+    function deleteItem(
+        id
+    ) {
+
+        const updated =
+            history.filter(
+                item =>
+                    item.id !== id
+            );
+
+
+        writeStorage(
+            STORAGE_KEYS.history,
+            updated
+        );
+
+
+        setHistory(
+            updated
+        );
+
+    }
+
+
+    return (
+
+        <div className="history-section">
+
+            <button
+                className="saved-lists-toggle"
+                onClick={() =>
+                    setOpen(
+                        previous =>
+                            !previous
+                    )
+                }
+            >
+
+                <span>
+                    Riwayat Acakan
+                </span>
+
+
+                <span>
+
+                    {history.length}
+
+                    {" "}
+
+                    {open
+                        ? "▲"
+                        : "▼"}
+
+                </span>
+
+            </button>
+
+
+            {open && (
+
+                <div className="history-list">
+
+                    {!history.length && (
+
+                        <div className="empty-saved">
+
+                            Belum ada riwayat.
+                            Hasil kelompok,
+                            duel, dan antrean
+                            akan muncul di sini.
+
+                        </div>
+
+                    )}
+
+
+                    {history.map(
+                        item => (
+
+                            <div
+                                className="history-item"
+                                key={
+                                    item.id
+                                }
+                            >
+
+                                <div className="history-item-icon">
+
+                                    <Icon
+                                        name={
+                                            getHistoryIcon(
+                                                item.type
+                                            )
+                                        }
+                                        size={16}
+                                    />
+
+                                </div>
+
+
+                                <div className="history-item-content">
+
+                                    <strong>
+                                        {
+                                            item.title
+                                        }
+                                    </strong>
+
+
+                                    <small>
+                                        {
+                                            formatHistoryDate(
+                                                item.createdAt
+                                            )
+                                        }
+                                    </small>
+
+
+                                    <div className="history-item-preview">
+
+                                        {item.type ===
+                                            "groups" &&
+                                            Array.isArray(
+                                                item.data
+                                            ) && (
+
+                                                <>
+                                                    {
+                                                        item.data
+                                                            .map(
+                                                                (
+                                                                    group,
+                                                                    index
+                                                                ) =>
+                                                                    `Kelompok ${
+                                                                        index +
+                                                                        1
+                                                                    }: ${
+                                                                        group.join(
+                                                                            ", "
+                                                                        )
+                                                                    }`
+                                                            )
+                                                            .join(
+                                                                " • "
+                                                            )
+                                                    }
+                                                </>
+
+                                            )}
+
+
+                                        {item.type ===
+                                            "duel" &&
+                                            Array.isArray(
+                                                item.data
+                                            ) && (
+
+                                                <>
+                                                    {
+                                                        item.data
+                                                            .map(
+                                                                (
+                                                                    pair,
+                                                                    index
+                                                                ) =>
+                                                                    `Duel ${
+                                                                        index +
+                                                                        1
+                                                                    }: ${
+                                                                        pair[0]
+                                                                    } vs ${
+                                                                        pair[1] ||
+                                                                        "BYE"
+                                                                    }`
+                                                            )
+                                                            .join(
+                                                                " • "
+                                                            )
+                                                    }
+                                                </>
+
+                                            )}
+
+
+                                        {item.type ===
+                                            "queue" &&
+                                            Array.isArray(
+                                                item.data
+                                            ) && (
+
+                                                <>
+                                                    {
+                                                        item.data
+                                                            .map(
+                                                                (
+                                                                    name,
+                                                                    index
+                                                                ) =>
+                                                                    `${
+                                                                        index +
+                                                                        1
+                                                                    }. ${
+                                                                        name
+                                                                    }`
+                                                            )
+                                                            .join(
+                                                                " • "
+                                                            )
+                                                    }
+                                                </>
+
+                                            )}
+
+
+                                        {item.type ===
+                                            "wheel" && (
+
+                                                <>
+                                                    Pemenang:{" "}
+                                                    {
+                                                        item.data
+                                                    }
+                                                </>
+
+                                            )}
+
+                                    </div>
+
+                                </div>
+
+
+                                <button
+                                    className="small-icon-button danger"
+                                    onClick={() =>
+                                        deleteItem(
+                                            item.id
+                                        )
+                                    }
+                                >
+
+                                    <Icon
+                                        name="trash"
+                                        size={15}
+                                    />
+
+                                </button>
+
+                            </div>
+
+                        )
+                    )}
+
+
+                    {history.length > 0 && (
+
+                        <button
+                            className="secondary-button full"
+                            onClick={
+                                clearHistory
+                            }
+                        >
+
+                            <Icon
+                                name="trash"
+                                size={16}
+                            />
+
+                            Hapus Semua Riwayat
+
+                        </button>
+
+                    )}
+
+                </div>
+
+            )}
 
         </div>
 
@@ -1694,9 +2354,7 @@ function GroupMode({
             }
 
         },
-        [
-            names.length
-        ]
+        [names.length]
     );
 
 
@@ -1710,6 +2368,7 @@ function GroupMode({
             );
 
             return;
+
         }
 
 
@@ -1722,6 +2381,20 @@ function GroupMode({
 
         setGroups(
             result
+        );
+
+
+        saveHistory(
+            "groups",
+            `${groupCount} kelompok`,
+            result
+        );
+
+
+        window.dispatchEvent(
+            new Event(
+                "arunikamix-history-updated"
+            )
         );
 
 
@@ -1754,7 +2427,9 @@ function GroupMode({
                                 name =>
                                     `- ${name}`
                             )
-                            .join("\n")
+                            .join(
+                                "\n"
+                            )
                 )
                 .join(
                     "\n\n"
@@ -1816,7 +2491,9 @@ function GroupMode({
 
 
                 <select
-                    value={groupCount}
+                    value={
+                        groupCount
+                    }
                     onChange={e =>
                         setGroupCount(
                             Number(
@@ -1966,6 +2643,18 @@ function GroupMode({
                                                     key={
                                                         `${name}-${i}`
                                                     }
+                                                    style={{
+                                                        fontFamily:
+                                                            "DM Sans, sans-serif",
+                                                        fontSize:
+                                                            "13px",
+                                                        lineHeight:
+                                                            "1.55",
+                                                        color:
+                                                            "var(--ink-soft)",
+                                                        fontWeight:
+                                                            500
+                                                    }}
                                                 >
                                                     {name}
                                                 </li>
@@ -1994,11 +2683,12 @@ function GroupMode({
 
 
 /* =========================================================
-   REAL SPIN WHEEL
+   SPIN WHEEL
 ========================================================= */
 
 function SpinWheel({
     names,
+    setNames,
     showToast
 }) {
 
@@ -2018,6 +2708,12 @@ function SpinWheel({
         winner,
         setWinner
     ] = useState(null);
+
+
+    const [
+        removeWinner,
+        setRemoveWinner
+    ] = useState(false);
 
 
     const total =
@@ -2068,9 +2764,11 @@ function SpinWheel({
                             index *
                             sector;
 
+
                         const end =
                             (index + 1) *
                             sector;
+
 
                         const color =
                             colors[
@@ -2138,8 +2836,7 @@ function SpinWheel({
                 "45%",
 
             transform:
-                `rotate(${center}deg)
-                 translateX(0)`,
+                `rotate(${center}deg)`,
 
             transformOrigin:
                 "0 50%",
@@ -2199,6 +2896,16 @@ function SpinWheel({
         );
 
 
+        /*
+         * PENTING:
+         *
+         * targetIndex adalah SATU-SATUNYA sumber
+         * penentuan pemenang.
+         *
+         * Sektor wheel dan nama pemenang memakai
+         * index yang sama.
+         */
+
         const targetIndex =
             Math.floor(
                 Math.random() *
@@ -2217,6 +2924,13 @@ function SpinWheel({
                 sector +
             sector / 2;
 
+
+        /*
+         * Pointer berada di posisi -90deg.
+         * Karena gradient juga dimulai dari -90deg,
+         * kita menghitung target berdasarkan sektor
+         * yang sama.
+         */
 
         const targetRotation =
             (
@@ -2261,6 +2975,11 @@ function SpinWheel({
         setTimeout(
             () => {
 
+                /*
+                 * targetName berasal langsung dari
+                 * targetIndex yang dipakai wheel.
+                 */
+
                 setWinner(
                     targetName
                 );
@@ -2271,9 +2990,56 @@ function SpinWheel({
                 );
 
 
-                showToast(
-                    `Pemenang: ${targetName}`
+                /*
+                 * Simpan history wheel juga.
+                 */
+
+                saveHistory(
+                    "wheel",
+                    "Roda Putar",
+                    targetName
                 );
+
+
+                window.dispatchEvent(
+                    new Event(
+                        "arunikamix-history-updated"
+                    )
+                );
+
+
+                /*
+                 * Hapus pemenang jika opsi aktif.
+                 */
+
+                if (
+                    removeWinner
+                ) {
+
+                    setNames(
+                        previous =>
+                            previous.filter(
+                                (
+                                    name,
+                                    index
+                                ) =>
+                                    index !==
+                                    targetIndex
+                            )
+                    );
+
+
+                    showToast(
+                        `${targetName} terpilih dan dihapus dari daftar.`
+                    );
+
+                } else {
+
+                    showToast(
+                        `Pemenang: ${targetName}`
+                    );
+
+                }
 
             },
             4600
@@ -2284,32 +3050,36 @@ function SpinWheel({
 
     return (
 
-        <div className="wheel-panel">
+        <div className="tool-panel">
 
-            <div className="wheel-header">
+            <div className="tool-header">
 
-                <div className="eyebrow">
+                <div>
 
-                    <Icon
-                        name="rotate"
-                        size={15}
-                    />
+                    <div className="eyebrow">
 
-                    RODA PUTAR
+                        <Icon
+                            name="rotate"
+                            size={15}
+                        />
+
+                        RODA PUTAR
+
+                    </div>
+
+
+                    <h2>
+                        Putar Nama Peserta
+                    </h2>
+
+
+                    <p>
+                        Setiap nama memiliki
+                        satu sektor yang sama
+                        dengan hasil undian.
+                    </p>
 
                 </div>
-
-
-                <h2>
-                    Putar Nama Peserta
-                </h2>
-
-
-                <p>
-                    Setiap nama memiliki
-                    satu sektor yang sama
-                    dengan hasil undian.
-                </p>
 
             </div>
 
@@ -2322,13 +3092,7 @@ function SpinWheel({
 
 
                 <div
-                    className={
-                        `spin-wheel ${
-                            spinning
-                                ? "spinning"
-                                : ""
-                        }`
-                    }
+                    className="spin-wheel"
                     style={{
 
                         background:
@@ -2386,7 +3150,9 @@ function SpinWheel({
 
             <button
                 className="primary-button full"
-                onClick={spin}
+                onClick={
+                    spin
+                }
                 disabled={
                     spinning ||
                     !names.length
@@ -2405,6 +3171,67 @@ function SpinWheel({
                 }
 
             </button>
+
+
+            <label
+                style={{
+                    display:
+                        "flex",
+                    alignItems:
+                        "center",
+                    gap:
+                        "9px",
+                    marginTop:
+                        "14px",
+                    fontFamily:
+                        "DM Sans, sans-serif",
+                    fontSize:
+                        "13px",
+                    color:
+                        "var(--ink-soft)",
+                    cursor:
+                        "pointer"
+                }}
+            >
+
+                <input
+                    type="checkbox"
+                    checked={
+                        removeWinner
+                    }
+                    onChange={e =>
+                        setRemoveWinner(
+                            e.target.checked
+                        )
+                    }
+                />
+
+                Hapus nama yang terpilih
+                dari daftar
+
+            </label>
+
+
+            {removeWinner && (
+
+                <small
+                    style={{
+                        display:
+                            "block",
+                        marginTop:
+                            "7px",
+                        color:
+                            "var(--ink-soft)"
+                    }}
+                >
+
+                    Jika aktif, nama pemenang akan
+                    otomatis dihapus setelah roda
+                    berhenti.
+
+                </small>
+
+            )}
 
 
             {winner && (
@@ -2455,18 +3282,83 @@ function DuelTool({
             );
 
             return;
+
         }
 
 
-        setPairs(
+        const result =
             makeDuelPairs(
                 names
+            );
+
+
+        setPairs(
+            result
+        );
+
+
+        saveHistory(
+            "duel",
+            "Undian Berpasangan",
+            result
+        );
+
+
+        window.dispatchEvent(
+            new Event(
+                "arunikamix-history-updated"
             )
         );
 
 
         showToast(
             "Pasangan berhasil diundi."
+        );
+
+    }
+
+
+    async function copyDuel() {
+
+        if (!pairs.length) {
+            return;
+        }
+
+
+        const text =
+            pairs
+                .map(
+                    (
+                        pair,
+                        index
+                    ) =>
+                        `Duel ${
+                            index + 1
+                        }\n${
+                            pair[0]
+                        } VS ${
+                            pair[1] ||
+                            "BYE"
+                        }`
+                )
+                .join(
+                    "\n\n"
+                );
+
+
+        const success =
+            await copyText(
+                text
+            );
+
+
+        showToast(
+            success
+                ? "Hasil berhasil disalin."
+                : "Gagal menyalin.",
+            success
+                ? "default"
+                : "error"
         );
 
     }
@@ -2521,6 +3413,32 @@ function DuelTool({
             {pairs.length > 0 && (
 
                 <div className="duel-results">
+
+                    <div className="results-heading">
+
+                        <h3>
+                            Hasil pasangan
+                        </h3>
+
+
+                        <button
+                            className="secondary-button"
+                            onClick={
+                                copyDuel
+                            }
+                        >
+
+                            <Icon
+                                name="copy"
+                                size={16}
+                            />
+
+                            Salin
+
+                        </button>
+
+                    </div>
+
 
                     {pairs.map(
                         (
@@ -2599,12 +3517,31 @@ function QueueTool({
             );
 
             return;
+
         }
 
 
-        setQueue(
+        const result =
             shuffleArray(
                 names
+            );
+
+
+        setQueue(
+            result
+        );
+
+
+        saveHistory(
+            "queue",
+            "Urutan Antrean",
+            result
+        );
+
+
+        window.dispatchEvent(
+            new Event(
+                "arunikamix-history-updated"
             )
         );
 
@@ -2813,6 +3750,7 @@ function AuthPanel({
             );
 
             return;
+
         }
 
 
@@ -2845,6 +3783,7 @@ function AuthPanel({
             );
 
             return;
+
         }
 
 
@@ -2868,6 +3807,7 @@ function AuthPanel({
             );
 
             return;
+
         }
 
 
@@ -2881,6 +3821,7 @@ function AuthPanel({
             );
 
             return;
+
         }
 
 
@@ -2925,6 +3866,7 @@ function AuthPanel({
             );
 
             return;
+
         }
 
 
@@ -3169,94 +4111,143 @@ function App() {
         () => {
 
             if (!user) {
+
                 return;
+
             }
 
 
-            async function ensureArunika() {
+            async function loadUserLists() {
 
-                const {
-                    data,
-                    error
-                } =
-                    await supabaseClient
-                        .from(
-                            "attendance_lists"
-                        )
-                        .select("id")
-                        .eq(
-                            "user_id",
-                            user.id
-                        )
-                        .limit(1);
-
-
-                if (error) {
-
-                    console.error(
-                        error
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    !data ||
-                    data.length === 0
-                ) {
+                try {
 
                     const {
-                        data:
-                            created,
-                        error:
-                            createError
+                        data,
+                        error
                     } =
                         await supabaseClient
                             .from(
                                 "attendance_lists"
                             )
-                            .insert({
-                                user_id:
-                                    user.id,
+                            .select("*")
+                            .eq(
+                                "user_id",
+                                user.id
+                            )
+                            .order(
+                                "updated_at",
+                                {
+                                    ascending:
+                                        false
+                                }
+                            );
 
-                                name:
-                                    DEFAULT_TEMPLATE_NAME,
 
-                                names:
-                                    DEFAULT_NAMES
-                            })
-                            .select()
-                            .single();
-
-
-                    if (
-                        createError
-                    ) {
+                    if (error) {
 
                         console.error(
-                            createError
+                            "USER LIST LOAD ERROR:",
+                            error
                         );
 
                         return;
+
                     }
 
 
-                    setSelectedList(
-                        created
+                    if (
+                        data &&
+                        data.length > 0
+                    ) {
+
+                        const first =
+                            data[0];
+
+
+                        setSelectedList(
+                            first
+                        );
+
+
+                        if (
+                            Array.isArray(
+                                first.names
+                            )
+                        ) {
+
+                            setNames(
+                                first.names
+                            );
+
+                        }
+
+                    } else {
+
+                        const {
+                            data:
+                                created,
+                            error:
+                                createError
+                        } =
+                            await supabaseClient
+                                .from(
+                                    "attendance_lists"
+                                )
+                                .insert({
+
+                                    user_id:
+                                        user.id,
+
+                                    name:
+                                        DEFAULT_TEMPLATE_NAME,
+
+                                    names:
+                                        DEFAULT_NAMES
+
+                                })
+                                .select()
+                                .single();
+
+
+                        if (
+                            createError
+                        ) {
+
+                            console.error(
+                                "DEFAULT LIST ERROR:",
+                                createError
+                            );
+
+                            return;
+
+                        }
+
+
+                        setSelectedList(
+                            created
+                        );
+
+
+                        setNames([
+                            ...DEFAULT_NAMES
+                        ]);
+
+                    }
+
+                } catch (
+                    error
+                ) {
+
+                    console.error(
+                        error
                     );
-
-
-                    setNames([
-                        ...DEFAULT_NAMES
-                    ]);
 
                 }
 
             }
 
 
-            ensureArunika();
+            loadUserLists();
 
         },
         [user]
@@ -3337,7 +4328,9 @@ function App() {
 
 
                 <ModeNavigation
-                    mode={mode}
+                    mode={
+                        mode
+                    }
                     setMode={
                         setMode
                     }
@@ -3347,11 +4340,15 @@ function App() {
                 <section className="workspace">
 
                     <AttendanceManager
-                        names={names}
+                        names={
+                            names
+                        }
                         setNames={
                             setNames
                         }
-                        user={user}
+                        user={
+                            user
+                        }
                         selectedList={
                             selectedList
                         }
@@ -3387,6 +4384,9 @@ function App() {
                             <SpinWheel
                                 names={
                                     names
+                                }
+                                setNames={
+                                    setNames
                                 }
                                 showToast={
                                     showToast
@@ -3430,6 +4430,13 @@ function App() {
                 </section>
 
 
+                <HistoryPanel
+                    showToast={
+                        showToast
+                    }
+                />
+
+
                 <footer className="site-footer">
 
                     <span>
@@ -3441,8 +4448,8 @@ function App() {
                     </span>
 
                     <span>
-                        TANPA LOGIN UNTUK
-                        MENGACAK
+                        DATA ACAKAN TERSIMPAN
+                        SECARA LOKAL
                     </span>
 
                 </footer>
@@ -3464,7 +4471,7 @@ function App() {
 
 
 /* =========================================================
-   START
+   START APP
 ========================================================= */
 
 const rootElement =
@@ -3487,4 +4494,4 @@ if (rootElement) {
         )
     );
 
-                }
+        }
