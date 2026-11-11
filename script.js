@@ -2688,6 +2688,383 @@ function SpinWheel({
 
                     <div className="wheel-center">
                         ◉
+function SpinWheel({
+    names,
+    showToast
+}) {
+
+    const [
+        spinning,
+        setSpinning
+    ] = useState(false);
+
+
+    const [
+        rotation,
+        setRotation
+    ] = useState(0);
+
+
+    const [
+        winner,
+        setWinner
+    ] = useState(null);
+
+
+    const total =
+        names.length;
+
+
+    const sector =
+        total > 0
+            ? 360 / total
+            : 360;
+
+
+    const gradient = useMemo(() => {
+
+        if (!total) {
+
+            return (
+                "conic-gradient(#ddd 0deg 360deg)"
+            );
+        }
+
+
+        const colors = [
+            "#e87868",
+            "#e8b34d",
+            "#76a99a",
+            "#4b304d",
+            "#86abb4",
+            "#d78b88",
+            "#93b99d",
+            "#ba8850"
+        ];
+
+
+        const stops = [];
+
+
+        names.forEach(
+            (_, index) => {
+
+                const start =
+                    index * sector;
+
+                const end =
+                    (index + 1) *
+                    sector;
+
+                const color =
+                    colors[
+                        index %
+                        colors.length
+                    ];
+
+
+                stops.push(
+                    `${color} ${start}deg ${end}deg`
+                );
+
+            }
+        );
+
+
+        return `
+            conic-gradient(
+                from -90deg,
+                ${stops.join(",")}
+            )
+        `;
+
+    }, [
+        names,
+        sector,
+        total
+    ]);
+
+
+    /*
+       Ukuran nama.
+    */
+
+    const labelFontSize =
+        total <= 10
+            ? 12
+            : total <= 18
+                ? 9
+                : total <= 25
+                    ? 7
+                    : 5.5;
+
+
+    /*
+       Setiap label ditempatkan tepat
+       di tengah sektornya.
+    */
+
+    function labelStyle(index) {
+
+        const center =
+            index * sector +
+            sector / 2;
+
+
+        return {
+
+            position: "absolute",
+
+            left: "50%",
+            top: "50%",
+
+            width: "45%",
+
+            transform:
+                `rotate(${center}deg)
+                 translateX(0)`,
+
+            transformOrigin:
+                "0 50%",
+
+            fontSize:
+                `${labelFontSize}px`,
+
+            lineHeight: "1",
+
+            textAlign: "right",
+
+            color: "#fff",
+
+            fontWeight: 700,
+
+            textShadow:
+                "0 1px 2px rgba(0,0,0,.45)",
+
+            whiteSpace:
+                "nowrap",
+
+            overflow:
+                "hidden",
+
+            textOverflow:
+                "ellipsis",
+
+            pointerEvents:
+                "none"
+        };
+    }
+
+
+    function spin() {
+
+        if (
+            spinning ||
+            !total
+        ) {
+            return;
+        }
+
+
+        setSpinning(true);
+
+        setWinner(null);
+
+
+        /*
+           SATU-SATUNYA random:
+           tentukan peserta pemenang.
+        */
+
+        const targetIndex =
+            Math.floor(
+                Math.random() * total
+            );
+
+
+        const targetName =
+            names[targetIndex];
+
+
+        /*
+           Titik tengah sektor target.
+        */
+
+        const targetCenter =
+            targetIndex * sector +
+            sector / 2;
+
+
+        /*
+           Karena gradient dimulai dari
+           posisi pointer (-90deg),
+           kita ingin targetCenter
+           berpindah ke posisi pointer.
+
+           Posisi target dalam koordinat roda:
+             targetCenter
+
+           Rotasi yang dibutuhkan:
+             -targetCenter
+        */
+
+        const targetRotation =
+            (
+                360 -
+                targetCenter
+            ) % 360;
+
+
+        const currentNormalized =
+            (
+                rotation % 360 +
+                360
+            ) % 360;
+
+
+        const delta =
+            (
+                targetRotation -
+                currentNormalized +
+                360
+            ) % 360;
+
+
+        const extraTurns =
+            5 +
+            Math.floor(
+                Math.random() * 3
+            );
+
+
+        const finalRotation =
+            rotation +
+            extraTurns * 360 +
+            delta;
+
+
+        setRotation(
+            finalRotation
+        );
+
+
+        /*
+           Hasil menggunakan targetName
+           yang SAMA dengan sektor target.
+
+           Tidak ada random kedua.
+        */
+
+        setTimeout(() => {
+
+            setWinner(
+                targetName
+            );
+
+            setSpinning(false);
+
+            showToast(
+                `Pemenang: ${targetName}`
+            );
+
+        }, 4600);
+    }
+
+
+    return (
+        <div className="wheel-panel">
+
+            <div className="wheel-header">
+
+                <div className="eyebrow">
+
+                    <Icon
+                        name="rotate"
+                        size={15}
+                    />
+
+                    RODA PUTAR
+
+                </div>
+
+
+                <h2>
+                    Putar Nama Peserta
+                </h2>
+
+
+                <p>
+                    Setiap nama memiliki
+                    satu sektor yang sama
+                    dengan hasil undian.
+                </p>
+
+            </div>
+
+
+            <div className="wheel-wrapper">
+
+                <div className="wheel-pointer">
+                    ▼
+                </div>
+
+
+                <div
+                    className={
+                        `spin-wheel ${
+                            spinning
+                                ? "spinning"
+                                : ""
+                        }`
+                    }
+                    style={{
+
+                        background:
+                            gradient,
+
+                        transform:
+                            `rotate(${rotation}deg)`,
+
+                        transition:
+                            spinning
+                                ? "transform 4.6s cubic-bezier(.12,.7,.18,1)"
+                                : "none"
+
+                    }}
+                >
+
+                    {names.map(
+                        (
+                            name,
+                            index
+                        ) => (
+
+                            <div
+                                key={
+                                    `${name}-${index}`
+                                }
+                                className="wheel-label"
+                                style={
+                                    labelStyle(
+                                        index
+                                    )
+                                }
+                            >
+
+                                {
+                                    shortWheelName(
+                                        name
+                                    )
+                                }
+
+                            </div>
+
+                        )
+                    )}
+
+
+                    <div className="wheel-center">
+                        ◉
                     </div>
 
                 </div>
@@ -2732,7 +3109,7 @@ function SpinWheel({
 
         </div>
     );
-}
+                        }
 
 
 /* =========================================================
