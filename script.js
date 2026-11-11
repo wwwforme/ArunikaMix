@@ -939,86 +939,122 @@ function AttendanceManager({
     ----------------------------------------- */
 
     async function createNewList() {
-
-        if (!user) {
-
-            showToast(
-                "Login terlebih dahulu.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const name =
-            window.prompt(
-                "Nama daftar baru:",
-                "Kelas 8A"
-            );
-
-
-        if (!name?.trim()) {
-            return;
-        }
-
-
-        setLoading(true);
-
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("attendance_lists")
-                .insert({
-                    user_id: user.id,
-                    name: name.trim(),
-                    names: []
-                })
-                .select()
-                .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            setSelectedList(data);
-            setNames([]);
-
-            await loadLists();
-
-            showToast(
-                `Daftar "${name.trim()}" dibuat.`
-            );
-
-                } catch (error) {
-
-            console.error(
-                "CREATE LIST ERROR:",
-                error
-            );
-
-            const errorMessage =
-                error?.message ||
-                error?.details ||
-                error?.hint ||
-                "Gagal membuat daftar.";
-
-            showToast(
-                errorMessage,
-                "error"
-            );
-
-        } finally {
-
-            setLoading(false);
-        }
+   
+    if (!user) {
+        showToast(
+            "Login terlebih dahulu.",
+            "error"
+        );
+        return;
     }
+
+    const name = window.prompt(
+        "Nama daftar baru:",
+        "Kelas 8A"
+    );
+
+    if (!name?.trim()) {
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+
+        console.log("=== CREATE LIST START ===");
+        console.log("User:", user);
+        console.log("User ID:", user.id);
+        console.log("Name:", name.trim());
+
+        const insertData = {
+            user_id: user.id,
+            name: name.trim(),
+            names: []
+        };
+
+        console.log(
+            "Data yang dikirim:",
+            insertData
+        );
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("attendance_lists")
+            .insert(insertData)
+            .select("*")
+            .single();
+
+        console.log("HASIL SUPABASE:", {
+            data,
+            error
+        });
+
+        if (error) {
+            console.error(
+                "SUPABASE CREATE ERROR:",
+                error
+            );
+
+            throw error;
+        }
+
+        console.log(
+            "BERHASIL MEMBUAT DAFTAR:",
+            data
+        );
+
+        setSelectedList(data);
+        setNames([]);
+
+        await loadLists();
+
+        showToast(
+            `Daftar "${name.trim()}" berhasil dibuat.`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "CREATE LIST ERROR:",
+            error
+        );
+
+        console.error(
+            "MESSAGE:",
+            error?.message
+        );
+
+        console.error(
+            "DETAILS:",
+            error?.details
+        );
+
+        console.error(
+            "HINT:",
+            error?.hint
+        );
+
+        console.error(
+            "CODE:",
+            error?.code
+        );
+
+        showToast(
+            error?.message ||
+            error?.details ||
+            error?.hint ||
+            "Gagal membuat daftar.",
+            "error"
+        );
+
+    } finally {
+
+        setLoading(false);
+
+    }
+}
 
 
     /* -----------------------------------------
