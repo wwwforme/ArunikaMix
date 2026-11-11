@@ -1695,6 +1695,318 @@ function GroupMode({
 
             </div>
 
+function GroupMode({
+    names,
+    showToast
+}) {
+
+    const [
+        groupCount,
+        setGroupCount
+    ] = useState(
+        Math.min(4, names.length || 1)
+    );
+
+
+    const [
+        groups,
+        setGroups
+    ] = useState([]);
+
+
+    const [
+        history,
+        setHistory
+    ] = useState(() =>
+        readStorage(
+            STORAGE_KEYS.history,
+            []
+        )
+    );
+
+
+    const [
+        showHistory,
+        setShowHistory
+    ] = useState(false);
+
+
+    useEffect(() => {
+
+        if (
+            names.length > 0 &&
+            groupCount > names.length
+        ) {
+
+            setGroupCount(
+                names.length
+            );
+        }
+
+    }, [names.length]);
+
+
+    function mixGroups() {
+
+        if (!names.length) {
+
+            showToast(
+                "Tambahkan peserta terlebih dahulu.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const result =
+            splitIntoGroups(
+                names,
+                groupCount
+            );
+
+
+        setGroups(result);
+
+
+        /*
+           Simpan hasil pembagian
+           ke histori.
+        */
+
+        const historyItem = {
+
+            id:
+                Date.now(),
+
+            createdAt:
+                new Date().toISOString(),
+
+            groupCount:
+                groupCount,
+
+            groups:
+                result
+
+        };
+
+
+        const newHistory = [
+
+            historyItem,
+
+            ...history
+
+        ].slice(0, 20);
+
+
+        setHistory(
+            newHistory
+        );
+
+
+        writeStorage(
+            STORAGE_KEYS.history,
+            newHistory
+        );
+
+
+        showToast(
+            `${groupCount} kelompok berhasil dibuat.`
+        );
+    }
+
+
+    function clearHistory() {
+
+        if (
+            !history.length
+        ) {
+            return;
+        }
+
+
+        if (
+            !window.confirm(
+                "Hapus seluruh histori pembagian?"
+            )
+        ) {
+            return;
+        }
+
+
+        setHistory([]);
+
+
+        writeStorage(
+            STORAGE_KEYS.history,
+            []
+        );
+
+
+        showToast(
+            "Histori pembagian dihapus."
+        );
+    }
+
+
+    function openHistory(item) {
+
+        setGroups(
+            item.groups
+        );
+
+
+        setGroupCount(
+            item.groupCount
+        );
+
+
+        setShowHistory(false);
+
+
+        showToast(
+            "Hasil histori dibuka kembali."
+        );
+    }
+
+
+    async function copyGroups() {
+
+        if (!groups.length) {
+            return;
+        }
+
+
+        const text =
+            groups
+                .map(
+                    (group, index) =>
+                        `Kelompok ${
+                            index + 1
+                        }\n` +
+                        group
+                            .map(
+                                name =>
+                                    `- ${name}`
+                            )
+                            .join("\n")
+                )
+                .join("\n\n");
+
+
+        const success =
+            await copyText(text);
+
+
+        showToast(
+            success
+                ? "Hasil berhasil disalin."
+                : "Gagal menyalin.",
+            success
+                ? "default"
+                : "error"
+        );
+    }
+
+
+    function formatHistoryDate(
+        date
+    ) {
+
+        try {
+
+            return new Date(
+                date
+            ).toLocaleString(
+                "id-ID",
+                {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            );
+
+        } catch {
+
+            return "Waktu tidak diketahui";
+        }
+    }
+
+
+    return (
+        <div className="tool-panel">
+
+            <div className="tool-header">
+
+                <div>
+
+                    <div className="eyebrow">
+                        <Icon
+                            name="users"
+                            size={15}
+                        />
+                        PEMBAGI KELOMPOK
+                    </div>
+
+                    <h2>
+                        Bagi peserta secara adil
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div className="group-control">
+
+                <label>
+                    Jumlah kelompok
+                </label>
+
+                <select
+                    value={groupCount}
+                    onChange={e =>
+                        setGroupCount(
+                            Number(
+                                e.target.value
+                            )
+                        )
+                    }
+                    disabled={!names.length}
+                >
+
+                    {Array.from(
+                        {
+                            length:
+                                names.length || 1
+                        },
+                        (_, i) => (
+
+                            <option
+                                key={i + 1}
+                                value={i + 1}
+                            >
+                                {i + 1} kelompok
+                            </option>
+
+                        )
+                    )}
+
+                </select>
+
+                <small>
+                    Maksimal{" "}
+                    {names.length}{" "}
+                    kelompok untuk{" "}
+                    {names.length}{" "}
+                    peserta.
+                </small>
+
+            </div>
+
 
             <button
                 className="primary-button full"
@@ -1710,6 +2022,8 @@ function GroupMode({
 
             </button>
 
+
+            {/* HASIL TERBARU */}
 
             {groups.length > 0 && (
 
@@ -1791,9 +2105,128 @@ function GroupMode({
 
             )}
 
+
+            {/* HISTORI */}
+
+            <div className="history-section">
+
+                <button
+                    className="saved-lists-toggle"
+                    onClick={() =>
+                        setShowHistory(
+                            !showHistory
+                        )
+                    }
+                >
+
+                    <span>
+                        📜 Histori Pembagian
+                        {" "}
+                        ({history.length})
+                    </span>
+
+                    <span>
+                        {showHistory
+                            ? "▲"
+                            : "▼"}
+                    </span>
+
+                </button>
+
+
+                {showHistory && (
+
+                    <div className="history-list">
+
+                        {!history.length && (
+
+                            <div className="empty-saved">
+                                Belum ada histori
+                                pembagian.
+                            </div>
+
+                        )}
+
+
+                        {history.map(
+                            item => (
+
+                                <button
+                                    key={item.id}
+                                    className="history-item"
+                                    onClick={() =>
+                                        openHistory(
+                                            item
+                                        )
+                                    }
+                                >
+
+                                    <strong>
+                                        {
+                                            item.groupCount
+                                        }{" "}
+                                        kelompok
+                                    </strong>
+
+                                    <small>
+                                        {
+                                            formatHistoryDate(
+                                                item.createdAt
+                                            )
+                                        }
+                                    </small>
+
+                                    <small>
+                                        {
+                                            item.groups
+                                                .reduce(
+                                                    (
+                                                        total,
+                                                        group
+                                                    ) =>
+                                                        total +
+                                                        group.length,
+                                                    0
+                                                )
+                                        }{" "}
+                                        peserta
+                                    </small>
+
+                                </button>
+
+                            )
+                        )}
+
+
+                        {history.length > 0 && (
+
+                            <button
+                                className="secondary-button full"
+                                onClick={
+                                    clearHistory
+                                }
+                            >
+
+                                <Icon
+                                    name="trash"
+                                    size={16}
+                                />
+
+                                Hapus Histori
+
+                            </button>
+
+                        )}
+
+                    </div>
+
+                )}
+
+            </div>
+
         </div>
     );
-}
+                            }
 
 
 /* =========================================================
