@@ -1,7 +1,6 @@
 const {
     useState,
-    useEffect,
-    useMemo
+    useEffect
 } = React;
 
 
@@ -193,13 +192,22 @@ async function copyText(text) {
 ========================================================= */
 
 function splitIntoGroups(names, count) {
+    const safeCount =
+        Math.max(
+            1,
+            Math.min(
+                Number(count) || 1,
+                names.length || 1
+            )
+        );
+
     const shuffled =
         shuffleArray(names);
 
     const groups =
         Array.from(
             {
-                length: count
+                length: safeCount
             },
             () => []
         );
@@ -207,7 +215,7 @@ function splitIntoGroups(names, count) {
     shuffled.forEach(
         (name, index) => {
             groups[
-                index % count
+                index % safeCount
             ].push(name);
         }
     );
@@ -526,10 +534,24 @@ function Toast({
             className={
                 `toast toast-${toast.type}`
             }
+            style={{
+                color: "var(--plum)"
+            }}
         >
-            <span className="toast-dot"></span>
+            <span
+                className="toast-dot"
+                style={{
+                    background:
+                        "var(--plum)"
+                }}
+            ></span>
 
-            <span>
+            <span
+                style={{
+                    color:
+                        "var(--plum)"
+                }}
+            >
                 {toast.message}
             </span>
         </div>
@@ -1653,12 +1675,49 @@ function GroupMode({
 
         setGroupCount(
             current =>
-                Math.min(
-                    current,
-                    names.length
+                Math.max(
+                    1,
+                    Math.min(
+                        Number(current) || 1,
+                        names.length
+                    )
                 )
         );
     }, [names.length]);
+
+
+    function handleGroupCountChange(value) {
+        if (!names.length) {
+            setGroupCount(1);
+            return;
+        }
+
+        const numericValue =
+            Number(value);
+
+        if (
+            Number.isNaN(
+                numericValue
+            )
+        ) {
+            return;
+        }
+
+        const safeValue =
+            Math.max(
+                1,
+                Math.min(
+                    Math.floor(
+                        numericValue
+                    ),
+                    names.length
+                )
+            );
+
+        setGroupCount(
+            safeValue
+        );
+    }
 
 
     function mixGroups() {
@@ -1672,10 +1731,15 @@ function GroupMode({
         }
 
         const count =
-            Math.min(
-                groupCount,
-                names.length
+            Math.max(
+                1,
+                Math.min(
+                    Number(groupCount) || 1,
+                    names.length
+                )
             );
+
+        setGroupCount(count);
 
         const result =
             splitIntoGroups(
@@ -1761,48 +1825,54 @@ function GroupMode({
 
             <div className="group-controls">
 
-                <div className="control-field">
+                <div className="control-field group-count-field">
 
                     <label>
-                        Jumlah kelompok
+                        Banyak kelompok
                     </label>
 
-                    <select
-                        value={groupCount}
-                        onChange={e =>
-                            setGroupCount(
-                                Number(
+                    <div className="group-count-input-wrap">
+
+                        <input
+                            className="group-count-input"
+                            type="number"
+                            min="1"
+                            max={
+                                Math.max(
+                                    1,
+                                    names.length
+                                )
+                            }
+                            value={
+                                names.length
+                                    ? groupCount
+                                    : 1
+                            }
+                            onChange={e =>
+                                handleGroupCountChange(
                                     e.target.value
                                 )
-                            )
-                        }
-                    >
+                            }
+                            onBlur={e =>
+                                handleGroupCountChange(
+                                    e.target.value
+                                )
+                            }
+                            disabled={
+                                names.length === 0
+                            }
+                            aria-label="Banyak kelompok"
+                        />
 
-                        {Array.from(
-                            {
-                                length:
-                                    Math.max(
-                                        1,
-                                        names.length
-                                    )
-                            },
-                            (_, index) => (
+                        <span className="group-count-suffix">
+                            kelompok
+                        </span>
 
-                                <option
-                                    value={
-                                        index + 1
-                                    }
-                                    key={
-                                        index + 1
-                                    }
-                                >
-                                    {index + 1}
-                                </option>
+                    </div>
 
-                            )
-                        )}
-
-                    </select>
+                    <small className="group-count-hint">
+                        Maksimal {names.length || 0}
+                    </small>
 
                 </div>
 
@@ -1850,7 +1920,11 @@ function GroupMode({
 
             {groups.length > 0 && (
 
-                <div className="group-results">
+                <div
+                    className={
+                        `group-results group-results-${groups.length}`
+                    }
+                >
 
                     {groups.map(
                         (group, index) => (
@@ -2611,9 +2685,21 @@ function QueueTool({
                                     </div>
 
 
-                                    <div className="queue-item-content">
+                                    <div
+                                        className="queue-item-content"
+                                        style={{
+                                            color:
+                                                "var(--ink)"
+                                        }}
+                                    >
 
-                                        <span className="queue-position-label">
+                                        <span
+                                            className="queue-position-label"
+                                            style={{
+                                                color:
+                                                    "var(--coral-deep)"
+                                            }}
+                                        >
                                             {index === 0
                                                 ? "PERTAMA"
                                                 : `URUTAN ${
@@ -2622,7 +2708,14 @@ function QueueTool({
                                                 }`}
                                         </span>
 
-                                        <span className="queue-name">
+                                        <span
+                                            className="queue-name"
+                                            style={{
+                                                color:
+                                                    "var(--ink)",
+                                                opacity: 1
+                                            }}
+                                        >
                                             {name}
                                         </span>
 
@@ -2946,56 +3039,42 @@ function AuthPanel({
 
                         <div className="auth-fields">
 
-                            <label className="auth-field">
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                value={email}
+                                autoComplete="email"
+                                aria-label="Email"
+                                onChange={e =>
+                                    setEmail(
+                                        e.target.value
+                                    )
+                                }
+                            />
 
-                                <span>
-                                    Email
-                                </span>
 
-                                <input
-                                    type="email"
-                                    placeholder="nama@email.com"
-                                    value={email}
-                                    autoComplete="email"
-                                    onChange={e =>
-                                        setEmail(
-                                            e.target.value
-                                        )
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                autoComplete="current-password"
+                                aria-label="Password"
+                                onChange={e =>
+                                    setPassword(
+                                        e.target.value
+                                    )
+                                }
+                                onKeyDown={event => {
+
+                                    if (
+                                        event.key ===
+                                        "Enter"
+                                    ) {
+                                        signIn();
                                     }
-                                />
 
-                            </label>
-
-
-                            <label className="auth-field">
-
-                                <span>
-                                    Password
-                                </span>
-
-                                <input
-                                    type="password"
-                                    placeholder="Masukkan password"
-                                    value={password}
-                                    autoComplete="current-password"
-                                    onChange={e =>
-                                        setPassword(
-                                            e.target.value
-                                        )
-                                    }
-                                    onKeyDown={event => {
-
-                                        if (
-                                            event.key ===
-                                            "Enter"
-                                        ) {
-                                            signIn();
-                                        }
-
-                                    }}
-                                />
-
-                            </label>
+                                }}
+                            />
 
                         </div>
 
