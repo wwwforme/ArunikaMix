@@ -175,6 +175,7 @@ async function copyText(text) {
             );
 
             textarea.select();
+
             document.execCommand("copy");
 
             textarea.remove();
@@ -197,7 +198,9 @@ function splitIntoGroups(names, count) {
 
     const groups =
         Array.from(
-            { length: count },
+            {
+                length: count
+            },
             () => []
         );
 
@@ -364,9 +367,7 @@ function getHistoryPreview(item) {
             .join(" • ");
     }
 
-    if (
-        item.type === "wheel"
-    ) {
+    if (item.type === "wheel") {
         return `Pemenang: ${
             item.data.winner || "-"
         }`;
@@ -527,6 +528,7 @@ function Toast({
             }
         >
             <span className="toast-dot"></span>
+
             <span>
                 {toast.message}
             </span>
@@ -536,7 +538,7 @@ function Toast({
 
 
 /* =========================================================
-   MODE NAV
+   MODE NAVIGATION
 ========================================================= */
 
 const MODES = [
@@ -569,7 +571,9 @@ function ModeNav({
 }) {
     return (
         <nav className="mode-nav">
+
             {MODES.map(item => (
+
                 <button
                     key={item.id}
                     className={
@@ -583,16 +587,22 @@ function ModeNav({
                         setMode(item.id)
                     }
                 >
-                    <Icon
-                        name={item.icon}
-                        size={16}
-                    />
+
+                    <span className="mode-tab-icon">
+                        <Icon
+                            name={item.icon}
+                            size={16}
+                        />
+                    </span>
 
                     <span>
                         {item.label}
                     </span>
+
                 </button>
+
             ))}
+
         </nav>
     );
 }
@@ -629,6 +639,7 @@ function AttendanceManager({
         loading,
         setLoading
     ] = useState(false);
+
 
     async function loadLists() {
         if (!user) {
@@ -675,6 +686,7 @@ function AttendanceManager({
                 "Belum ada nama yang ditambahkan.",
                 "error"
             );
+
             return;
         }
 
@@ -698,6 +710,11 @@ function AttendanceManager({
                 (_, i) =>
                     i !== index
             )
+        );
+
+        showToast(
+            "Nama dihapus dari daftar.",
+            "success"
         );
     }
 
@@ -745,6 +762,7 @@ function AttendanceManager({
                 "Masuk terlebih dahulu untuk menyimpan daftar.",
                 "error"
             );
+
             return;
         }
 
@@ -808,6 +826,7 @@ function AttendanceManager({
                 "Masuk terlebih dahulu untuk menyimpan daftar.",
                 "error"
             );
+
             return;
         }
 
@@ -829,7 +848,9 @@ function AttendanceManager({
                     .update({
                         name:
                             selectedList.name,
-                        names: names,
+
+                        names,
+
                         updated_at:
                             new Date().toISOString()
                     })
@@ -848,9 +869,11 @@ function AttendanceManager({
                     .from("attendance_lists")
                     .insert({
                         user_id: user.id,
+
                         name:
                             DEFAULT_TEMPLATE_NAME,
-                        names: names
+
+                        names
                     })
                     .select("*")
                     .single());
@@ -902,6 +925,7 @@ function AttendanceManager({
                 .from("attendance_lists")
                 .update({
                     name: name.trim(),
+
                     updated_at:
                         new Date().toISOString()
                 })
@@ -917,6 +941,7 @@ function AttendanceManager({
                 `Gagal mengubah nama: ${error.message}`,
                 "error"
             );
+
             return;
         }
 
@@ -962,6 +987,7 @@ function AttendanceManager({
                 `Gagal menghapus: ${error.message}`,
                 "error"
             );
+
             return;
         }
 
@@ -1004,7 +1030,9 @@ function AttendanceManager({
         <aside className="attendance-panel">
 
             <div className="panel-heading">
+
                 <div>
+
                     <div className="eyebrow">
                         DAFTAR PESERTA
                     </div>
@@ -1013,15 +1041,18 @@ function AttendanceManager({
                         {selectedList?.name ||
                             DEFAULT_TEMPLATE_NAME}
                     </h3>
+
                 </div>
 
                 <div className="participant-count">
                     {names.length}
                 </div>
+
             </div>
 
 
             <div className="attendance-input">
+
                 <textarea
                     value={input}
                     onChange={e =>
@@ -1036,16 +1067,19 @@ function AttendanceManager({
                 />
 
                 <button
-                    className="btn btn-secondary"
+                    className="btn btn-secondary add-member-button"
                     onClick={addNames}
                 >
-                    <Icon
-                        name="plus"
-                        size={16}
-                    />
+                    <span className="button-icon-box">
+                        <Icon
+                            name="plus"
+                            size={15}
+                        />
+                    </span>
 
-                    Tambahkan
+                    Tambahkan anggota
                 </button>
+
             </div>
 
 
@@ -1059,6 +1093,7 @@ function AttendanceManager({
                         name="rotate"
                         size={14}
                     />
+
                     Reset awal
                 </button>
 
@@ -1070,6 +1105,7 @@ function AttendanceManager({
                         name="trash"
                         size={14}
                     />
+
                     Hapus semua
                 </button>
 
@@ -1079,16 +1115,21 @@ function AttendanceManager({
             <div className="participant-list">
 
                 {names.length === 0 ? (
+
                     <div className="empty-participants">
                         Belum ada nama.
                     </div>
+
                 ) : (
+
                     names.map(
                         (name, index) => (
+
                             <div
                                 className="participant-row"
                                 key={`${name}-${index}`}
                             >
+
                                 <span className="participant-number">
                                     {String(
                                         index + 1
@@ -1118,9 +1159,12 @@ function AttendanceManager({
                                         size={14}
                                     />
                                 </button>
+
                             </div>
+
                         )
                     )
+
                 )}
 
             </div>
@@ -1129,25 +1173,45 @@ function AttendanceManager({
             <div className="saved-area">
 
                 <button
-                    className="saved-toggle"
+                    className={
+                        `saved-toggle ${
+                            showSaved
+                                ? "open"
+                                : ""
+                        }`
+                    }
                     onClick={() =>
                         setShowSaved(
                             value => !value
                         )
                     }
                 >
-                    <span>
-                        Daftar tersimpan
+
+                    <span className="saved-toggle-left">
+
+                        <span className="saved-toggle-mark">
+                            <Icon
+                                name="save"
+                                size={14}
+                            />
+                        </span>
+
+                        <span>
+                            Daftar tersimpan
+                        </span>
+
                     </span>
 
                     <Icon
                         name="chevron"
                         size={15}
                     />
+
                 </button>
 
 
                 {showSaved && (
+
                     <div className="saved-list">
 
                         <div className="saved-list-actions">
@@ -1163,11 +1227,12 @@ function AttendanceManager({
                                     name="plus"
                                     size={14}
                                 />
+
                                 Baru
                             </button>
 
                             <button
-                                className="small-action"
+                                className="small-action accent"
                                 onClick={
                                     saveCurrentList
                                 }
@@ -1177,6 +1242,7 @@ function AttendanceManager({
                                     name="save"
                                     size={14}
                                 />
+
                                 Simpan
                             </button>
 
@@ -1184,16 +1250,22 @@ function AttendanceManager({
 
 
                         {!user ? (
+
                             <div className="saved-empty">
                                 Masuk untuk menyimpan daftar.
                             </div>
+
                         ) : savedLists.length === 0 ? (
+
                             <div className="saved-empty">
                                 Belum ada daftar tersimpan.
                             </div>
+
                         ) : (
+
                             savedLists.map(
                                 list => (
+
                                     <div
                                         className="saved-item"
                                         key={list.id}
@@ -1212,11 +1284,13 @@ function AttendanceManager({
                                             </span>
 
                                             <small>
-                                                {Array.isArray(
-                                                    list.names
-                                                )
-                                                    ? list.names.length
-                                                    : 0}{" "}
+                                                {
+                                                    Array.isArray(
+                                                        list.names
+                                                    )
+                                                        ? list.names.length
+                                                        : 0
+                                                }{" "}
                                                 nama
                                             </small>
                                         </button>
@@ -1228,6 +1302,7 @@ function AttendanceManager({
                                                     list
                                                 )
                                             }
+                                            aria-label="Ubah nama"
                                         >
                                             <Icon
                                                 name="edit"
@@ -1242,6 +1317,7 @@ function AttendanceManager({
                                                     list
                                                 )
                                             }
+                                            aria-label="Hapus daftar"
                                         >
                                             <Icon
                                                 name="trash"
@@ -1250,11 +1326,14 @@ function AttendanceManager({
                                         </button>
 
                                     </div>
+
                                 )
                             )
+
                         )}
 
                     </div>
+
                 )}
 
             </div>
@@ -1386,6 +1465,7 @@ function HistoryPanel({
                     </span>
 
                     <span>
+
                         <span className="history-toggle-title">
                             Riwayat Acakan
                         </span>
@@ -1393,6 +1473,7 @@ function HistoryPanel({
                         <span className="history-toggle-subtitle">
                             {history.length} hasil tersimpan
                         </span>
+
                     </span>
 
                 </span>
@@ -1425,6 +1506,7 @@ function HistoryPanel({
 
 
             {open && (
+
                 <div className="history-body">
 
                     {history.length === 0 ? (
@@ -1441,6 +1523,7 @@ function HistoryPanel({
 
                                 {history.map(
                                     item => (
+
                                         <div
                                             className="history-item"
                                             key={item.id}
@@ -1499,6 +1582,7 @@ function HistoryPanel({
                                             </button>
 
                                         </div>
+
                                     )
                                 )}
 
@@ -1528,6 +1612,7 @@ function HistoryPanel({
                     )}
 
                 </div>
+
             )}
 
         </section>
@@ -1582,6 +1667,7 @@ function GroupMode({
                 "Tambahkan nama terlebih dahulu.",
                 "error"
             );
+
             return;
         }
 
@@ -1691,6 +1777,7 @@ function GroupMode({
                             )
                         }
                     >
+
                         {Array.from(
                             {
                                 length:
@@ -1700,6 +1787,7 @@ function GroupMode({
                                     )
                             },
                             (_, index) => (
+
                                 <option
                                     value={
                                         index + 1
@@ -1710,8 +1798,10 @@ function GroupMode({
                                 >
                                     {index + 1}
                                 </option>
+
                             )
                         )}
+
                     </select>
 
                 </div>
@@ -1721,12 +1811,14 @@ function GroupMode({
                     className="btn btn-primary group-mix-button"
                     onClick={mixGroups}
                 >
+
                     <Icon
                         name="shuffle"
                         size={17}
                     />
 
                     Acak & Bagi Kelompok
+
                 </button>
 
             </div>
@@ -1763,6 +1855,7 @@ function GroupMode({
 
                     {groups.map(
                         (group, index) => (
+
                             <div
                                 className="group-card"
                                 key={index}
@@ -1789,18 +1882,23 @@ function GroupMode({
                                             name,
                                             memberIndex
                                         ) => (
+
                                             <div
                                                 className="group-card-member"
                                                 key={`${name}-${memberIndex}`}
                                             >
+                                                <span className="member-dot"></span>
+
                                                 {name}
                                             </div>
+
                                         )
                                     )}
 
                                 </div>
 
                             </div>
+
                         )
                     )}
 
@@ -1900,13 +1998,6 @@ function SpinWheel({
             return;
         }
 
-        /*
-         * SATU targetIndex menentukan
-         * seluruh hasil.
-         *
-         * Tidak ada random kedua.
-         */
-
         const targetIndex =
             Math.floor(
                 Math.random() * total
@@ -1915,49 +2006,47 @@ function SpinWheel({
         const targetName =
             names[targetIndex];
 
-
         /*
-         * Wheel dibuat dengan:
-         *
-         * conic-gradient(from -90deg)
-         *
-         * Artinya sektor pertama
-         * dimulai dari posisi atas.
-         *
-         * Titik tengah sektor target:
-         *
-         * (index + 0.5) * sector
-         *
-         * Kita ingin titik tengah tersebut
-         * tepat berada di pointer atas.
+         * Karena pointer berada di posisi
+         * 12 o'clock, pusat sektor target
+         * diarahkan tepat ke atas.
          */
+
+        const targetCenter =
+            (
+                targetIndex +
+                0.5
+            ) * sector;
 
         const targetAngle =
-            90 -
-            (
-                (targetIndex + 0.5) *
-                sector
-            );
-
-
-        /*
-         * Tambahkan beberapa putaran penuh.
-         * Karena 360 derajat tidak mengubah
-         * sektor akhirnya, target tetap sama.
-         */
+            -targetCenter;
 
         const extraSpins =
             7 * 360;
 
+        /*
+         * Gunakan rotation terakhir sebagai
+         * titik awal agar arah visual tetap
+         * konsisten walaupun roda sudah pernah
+         * diputar sebelumnya.
+         */
+
+        const normalized =
+            rotation % 360;
+
+        const correction =
+            targetAngle -
+            normalized;
 
         const finalRotation =
             rotation +
             extraSpins +
-            targetAngle;
-
+            correction;
 
         setWinner(null);
+
         setSpinning(true);
+
         setRotation(
             finalRotation
         );
@@ -1965,11 +2054,6 @@ function SpinWheel({
 
         window.setTimeout(
             () => {
-                /*
-                 * targetName berasal dari
-                 * targetIndex yang sama persis
-                 * dengan sektor target.
-                 */
 
                 setWinner(
                     targetName
@@ -2016,6 +2100,7 @@ function SpinWheel({
                     `Terpilih: ${targetName}`,
                     "success"
                 );
+
             },
             4600
         );
@@ -2032,6 +2117,7 @@ function SpinWheel({
                             _,
                             index
                         ) => {
+
                             const start =
                                 index *
                                 sector;
@@ -2052,6 +2138,7 @@ function SpinWheel({
                             return (
                                 `${color} ${start}deg ${end}deg`
                             );
+
                         }
                     )
                     .join(", ")}
@@ -2096,14 +2183,9 @@ function SpinWheel({
                             <span></span>
                         </div>
 
+
                         <div
-                            className={
-                                `wheel ${
-                                    spinning
-                                        ? "is-spinning"
-                                        : ""
-                                }`
-                            }
+                            className="wheel"
                             style={{
                                 background:
                                     wheelBackground,
@@ -2120,10 +2202,11 @@ function SpinWheel({
                                 ) => {
 
                                     const angle =
-                                        index *
-                                            sector +
-                                        sector /
-                                            2;
+                                        (
+                                            index +
+                                            0.5
+                                        ) *
+                                        sector;
 
                                     return (
                                         <div
@@ -2131,9 +2214,10 @@ function SpinWheel({
                                             className="wheel-label"
                                             style={{
                                                 transform:
-                                                    `rotate(${angle}deg)`
+                                                    `rotate(${angle}deg) translateY(-38%)`
                                             }}
                                         >
+
                                             <span>
                                                 {
                                                     shortWheelName(
@@ -2141,15 +2225,20 @@ function SpinWheel({
                                                     )
                                                 }
                                             </span>
+
                                         </div>
                                     );
+
                                 }
                             )}
 
+
                             <div className="wheel-center">
-                                <span>
+
+                                <span className="wheel-center-small">
                                     ARUNIKA
                                 </span>
+
                             </div>
 
                         </div>
@@ -2160,13 +2249,14 @@ function SpinWheel({
                     <div className="wheel-controls">
 
                         <button
-                            className="btn btn-primary"
+                            className="btn btn-primary wheel-spin-button"
                             onClick={spin}
                             disabled={
                                 spinning ||
                                 total === 0
                             }
                         >
+
                             <Icon
                                 name="rotate"
                                 size={17}
@@ -2175,6 +2265,7 @@ function SpinWheel({
                             {spinning
                                 ? "Memutar..."
                                 : "Putar Roda"}
+
                         </button>
 
 
@@ -2250,6 +2341,7 @@ function DuelTool({
                 "Minimal 2 peserta.",
                 "error"
             );
+
             return;
         }
 
@@ -2335,12 +2427,14 @@ function DuelTool({
                 className="btn btn-primary"
                 onClick={drawDuel}
             >
+
                 <Icon
                     name="shuffle"
                     size={17}
                 />
 
                 Acak Pasangan
+
             </button>
 
 
@@ -2358,12 +2452,14 @@ function DuelTool({
                             className="small-action"
                             onClick={copyDuel}
                         >
+
                             <Icon
                                 name="copy"
                                 size={14}
                             />
 
                             Salin
+
                         </button>
 
                     </div>
@@ -2376,6 +2472,7 @@ function DuelTool({
                                 pair,
                                 index
                             ) => (
+
                                 <div
                                     className="duel-card"
                                     key={index}
@@ -2408,6 +2505,7 @@ function DuelTool({
                                     </div>
 
                                 </div>
+
                             )
                         )}
 
@@ -2442,6 +2540,7 @@ function QueueTool({
                 "Tambahkan nama terlebih dahulu.",
                 "error"
             );
+
             return;
         }
 
@@ -2521,12 +2620,14 @@ function QueueTool({
                 className="btn btn-primary"
                 onClick={makeQueue}
             >
+
                 <Icon
                     name="shuffle"
                     size={17}
                 />
 
                 Acak Urutan
+
             </button>
 
 
@@ -2544,12 +2645,14 @@ function QueueTool({
                             className="small-action"
                             onClick={copyQueue}
                         >
+
                             <Icon
                                 name="copy"
                                 size={14}
                             />
 
                             Salin
+
                         </button>
 
                     </div>
@@ -2562,25 +2665,69 @@ function QueueTool({
                                 name,
                                 index
                             ) => (
+
                                 <div
-                                    className="queue-item"
+                                    className={
+                                        `queue-item ${
+                                            index === 0
+                                                ? "first"
+                                                : ""
+                                        }`
+                                    }
                                     key={`${name}-${index}`}
                                 >
 
-                                    <span className="queue-number">
-                                        {String(
-                                            index + 1
-                                        ).padStart(
-                                            2,
-                                            "0"
-                                        )}
-                                    </span>
+                                    <div className="queue-number-wrap">
 
-                                    <span className="queue-name">
-                                        {name}
-                                    </span>
+                                        <span className="queue-number">
+                                            {String(
+                                                index + 1
+                                            ).padStart(
+                                                2,
+                                                "0"
+                                            )}
+                                        </span>
+
+                                        {index <
+                                            queue.length -
+                                                1 && (
+                                            <span className="queue-line"></span>
+                                        )}
+
+                                    </div>
+
+
+                                    <div className="queue-item-content">
+
+                                        <span className="queue-position-label">
+                                            {index === 0
+                                                ? "PERTAMA"
+                                                : `URUTAN ${
+                                                    index +
+                                                    1
+                                                }`}
+                                        </span>
+
+                                        <span className="queue-name">
+                                            {name}
+                                        </span>
+
+                                    </div>
+
+
+                                    {index === 0 && (
+
+                                        <span className="queue-first-mark">
+                                            <Icon
+                                                name="check"
+                                                size={14}
+                                            />
+                                        </span>
+
+                                    )}
 
                                 </div>
+
                             )
                         )}
 
@@ -2629,6 +2776,7 @@ function AuthPanel({
                 "Isi email dan password.",
                 "error"
             );
+
             return;
         }
 
@@ -2642,6 +2790,7 @@ function AuthPanel({
                 .signInWithPassword({
                     email:
                         email.trim(),
+
                     password
                 });
 
@@ -2652,6 +2801,7 @@ function AuthPanel({
                 error.message,
                 "error"
             );
+
             return;
         }
 
@@ -2675,6 +2825,7 @@ function AuthPanel({
                 "Isi email dan password.",
                 "error"
             );
+
             return;
         }
 
@@ -2692,7 +2843,9 @@ function AuthPanel({
                 .signUp({
                     email:
                         email.trim(),
+
                     password,
+
                     options: {
                         emailRedirectTo:
                             redirectUrl
@@ -2706,6 +2859,7 @@ function AuthPanel({
                 error.message,
                 "error"
             );
+
             return;
         }
 
@@ -2735,6 +2889,7 @@ function AuthPanel({
 
 
     if (user) {
+
         return (
             <div className="auth-user">
 
@@ -2851,10 +3006,6 @@ function App() {
     } = useToast();
 
 
-    /*
-     * SESSION
-     */
-
     useEffect(() => {
         let mounted = true;
 
@@ -2884,6 +3035,7 @@ function App() {
                     _event,
                     session
                 ) => {
+
                     if (!mounted) {
                         return;
                     }
@@ -2892,6 +3044,7 @@ function App() {
                         session?.user ||
                         null
                     );
+
                 }
             );
 
@@ -2903,10 +3056,6 @@ function App() {
     }, []);
 
 
-    /*
-     * LOCAL NAMES
-     */
-
     useEffect(() => {
         writeStorage(
             STORAGE_KEYS.currentAttendance,
@@ -2915,11 +3064,8 @@ function App() {
     }, [names]);
 
 
-    /*
-     * LOAD USER LIST
-     */
-
     useEffect(() => {
+
         if (!user) {
             setSelectedList(null);
             return;
@@ -2928,6 +3074,7 @@ function App() {
         let cancelled = false;
 
         async function loadUserLists() {
+
             const {
                 data,
                 error
@@ -2953,6 +3100,7 @@ function App() {
                 data &&
                 data.length > 0
             ) {
+
                 const first =
                     data[0];
 
@@ -2973,11 +3121,6 @@ function App() {
                 return;
             }
 
-
-            /*
-             * Buat template Arunika
-             * otomatis untuk akun baru.
-             */
 
             const {
                 data: created,
@@ -3005,6 +3148,7 @@ function App() {
                 console.error(
                     createError
                 );
+
                 return;
             }
 
@@ -3022,10 +3166,12 @@ function App() {
         return () => {
             cancelled = true;
         };
+
     }, [user]);
 
 
     function renderMode() {
+
         if (mode === "groups") {
             return (
                 <GroupMode
@@ -3075,14 +3221,13 @@ function App() {
                 <div className="brand">
 
                     <div className="brand-mark">
-
                         <span></span>
                         <span></span>
                         <span></span>
-
                     </div>
 
                     <div className="brand-text">
+
                         <div className="brand-name">
                             ArunikaMix
                         </div>
@@ -3090,6 +3235,7 @@ function App() {
                         <div className="brand-caption">
                             alat kecil untuk menyatukan orang
                         </div>
+
                     </div>
 
                 </div>
