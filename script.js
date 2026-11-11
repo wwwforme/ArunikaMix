@@ -1,4725 +1,4018 @@
 const {
-   1 useState,
-    useEffect,
-    useMemo
+useState,
+useEffect,
+useMemo
 } = React;
 
-
 /* =========================================================
-   SUPABASE
+SUPABASE
 ========================================================= */
 
 const SUPABASE_URL =
-    "https://hldsxluraxvsxscjfbqf.supabase.co";
+"https://hldsxluraxvsxscjfbqf.supabase.co";
 
 const SUPABASE_ANON_KEY =
-    "sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0";
+"sb_publishable_UHd_c11RvO2W814V17CbrA_v3WmdRF0";
 
 const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-    );
-
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
 
 /* =========================================================
-   DEFAULT DATA
+DEFAULT DATA
 ========================================================= */
 
 const DEFAULT_TEMPLATE_NAME = "Arunika";
 
 const DEFAULT_NAMES = [
-    "Agung Pranaja",
-    "Aina Salsabil",
-    "Ainul Mardhiah",
-    "Azfar Syahmi Al Akbar",
-    "Fhyan Farikha Andi",
-    "Iffanda Putri Vallendini",
-    "Kansya Asqira Madhani Alam",
-    "Khayla Eka Anugerah",
-    "La Ode Abdul Raja Mananti",
-    "La Ode Muhammad Syaban Hasnan",
-    "Mahira Hasna Kamila Mustam",
-    "Muh. Nur Alim",
-    "Muhammad Fajar Ayyatullah An Nur",
-    "Naizar Al Azmi K",
-    "Nanda Saputri",
-    "Nur Zahwa Syarifuddin",
-    "Nurul Mutmainnah",
-    "Oriza Putri Virany H.",
-    "Raslan Syarsid",
-    "Rasya Muhammad Athaya",
-    "Sahlaa Zahidah Hawwaa M.",
-    "Wa Ode Dini Dzakirah Lukman",
-    "Wa Ode Kamalia Putri",
-    "Wa Ode Ibnaty Nurul Aini S.",
-    "Waldan Risallah Ampaeja",
-    "Wa Ode Zalni Nining Pratiwi",
-    "Zaim Andrias Adhimukti",
-    "Zakiyah Khoirunnisa"
+"Agung Pranaja",
+"Aina Salsabil",
+"Ainul Mardhiah",
+"Azfar Syahmi Al Akbar",
+"Fhyan Farikha Andi",
+"Iffanda Putri Vallendini",
+"Kansya Asqira Madhani Alam",
+"Khayla Eka Anugerah",
+"La Ode Abdul Raja Mananti",
+"La Ode Muhammad Syaban Hasnan",
+"Mahira Hasna Kamila Mustam",
+"Muh. Nur Alim",
+"Muhammad Fajar Ayyatullah An Nur",
+"Naizar Al Azmi K",
+"Nanda Saputri",
+"Nur Zahwa Syarifuddin",
+"Nurul Mutmainnah",
+"Oriza Putri Virany H.",
+"Raslan Syarsid",
+"Rasya Muhammad Athaya",
+"Sahlaa Zahidah Hawwaa M.",
+"Wa Ode Dini Dzakirah Lukman",
+"Wa Ode Kamalia Putri",
+"Wa Ode Ibnaty Nurul Aini S.",
+"Waldan Risallah Ampaeja",
+"Wa Ode Zalni Nining Pratiwi",
+"Zaim Andrias Adhimukti",
+"Zakiyah Khoirunnisa"
 ];
-
 
 const GROUP_COLORS = [
-    "#e87868",
-    "#e8b34d",
-    "#76a99a",
-    "#4b304d",
-    "#86abb4",
-    "#d78b88",
-    "#93b99d",
-    "#ba8850"
+"#e87868",
+"#e8b34d",
+"#76a99a",
+"#4b304d",
+"#86abb4",
+"#d78b88",
+"#93b99d",
+"#ba8850"
 ];
 
-
 /* =========================================================
-   LOCAL STORAGE
+LOCAL STORAGE
 ========================================================= */
 
 const STORAGE_KEYS = {
-    currentAttendance:
-        "arunikamix_current_attendance_v4",
+currentAttendance:
+"arunikamix_current_attendance_v4",
 
-    history:
-        "arunikamix_shuffle_history_v4"
+history:  
+    "arunikamix_shuffle_history_v4"
+
 };
 
-
 function readStorage(key, fallback) {
-    try {
-        const value = localStorage.getItem(key);
+try {
+const value = localStorage.getItem(key);
 
-        if (!value) {
-            return fallback;
-        }
+if (!value) {  
+        return fallback;  
+    }  
 
-        return JSON.parse(value);
+    return JSON.parse(value);  
 
-    } catch {
-        return fallback;
-    }
+} catch {  
+    return fallback;  
 }
 
+}
 
 function writeStorage(key, value) {
-    try {
-        localStorage.setItem(
-            key,
-            JSON.stringify(value)
-        );
-    } catch {
-        // Ignore storage errors
-    }
+try {
+localStorage.setItem(
+key,
+JSON.stringify(value)
+);
+} catch {
+// Ignore storage errors
+}
 }
 
-
 /* =========================================================
-   GENERAL HELPERS
+GENERAL HELPERS
 ========================================================= */
 
 function shuffleArray(array) {
 
-    const result = [...array];
+const result = [...array];  
 
-    for (
-        let i = result.length - 1;
-        i > 0;
-        i--
-    ) {
+for (  
+    let i = result.length - 1;  
+    i > 0;  
+    i--  
+) {  
 
-        const j =
-            Math.floor(
-                Math.random() * (i + 1)
-            );
+    const j =  
+        Math.floor(  
+            Math.random() * (i + 1)  
+        );  
 
-        [
-            result[i],
-            result[j]
-        ] = [
-            result[j],
-            result[i]
-        ];
-    }
+    [  
+        result[i],  
+        result[j]  
+    ] = [  
+        result[j],  
+        result[i]  
+    ];  
+}  
 
-    return result;
+return result;
+
 }
-
 
 function cleanNames(text) {
 
-    return text
-        .split(/\r?\n/)
-        .map(name => name.trim())
-        .filter(Boolean);
+return text  
+    .split(/\r?\n/)  
+    .map(name => name.trim())  
+    .filter(Boolean);
+
 }
 
-
 /* =========================================================
-   SHORT NAME FOR WHEEL
+SHORT NAME FOR WHEEL
 ========================================================= */
 
 function shortWheelName(name) {
 
-    const parts =
-        name
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
+const parts =  
+    name  
+        .trim()  
+        .split(/\s+/)  
+        .filter(Boolean);  
 
-    if (parts.length === 0) {
-        return "";
-    }
+if (parts.length === 0) {  
+    return "";  
+}  
 
-    if (parts.length === 1) {
-        return parts[0];
-    }
-
-
-    /*
-       La Ode Muhammad ...
-       → La Ode M
-
-       Wa Ode Kamalia ...
-       → Wa Ode K
-    */
-
-    if (
-        parts[0] === "La" &&
-        parts[1] === "Ode"
-    ) {
-
-        return `La Ode ${
-            parts[2]
-                ? parts[2][0]
-                : ""
-        }`;
-    }
+if (parts.length === 1) {  
+    return parts[0];  
+}  
 
 
-    if (
-        parts[0] === "Wa" &&
-        parts[1] === "Ode"
-    ) {
+/*  
+   La Ode Muhammad ...  
+   → La Ode M  
 
-        return `Wa Ode ${
-            parts[2]
-                ? parts[2][0]
-                : ""
-        }`;
-    }
+   Wa Ode Kamalia ...  
+   → Wa Ode K  
+*/  
+
+if (  
+    parts[0] === "La" &&  
+    parts[1] === "Ode"  
+) {  
+
+    return `La Ode ${  
+        parts[2]  
+            ? parts[2][0]  
+            : ""  
+    }`;  
+}  
 
 
-    return `${parts[0]} ${parts[1][0]}`;
+if (  
+    parts[0] === "Wa" &&  
+    parts[1] === "Ode"  
+) {  
+
+    return `Wa Ode ${  
+        parts[2]  
+            ? parts[2][0]  
+            : ""  
+    }`;  
+}  
+
+
+return `${parts[0]} ${parts[1][0]}`;
+
 }
 
-
 /* =========================================================
-   GROUPING
+GROUPING
 ========================================================= */
 
 function splitIntoGroups(
-    names,
-    groupCount
+names,
+groupCount
 ) {
 
-    const shuffled =
-        shuffleArray(names);
+const shuffled =  
+    shuffleArray(names);  
 
-    const groups =
-        Array.from(
-            { length: groupCount },
-            () => []
-        );
-
-
-    /*
-       Dibagi dengan metode round-robin.
-
-       30 orang / 30 grup:
-       setiap grup = 1 orang
-
-       30 orang / 4 grup:
-       8, 8, 7, 7
-    */
-
-    shuffled.forEach(
-        (name, index) => {
-
-            groups[
-                index % groupCount
-            ].push(name);
-
-        }
-    );
+const groups =  
+    Array.from(  
+        { length: groupCount },  
+        () => []  
+    );  
 
 
-    return groups;
+/*  
+   Dibagi dengan metode round-robin.  
+
+   30 orang / 30 grup:  
+   setiap grup = 1 orang  
+
+   30 orang / 4 grup:  
+   8, 8, 7, 7  
+*/  
+
+shuffled.forEach(  
+    (name, index) => {  
+
+        groups[  
+            index % groupCount  
+        ].push(name);  
+
+    }  
+);  
+
+
+return groups;
+
 }
-
 
 function makeDuelPairs(names) {
 
-    const shuffled =
-        shuffleArray(names);
+const shuffled =  
+    shuffleArray(names);  
 
-    const pairs = [];
+const pairs = [];  
 
-    for (
-        let i = 0;
-        i < shuffled.length;
-        i += 2
-    ) {
+for (  
+    let i = 0;  
+    i < shuffled.length;  
+    i += 2  
+) {  
 
-        if (
-            i + 1 <
-            shuffled.length
-        ) {
+    if (  
+        i + 1 <  
+        shuffled.length  
+    ) {  
 
-            pairs.push([
-                shuffled[i],
-                shuffled[i + 1]
-            ]);
+        pairs.push([  
+            shuffled[i],  
+            shuffled[i + 1]  
+        ]);  
 
-        } else {
+    } else {  
 
-            pairs.push([
-                shuffled[i],
-                null
-            ]);
+        pairs.push([  
+            shuffled[i],  
+            null  
+        ]);  
 
-        }
-    }
+    }  
+}  
 
-    return pairs;
+return pairs;
+
 }
 
-
 /* =========================================================
-   COPY
+COPY
 ========================================================= */
 
 async function copyText(text) {
 
-    try {
+try {  
 
-        await navigator.clipboard.writeText(
-            text
-        );
+    await navigator.clipboard.writeText(  
+        text  
+    );  
 
-        return true;
+    return true;  
 
-    } catch {
+} catch {  
 
-        return false;
-    }
+    return false;  
 }
 
+}
 
 /* =========================================================
-   ICON
+ICON
 ========================================================= */
 
 function Icon({
-    name,
-    size = 18
+name,
+size = 18
 }) {
 
-    const icons = {
+const icons = {  
 
-        users: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-        `,
+    users: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>  
+            <circle cx="9" cy="7" r="4"/>  
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>  
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>  
+        </svg>  
+    `,  
 
-        rotate: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <path d="M21 12a9 9 0 0 0-15.3-6.4L3 8"/>
-                <path d="M3 3v5h5"/>
-                <path d="M3 12a9 9 0 0 0 15.3 6.4L21 16"/>
-                <path d="M21 21v-5h-5"/>
-            </svg>
-        `,
+    rotate: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <path d="M21 12a9 9 0 0 0-15.3-6.4L3 8"/>  
+            <path d="M3 3v5h5"/>  
+            <path d="M3 12a9 9 0 0 0 15.3 6.4L21 16"/>  
+            <path d="M21 21v-5h-5"/>  
+        </svg>  
+    `,  
 
-        shuffle: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <path d="M16 3h5v5"/>
-                <path d="M4 20L21 3"/>
-                <path d="M21 16v5h-5"/>
-                <path d="M15 15l6 6"/>
-                <path d="M4 4l5 5"/>
-            </svg>
-        `,
+    shuffle: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <path d="M16 3h5v5"/>  
+            <path d="M4 20L21 3"/>  
+            <path d="M21 16v5h-5"/>  
+            <path d="M15 15l6 6"/>  
+            <path d="M4 4l5 5"/>  
+        </svg>  
+    `,  
 
-        list: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-        `,
+    list: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <line x1="8" y1="6" x2="21" y2="6"/>  
+            <line x1="8" y1="12" x2="21" y2="12"/>  
+            <line x1="8" y1="18" x2="21" y2="18"/>  
+            <line x1="3" y1="6" x2="3.01" y2="6"/>  
+            <line x1="3" y1="12" x2="3.01" y2="12"/>  
+            <line x1="3" y1="18" x2="3.01" y2="18"/>  
+        </svg>  
+    `,  
 
-        trash: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14H6L5 6"/>
-                <path d="M10 11v6"/>
-                <path d="M14 11v6"/>
-                <path d="M9 6V4h6v2"/>
-            </svg>
-        `,
+    trash: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <polyline points="3 6 5 6 21 6"/>  
+            <path d="M19 6l-1 14H6L5 6"/>  
+            <path d="M10 11v6"/>  
+            <path d="M14 11v6"/>  
+            <path d="M9 6V4h6v2"/>  
+        </svg>  
+    `,  
 
-        plus: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-        `,
+    plus: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round">  
+            <line x1="12" y1="5" x2="12" y2="19"/>  
+            <line x1="5" y1="12" x2="19" y2="12"/>  
+        </svg>  
+    `,  
 
-        edit: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-            </svg>
-        `,
+    edit: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <path d="M12 20h9"/>  
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>  
+        </svg>  
+    `,  
 
-        save: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-            </svg>
-        `,
+    save: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>  
+            <polyline points="17 21 17 13 7 13 7 21"/>  
+            <polyline points="7 3 7 8 15 8"/>  
+        </svg>  
+    `,  
 
-        copy: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-        `,
+    copy: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <rect x="9" y="9" width="13" height="13" rx="2"/>  
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>  
+        </svg>  
+    `,  
 
-        link: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-            </svg>
-        `,
+    link: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>  
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>  
+        </svg>  
+    `,  
 
-        trophy: `
-            <svg viewBox="0 0 24 24"
-                 width="${size}"
-                 height="${size}"
-                 fill="none"
-                 stroke="currentColor"
-                 stroke-width="2"
-                 stroke-linecap="round"
-                 stroke-linejoin="round">
-                <path d="M8 21h8"/>
-                <path d="M12 17v4"/>
-                <path d="M7 4h10v5a5 5 0 0 1-10 0Z"/>
-                <path d="M7 5H3v2a4 4 0 0 0 4 4"/>
-                <path d="M17 5h4v2a4 4 0 0 1-4 4"/>
-            </svg>
-        `
-    };
+    trophy: `  
+        <svg viewBox="0 0 24 24"  
+             width="${size}"  
+             height="${size}"  
+             fill="none"  
+             stroke="currentColor"  
+             stroke-width="2"  
+             stroke-linecap="round"  
+             stroke-linejoin="round">  
+            <path d="M8 21h8"/>  
+            <path d="M12 17v4"/>  
+            <path d="M7 4h10v5a5 5 0 0 1-10 0Z"/>  
+            <path d="M7 5H3v2a4 4 0 0 0 4 4"/>  
+            <path d="M17 5h4v2a4 4 0 0 1-4 4"/>  
+        </svg>  
+    `  
+};  
 
 
-    return React.createElement(
-        "span",
-        {
-            className: "icon-wrap",
-            dangerouslySetInnerHTML: {
-                __html:
-                    icons[name] ||
-                    icons.users
-            }
-        }
-    );
+return React.createElement(  
+    "span",  
+    {  
+        className: "icon-wrap",  
+        dangerouslySetInnerHTML: {  
+            __html:  
+                icons[name] ||  
+                icons.users  
+        }  
+    }  
+);
+
 }
 
-
 /* =========================================================
-   TOAST
+TOAST
 ========================================================= */
 
 function useToast() {
 
-    const [
-        toast,
-        setToast
-    ] = useState(null);
+const [  
+    toast,  
+    setToast  
+] = useState(null);  
 
 
-    function showToast(
-        message,
-        type = "default"
-    ) {
+function showToast(  
+    message,  
+    type = "default"  
+) {  
 
-        setToast({
-            message,
-            type
-        });
+    setToast({  
+        message,  
+        type  
+    });  
 
-        setTimeout(() => {
-            setToast(null);
-        }, 2600);
-    }
+    setTimeout(() => {  
+        setToast(null);  
+    }, 2600);  
+}  
 
 
-    return {
-        toast,
-        showToast
-    };
+return {  
+    toast,  
+    showToast  
+};
+
 }
-
 
 function Toast({
-    toast
+toast
 }) {
 
-    if (!toast) {
-        return null;
-    }
+if (!toast) {  
+    return null;  
+}  
 
-    return (
-        <div
-            className={
-                `toast toast-${toast.type}`
-            }
-        >
-            {toast.message}
-        </div>
-    );
+return (  
+    <div  
+        className={  
+            `toast toast-${toast.type}`  
+        }  
+    >  
+        {toast.message}  
+    </div>  
+);
+
 }
 
-
 /* =========================================================
-   MODE NAVIGATION
+MODE NAVIGATION
 ========================================================= */
 
 function ModeNavigation({
-    mode,
-    setMode
+mode,
+setMode
 }) {
 
-    const modes = [
+const modes = [  
 
-        {
-            id: "groups",
-            label: "Pembagi Kelompok",
-            icon: "users"
-        },
+    {  
+        id: "groups",  
+        label: "Pembagi Kelompok",  
+        icon: "users"  
+    },  
 
-        {
-            id: "wheel",
-            label: "Roda Putar (Spin Wheel)",
-            icon: "rotate"
-        },
+    {  
+        id: "wheel",  
+        label: "Roda Putar (Spin Wheel)",  
+        icon: "rotate"  
+    },  
 
-        {
-            id: "duel",
-            label: "Undian Berpasangan (Duel)",
-            icon: "shuffle"
-        },
+    {  
+        id: "duel",  
+        label: "Undian Berpasangan (Duel)",  
+        icon: "shuffle"  
+    },  
 
-        {
-            id: "queue",
-            label: "Urutan Antrean / Giliran",
-            icon: "list"
-        }
-    ];
+    {  
+        id: "queue",  
+        label: "Urutan Antrean / Giliran",  
+        icon: "list"  
+    }  
+];  
 
 
-    return (
-        <div className="mode-navigation">
+return (  
+    <div className="mode-navigation">  
 
-            {modes.map(item => (
+        {modes.map(item => (  
 
-                <button
-                    key={item.id}
-                    className={
-                        `mode-button ${
-                            mode === item.id
-                                ? "active"
-                                : ""
-                        }`
-                    }
-                    onClick={() =>
-                        setMode(item.id)
-                    }
-                >
+            <button  
+                key={item.id}  
+                className={  
+                    `mode-button ${  
+                        mode === item.id  
+                            ? "active"  
+                            : ""  
+                    }`  
+                }  
+                onClick={() =>  
+                    setMode(item.id)  
+                }  
+            >  
 
-                    <Icon
-                        name={item.icon}
-                        size={17}
-                    />
+                <Icon  
+                    name={item.icon}  
+                    size={17}  
+                />  
 
-                    <span>
-                        {item.label}
-                    </span>
+                <span>  
+                    {item.label}  
+                </span>  
 
-                </button>
+            </button>  
 
-            ))}
+        ))}  
 
-        </div>
-    );
+    </div>  
+);
+
 }
 
-
 /* =========================================================
-   ATTENDANCE MANAGER
+ATTENDANCE MANAGER
 ========================================================= */
 
 function AttendanceManager({
-    names,
-    setNames,
-    user,
-    selectedList,
-    setSelectedList,
-    showToast
+names,
+setNames,
+user,
+selectedList,
+setSelectedList,
+showToast
 }) {
 
-    const [
-        input,
-        setInput
-    ] = useState("");
+const [  
+    input,  
+    setInput  
+] = useState("");  
 
 
-    const [
-        lists,
-        setLists
-    ] = useState([]);
+const [  
+    lists,  
+    setLists  
+] = useState([]);  
 
 
-    const [
-        loading,
-        setLoading
-    ] = useState(false);
+const [  
+    loading,  
+    setLoading  
+] = useState(false);  
 
 
-    const [
-        showLists,
-        setShowLists
-    ] = useState(false);
+const [  
+    showLists,  
+    setShowLists  
+] = useState(false);  
 
 
-    /* -----------------------------------------
-       Load user's saved lists
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Load user's saved lists  
+----------------------------------------- */  
 
-    async function loadLists() {
+async function loadLists() {  
 
-        if (!user) {
-            setLists([]);
-            return;
-        }
+    if (!user) {  
+        setLists([]);  
+        return;  
+    }  
 
-        const {
-            data,
-            error
-        } = await supabaseClient
-            .from("attendance_lists")
-            .select("*")
-            .eq("user_id", user.id)
-            .order(
-                "updated_at",
-                {
-                    ascending: false
-                }
-            );
+    const {  
+        data,  
+        error  
+    } = await supabaseClient  
+        .from("attendance_lists")  
+        .select("*")  
+        .eq("user_id", user.id)  
+        .order(  
+            "updated_at",  
+            {  
+                ascending: false  
+            }  
+        );  
 
 
-        if (error) {
+    if (error) {  
 
-            console.error(error);
+        console.error(error);  
 
-            showToast(
-                "Gagal mengambil daftar tersimpan.",
-                "error"
-            );
+        showToast(  
+            "Gagal mengambil daftar tersimpan.",  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        setLists(data || []);
-    }
+    setLists(data || []);  
+}  
 
 
-    useEffect(() => {
+useEffect(() => {  
 
-        loadLists();
+    loadLists();  
 
-    }, [user]);
+}, [user]);  
 
 
-    /* -----------------------------------------
-       Save current list
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Save current list  
+----------------------------------------- */  
 
-    async function saveCurrentList() {
+async function saveCurrentList() {  
 
-        if (!user) {
+    if (!user) {  
 
-            showToast(
-                "Login terlebih dahulu untuk menyimpan daftar.",
-                "error"
-            );
+        showToast(  
+            "Login terlebih dahulu untuk menyimpan daftar.",  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        const name =
-            selectedList?.name ||
-            DEFAULT_TEMPLATE_NAME;
+    const name =  
+        selectedList?.name ||  
+        DEFAULT_TEMPLATE_NAME;  
 
 
-        setLoading(true);
+    setLoading(true);  
 
 
-        try {
+    try {  
 
-            if (selectedList?.id) {
+        if (selectedList?.id) {  
 
-                const {
-                    error
-                } = await supabaseClient
-                    .from("attendance_lists")
-                    .update({
-                        name,
-                        names,
-                        updated_at:
-                            new Date().toISOString()
-                    })
-                    .eq(
-                        "id",
-                        selectedList.id
-                    )
-                    .eq(
-                        "user_id",
-                        user.id
-                    );
+            const {  
+                error  
+            } = await supabaseClient  
+                .from("attendance_lists")  
+                .update({  
+                    name,  
+                    names,  
+                    updated_at:  
+                        new Date().toISOString()  
+                })  
+                .eq(  
+                    "id",  
+                    selectedList.id  
+                )  
+                .eq(  
+                    "user_id",  
+                    user.id  
+                );  
 
 
-                if (error) {
-                    throw error;
-                }
+            if (error) {  
+                throw error;  
+            }  
 
 
-                showToast(
-                    "Daftar berhasil diperbarui."
-                );
+            showToast(  
+                "Daftar berhasil diperbarui."  
+            );  
 
-            } else {
+        } else {  
 
-                const {
-                    data,
-                    error
-                } = await supabaseClient
-                    .from("attendance_lists")
-                    .insert({
-                        user_id: user.id,
-                        name,
-                        names
-                    })
-                    .select()
-                    .single();
+            const {  
+                data,  
+                error  
+            } = await supabaseClient  
+                .from("attendance_lists")  
+                .insert({  
+                    user_id: user.id,  
+                    name,  
+                    names  
+                })  
+                .select()  
+                .single();  
 
 
-                if (error) {
-                    throw error;
-                }
+            if (error) {  
+                throw error;  
+            }  
 
 
-                setSelectedList(data);
+            setSelectedList(data);  
 
 
-                showToast(
-                    "Daftar berhasil disimpan."
-                );
-            }
+            showToast(  
+                "Daftar berhasil disimpan."  
+            );  
+        }  
 
 
-            await loadLists();
+        await loadLists();  
 
-        } catch (error) {
+    } catch (error) {  
 
-            console.error(error);
+        console.error(error);  
 
-            showToast(
-                "Gagal menyimpan daftar.",
-                "error"
-            );
+        showToast(  
+            "Gagal menyimpan daftar.",  
+            "error"  
+        );  
 
-        } finally {
+    } finally {  
 
-            setLoading(false);
-        }
-    }
+        setLoading(false);  
+    }  
+}  
 
 
-    /* -----------------------------------------
-       Add names
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Add names  
+----------------------------------------- */  
 
-    function addNames() {
+function addNames() {  
 
-        const newNames =
-            cleanNames(input);
+    const newNames =  
+        cleanNames(input);  
 
 
-        if (!newNames.length) {
+    if (!newNames.length) {  
 
-            showToast(
-                "Masukkan minimal satu nama.",
-                "error"
-            );
+        showToast(  
+            "Masukkan minimal satu nama.",  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        setNames(prev => [
-            ...prev,
-            ...newNames
-        ]);
+    setNames(prev => [  
+        ...prev,  
+        ...newNames  
+    ]);  
 
 
-        setInput("");
+    setInput("");  
 
 
-        showToast(
-            `${newNames.length} nama ditambahkan.`
-        );
-    }
+    showToast(  
+        `${newNames.length} nama ditambahkan.`  
+    );  
+}  
 
 
-    /* -----------------------------------------
-       Delete participant
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Delete participant  
+----------------------------------------- */  
 
-    function deleteName(index) {
+function deleteName(index) {  
 
-        setNames(prev =>
-            prev.filter(
-                (_, i) => i !== index
-            )
-        );
-    }
+    setNames(prev =>  
+        prev.filter(  
+            (_, i) => i !== index  
+        )  
+    );  
+}  
 
 
-    /* -----------------------------------------
-       Clear all
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Clear all  
+----------------------------------------- */  
 
-    function clearAll() {
+function clearAll() {  
 
-        if (
-            !window.confirm(
-                "Hapus semua peserta dari daftar ini?"
-            )
-        ) {
-            return;
-        }
+    if (  
+        !window.confirm(  
+            "Hapus semua peserta dari daftar ini?"  
+        )  
+    ) {  
+        return;  
+    }  
 
 
-        setNames([]);
+    setNames([]);  
 
-        showToast(
-            "Semua peserta dihapus."
-        );
-    }
+    showToast(  
+        "Semua peserta dihapus."  
+    );  
+}  
 
 
-    /* -----------------------------------------
-       Reset to Arunika
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Reset to Arunika  
+----------------------------------------- */  
 
-    function resetArunika() {
+function resetArunika() {  
 
-        if (
-            !window.confirm(
-                "Kembalikan daftar ke template Arunika?"
-            )
-        ) {
-            return;
-        }
+    if (  
+        !window.confirm(  
+            "Kembalikan daftar ke template Arunika?"  
+        )  
+    ) {  
+        return;  
+    }  
 
 
-        setNames([
-            ...DEFAULT_NAMES
-        ]);
+    setNames([  
+        ...DEFAULT_NAMES  
+    ]);  
 
 
-        showToast(
-            "Daftar dikembalikan ke Arunika."
-        );
-    }
+    showToast(  
+        "Daftar dikembalikan ke Arunika."  
+    );  
+}  
 
 
-    /* -----------------------------------------
-       Create new list
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Create new list  
+----------------------------------------- */  
 
-    async function createNewList() {
-   
-    if (!user) {
-        showToast(
-            "Login terlebih dahulu.",
-            "error"
-        );
-        return;
-    }
+async function createNewList() {  
+ 
+if (!user) {  
+    showToast(  
+        "Login terlebih dahulu.",  
+        "error"  
+    );  
+    return;  
+}  
 
-    const name = window.prompt(
-        "Nama daftar baru:",
-        "Kelas 8A"
-    );
+const name = window.prompt(  
+    "Nama daftar baru:",  
+    "Kelas 8A"  
+);  
 
-    if (!name?.trim()) {
-        return;
-    }
+if (!name?.trim()) {  
+    return;  
+}  
 
-    setLoading(true);
+setLoading(true);  
 
-    try {
+try {  
 
-        console.log("=== CREATE LIST START ===");
-        console.log("User:", user);
-        console.log("User ID:", user.id);
-        console.log("Name:", name.trim());
+    console.log("=== CREATE LIST START ===");  
+    console.log("User:", user);  
+    console.log("User ID:", user.id);  
+    console.log("Name:", name.trim());  
 
-        const insertData = {
-            user_id: user.id,
-            name: name.trim(),
-            names: []
-        };
+    const insertData = {  
+        user_id: user.id,  
+        name: name.trim(),  
+        names: []  
+    };  
 
-        console.log(
-            "Data yang dikirim:",
-            insertData
-        );
+    console.log(  
+        "Data yang dikirim:",  
+        insertData  
+    );  
 
-        const {
-            data,
-            error
-        } = await supabaseClient
-            .from("attendance_lists")
-            .insert(insertData)
-            .select("*")
-            .single();
+    const {  
+        data,  
+        error  
+    } = await supabaseClient  
+        .from("attendance_lists")  
+        .insert(insertData)  
+        .select("*")  
+        .single();  
 
-        console.log("HASIL SUPABASE:", {
-            data,
-            error
-        });
+    console.log("HASIL SUPABASE:", {  
+        data,  
+        error  
+    });  
 
-        if (error) {
-            console.error(
-                "SUPABASE CREATE ERROR:",
-                error
-            );
+    if (error) {  
+        console.error(  
+            "SUPABASE CREATE ERROR:",  
+            error  
+        );  
 
-            throw error;
-        }
+        throw error;  
+    }  
 
-        console.log(
-            "BERHASIL MEMBUAT DAFTAR:",
-            data
-        );
+    console.log(  
+        "BERHASIL MEMBUAT DAFTAR:",  
+        data  
+    );  
 
-        setSelectedList(data);
-        setNames([]);
+    setSelectedList(data);  
+    setNames([]);  
 
-        await loadLists();
+    await loadLists();  
 
-        showToast(
-            `Daftar "${name.trim()}" berhasil dibuat.`
-        );
+    showToast(  
+        `Daftar "${name.trim()}" berhasil dibuat.`  
+    );  
 
-    } catch (error) {
+} catch (error) {  
 
-        console.error(
-            "CREATE LIST ERROR:",
-            error
-        );
+    console.error(  
+        "CREATE LIST ERROR:",  
+        error  
+    );  
 
-        console.error(
-            "MESSAGE:",
-            error?.message
-        );
+    console.error(  
+        "MESSAGE:",  
+        error?.message  
+    );  
 
-        console.error(
-            "DETAILS:",
-            error?.details
-        );
+    console.error(  
+        "DETAILS:",  
+        error?.details  
+    );  
 
-        console.error(
-            "HINT:",
-            error?.hint
-        );
+    console.error(  
+        "HINT:",  
+        error?.hint  
+    );  
 
-        console.error(
-            "CODE:",
-            error?.code
-        );
+    console.error(  
+        "CODE:",  
+        error?.code  
+    );  
 
-        showToast(
-            error?.message ||
-            error?.details ||
-            error?.hint ||
-            "Gagal membuat daftar.",
-            "error"
-        );
+    showToast(  
+        error?.message ||  
+        error?.details ||  
+        error?.hint ||  
+        "Gagal membuat daftar.",  
+        "error"  
+    );  
 
-    } finally {
+} finally {  
 
-        setLoading(false);
+    setLoading(false);  
 
-    }
 }
 
-
-    /* -----------------------------------------
-       Load selected list
-    ----------------------------------------- */
-
-    function openList(list) {
-
-        setSelectedList(list);
-
-        setNames(
-            Array.isArray(list.names)
-                ? list.names
-                : []
-        );
-
-        setShowLists(false);
-
-        showToast(
-            `Daftar "${list.name}" dibuka.`
-        );
-    }
-
-
-    /* -----------------------------------------
-       Rename
-    ----------------------------------------- */
-
-    async function renameList(list) {
-
-        if (!user) {
-            return;
-        }
-
-
-        const newName =
-            window.prompt(
-                "Nama baru:",
-                list.name
-            );
-
-
-        if (!newName?.trim()) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                error
-            } = await supabaseClient
-                .from("attendance_lists")
-                .update({
-                    name: newName.trim(),
-                    updated_at:
-                        new Date().toISOString()
-                })
-                .eq(
-                    "id",
-                    list.id
-                )
-                .eq(
-                    "user_id",
-                    user.id
-                );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (
-                selectedList?.id ===
-                list.id
-            ) {
-
-                setSelectedList({
-                    ...list,
-                    name: newName.trim()
-                });
-            }
-
-
-            await loadLists();
-
-
-            showToast(
-                "Nama daftar diubah."
-            );
-
-        } catch (error) {
-
-            console.error(error);
-
-            showToast(
-                "Gagal mengganti nama.",
-                "error"
-            );
-        }
-    }
-
-
-    /* -----------------------------------------
-       Delete saved list
-    ----------------------------------------- */
-
-    async function deleteList(list) {
-
-        if (!user) {
-            return;
-        }
-
-
-        if (
-            !window.confirm(
-                `Hapus daftar "${list.name}"?`
-            )
-        ) {
-            return;
-        }
-
-
-        try {
-
-            const {
-                error
-            } = await supabaseClient
-                .from("attendance_lists")
-                .delete()
-                .eq(
-                    "id",
-                    list.id
-                )
-                .eq(
-                    "user_id",
-                    user.id
-                );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (
-                selectedList?.id ===
-                list.id
-            ) {
-
-                setSelectedList(null);
-
-                setNames([]);
-            }
-
-
-            await loadLists();
-
-
-            showToast(
-                "Daftar berhasil dihapus."
-            );
-
-        } catch (error) {
-
-            console.error(error);
-
-            showToast(
-                "Gagal menghapus daftar.",
-                "error"
-            );
-        }
-    }
-
-
-    return (
-        <div className="participant-panel">
-
-            <div className="panel-heading">
-
-                <div>
-
-                    <div className="eyebrow">
-                        <Icon
-                            name="users"
-                            size={15}
-                        />
-                        PESERTA
-                    </div>
-
-                    <h2>
-                        Daftar peserta
-                        <span className="count">
-                            ({names.length})
-                        </span>
-                    </h2>
-
-                </div>
-
-
-                <div className="panel-actions">
-
-                    <button
-                        className="icon-button"
-                        onClick={clearAll}
-                        title="Hapus semua"
-                    >
-                        <Icon
-                            name="trash"
-                            size={18}
-                        />
-                    </button>
-
-
-                    <button
-                        className="icon-button"
-                        onClick={resetArunika}
-                        title="Reset Arunika"
-                    >
-                        <Icon
-                            name="rotate"
-                            size={18}
-                        />
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <p className="panel-description">
-                Ketik satu nama atau tempel
-                (*paste*) daftar nama panjang
-                (baris baru otomatis jadi nama
-                terpisah).
-            </p>
-
-
-            {/* INPUT */}
-
-            <textarea
-                className="name-input"
-                value={input}
-                onChange={e =>
-                    setInput(e.target.value)
-                }
-                placeholder={
-                    "Ketik atau tempel daftar nama di sini..."
-                }
-            />
-
-
-            <button
-                className="primary-button full"
-                onClick={addNames}
-            >
-                <Icon
-                    name="plus"
-                    size={18}
-                />
-
-                Tambahkan ke Daftar
-            </button>
-
-
-            {/* SAVED LISTS */}
-
-            <div className="saved-lists-section">
-
-                <button
-                    className="saved-lists-toggle"
-                    onClick={() =>
-                        setShowLists(
-                            !showLists
-                        )
-                    }
-                >
-
-                    <span>
-                        Daftar tersimpan
-                    </span>
-
-                    <span>
-                        {showLists
-                            ? "▲"
-                            : "▼"}
-                    </span>
-
-                </button>
-
-
-                {showLists && (
-
-                    <div className="saved-lists">
-
-                        <button
-                            className="saved-list-new"
-                            onClick={createNewList}
-                        >
-                            <Icon
-                                name="plus"
-                                size={16}
-                            />
-                            Daftar Baru
-                        </button>
-
-
-                        {!lists.length && (
-
-                            <div className="empty-saved">
-                                Belum ada daftar tersimpan.
-                            </div>
-
-                        )}
-
-
-                        {lists.map(list => (
-
-                            <div
-                                className={
-                                    `saved-list ${
-                                        selectedList?.id === list.id
-                                            ? "selected"
-                                            : ""
-                                    }`
-                                }
-                                key={list.id}
-                            >
-
-                                <button
-                                    className="saved-list-main"
-                                    onClick={() =>
-                                        openList(list)
-                                    }
-                                >
-
-                                    <strong>
-                                        {list.name}
-                                    </strong>
-
-                                    <small>
-                                        {
-                                            Array.isArray(list.names)
-                                                ? list.names.length
-                                                : 0
-                                        } peserta
-                                    </small>
-
-                                </button>
-
-
-                                <button
-                                    className="small-icon-button"
-                                    onClick={() =>
-                                        renameList(list)
-                                    }
-                                >
-                                    <Icon
-                                        name="edit"
-                                        size={15}
-                                    />
-                                </button>
-
-
-                                <button
-                                    className="small-icon-button danger"
-                                    onClick={() =>
-                                        deleteList(list)
-                                    }
-                                >
-                                    <Icon
-                                        name="trash"
-                                        size={15}
-                                    />
-                                </button>
-
-                            </div>
-
-                        ))}
-
-                    </div>
-
-                )}
-
-            </div>
-
-
-            {/* SAVE */}
-
-            <button
-                className="secondary-button full"
-                onClick={saveCurrentList}
-                disabled={
-                    loading ||
-                    !user ||
-                    names.length === 0
-                }
-            >
-
-                <Icon
-                    name="save"
-                    size={17}
-                />
-
-                {loading
-                    ? "Menyimpan..."
-                    : "Simpan Daftar"}
-
-            </button>
-
-
-            {!user && (
-
-                <small className="login-hint">
-                    Login untuk menyimpan daftar
-                    ke akunmu.
-                </small>
-
-            )}
-
-
-            {/* PARTICIPANTS */}
-
-            <div className="participant-list">
-
-                {names.map(
-                    (name, index) => (
-
-                        <div
-                            className="participant-row"
-                            key={`${name}-${index}`}
-                        >
-
-                            <span className="participant-number">
-                                {index + 1}
-                            </span>
-
-                            <span className="participant-name">
-                                {name}
-                            </span>
-
-                            <button
-                                className="small-icon-button danger"
-                                onClick={() =>
-                                    deleteName(index)
-                                }
-                            >
-                                <Icon
-                                    name="trash"
-                                    size={15}
-                                />
-                            </button>
-
-                        </div>
-
-                    )
-                )}
-
-            </div>
-
-        </div>
-    );
 }
 
+/* -----------------------------------------  
+   Load selected list  
+----------------------------------------- */  
+
+function openList(list) {  
+
+    setSelectedList(list);  
+
+    setNames(  
+        Array.isArray(list.names)  
+            ? list.names  
+            : []  
+    );  
+
+    setShowLists(false);  
+
+    showToast(  
+        `Daftar "${list.name}" dibuka.`  
+    );  
+}  
+
+
+/* -----------------------------------------  
+   Rename  
+----------------------------------------- */  
+
+async function renameList(list) {  
+
+    if (!user) {  
+        return;  
+    }  
+
+
+    const newName =  
+        window.prompt(  
+            "Nama baru:",  
+            list.name  
+        );  
+
+
+    if (!newName?.trim()) {  
+        return;  
+    }  
+
+
+    try {  
+
+        const {  
+            error  
+        } = await supabaseClient  
+            .from("attendance_lists")  
+            .update({  
+                name: newName.trim(),  
+                updated_at:  
+                    new Date().toISOString()  
+            })  
+            .eq(  
+                "id",  
+                list.id  
+            )  
+            .eq(  
+                "user_id",  
+                user.id  
+            );  
+
+
+        if (error) {  
+            throw error;  
+        }  
+
+
+        if (  
+            selectedList?.id ===  
+            list.id  
+        ) {  
+
+            setSelectedList({  
+                ...list,  
+                name: newName.trim()  
+            });  
+        }  
+
+
+        await loadLists();  
+
+
+        showToast(  
+            "Nama daftar diubah."  
+        );  
+
+    } catch (error) {  
+
+        console.error(error);  
+
+        showToast(  
+            "Gagal mengganti nama.",  
+            "error"  
+        );  
+    }  
+}  
+
+
+/* -----------------------------------------  
+   Delete saved list  
+----------------------------------------- */  
+
+async function deleteList(list) {  
+
+    if (!user) {  
+        return;  
+    }  
+
+
+    if (  
+        !window.confirm(  
+            `Hapus daftar "${list.name}"?`  
+        )  
+    ) {  
+        return;  
+    }  
+
+
+    try {  
+
+        const {  
+            error  
+        } = await supabaseClient  
+            .from("attendance_lists")  
+            .delete()  
+            .eq(  
+                "id",  
+                list.id  
+            )  
+            .eq(  
+                "user_id",  
+                user.id  
+            );  
+
+
+        if (error) {  
+            throw error;  
+        }  
+
+
+        if (  
+            selectedList?.id ===  
+            list.id  
+        ) {  
+
+            setSelectedList(null);  
+
+            setNames([]);  
+        }  
+
+
+        await loadLists();  
+
+
+        showToast(  
+            "Daftar berhasil dihapus."  
+        );  
+
+    } catch (error) {  
+
+        console.error(error);  
+
+        showToast(  
+            "Gagal menghapus daftar.",  
+            "error"  
+        );  
+    }  
+}  
+
+
+return (  
+    <div className="participant-panel">  
+
+        <div className="panel-heading">  
+
+            <div>  
+
+                <div className="eyebrow">  
+                    <Icon  
+                        name="users"  
+                        size={15}  
+                    />  
+                    PESERTA  
+                </div>  
+
+                <h2>  
+                    Daftar peserta  
+                    <span className="count">  
+                        ({names.length})  
+                    </span>  
+                </h2>  
+
+            </div>  
+
+
+            <div className="panel-actions">  
+
+                <button  
+                    className="icon-button"  
+                    onClick={clearAll}  
+                    title="Hapus semua"  
+                >  
+                    <Icon  
+                        name="trash"  
+                        size={18}  
+                    />  
+                </button>  
+
+
+                <button  
+                    className="icon-button"  
+                    onClick={resetArunika}  
+                    title="Reset Arunika"  
+                >  
+                    <Icon  
+                        name="rotate"  
+                        size={18}  
+                    />  
+                </button>  
+
+            </div>  
+
+        </div>  
+
+
+        <p className="panel-description">  
+            Ketik satu nama atau tempel  
+            (*paste*) daftar nama panjang  
+            (baris baru otomatis jadi nama  
+            terpisah).  
+        </p>  
+
+
+        {/* INPUT */}  
+
+        <textarea  
+            className="name-input"  
+            value={input}  
+            onChange={e =>  
+                setInput(e.target.value)  
+            }  
+            placeholder={  
+                "Ketik atau tempel daftar nama di sini..."  
+            }  
+        />  
+
+
+        <button  
+            className="primary-button full"  
+            onClick={addNames}  
+        >  
+            <Icon  
+                name="plus"  
+                size={18}  
+            />  
+
+            Tambahkan ke Daftar  
+        </button>  
+
+
+        {/* SAVED LISTS */}  
+
+        <div className="saved-lists-section">  
+
+            <button  
+                className="saved-lists-toggle"  
+                onClick={() =>  
+                    setShowLists(  
+                        !showLists  
+                    )  
+                }  
+            >  
+
+                <span>  
+                    Daftar tersimpan  
+                </span>  
+
+                <span>  
+                    {showLists  
+                        ? "▲"  
+                        : "▼"}  
+                </span>  
+
+            </button>  
+
+
+            {showLists && (  
+
+                <div className="saved-lists">  
+
+                    <button  
+                        className="saved-list-new"  
+                        onClick={createNewList}  
+                    >  
+                        <Icon  
+                            name="plus"  
+                            size={16}  
+                        />  
+                        Daftar Baru  
+                    </button>  
+
+
+                    {!lists.length && (  
+
+                        <div className="empty-saved">  
+                            Belum ada daftar tersimpan.  
+                        </div>  
+
+                    )}  
+
+
+                    {lists.map(list => (  
+
+                        <div  
+                            className={  
+                                `saved-list ${  
+                                    selectedList?.id === list.id  
+                                        ? "selected"  
+                                        : ""  
+                                }`  
+                            }  
+                            key={list.id}  
+                        >  
+
+                            <button  
+                                className="saved-list-main"  
+                                onClick={() =>  
+                                    openList(list)  
+                                }  
+                            >  
+
+                                <strong>  
+                                    {list.name}  
+                                </strong>  
+
+                                <small>  
+                                    {  
+                                        Array.isArray(list.names)  
+                                            ? list.names.length  
+                                            : 0  
+                                    } peserta  
+                                </small>  
+
+                            </button>  
+
+
+                            <button  
+                                className="small-icon-button"  
+                                onClick={() =>  
+                                    renameList(list)  
+                                }  
+                            >  
+                                <Icon  
+                                    name="edit"  
+                                    size={15}  
+                                />  
+                            </button>  
+
+
+                            <button  
+                                className="small-icon-button danger"  
+                                onClick={() =>  
+                                    deleteList(list)  
+                                }  
+                            >  
+                                <Icon  
+                                    name="trash"  
+                                    size={15}  
+                                />  
+                            </button>  
+
+                        </div>  
+
+                    ))}  
+
+                </div>  
+
+            )}  
+
+        </div>  
+
+
+        {/* SAVE */}  
+
+        <button  
+            className="secondary-button full"  
+            onClick={saveCurrentList}  
+            disabled={  
+                loading ||  
+                !user ||  
+                names.length === 0  
+            }  
+        >  
+
+            <Icon  
+                name="save"  
+                size={17}  
+            />  
+
+            {loading  
+                ? "Menyimpan..."  
+                : "Simpan Daftar"}  
+
+        </button>  
+
+
+        {!user && (  
+
+            <small className="login-hint">  
+                Login untuk menyimpan daftar  
+                ke akunmu.  
+            </small>  
+
+        )}  
+
+
+        {/* PARTICIPANTS */}  
+
+        <div className="participant-list">  
+
+            {names.map(  
+                (name, index) => (  
+
+                    <div  
+                        className="participant-row"  
+                        key={`${name}-${index}`}  
+                    >  
+
+                        <span className="participant-number">  
+                            {index + 1}  
+                        </span>  
+
+                        <span className="participant-name">  
+                            {name}  
+                        </span>  
+
+                        <button  
+                            className="small-icon-button danger"  
+                            onClick={() =>  
+                                deleteName(index)  
+                            }  
+                        >  
+                            <Icon  
+                                name="trash"  
+                                size={15}  
+                            />  
+                        </button>  
+
+                    </div>  
+
+                )  
+            )}  
+
+        </div>  
+
+    </div>  
+);
+
+}
 
 /* =========================================================
-   GROUP MODE
+GROUP MODE
 ========================================================= */
 
 function GroupMode({
-    names,
-    showToast
+names,
+showToast
 }) {
 
-    const [
-        groupCount,
-        setGroupCount
-    ] = useState(
-        Math.min(4, names.length || 1)
-    );
+const [  
+    groupCount,  
+    setGroupCount  
+] = useState(  
+    Math.min(4, names.length || 1)  
+);  
 
 
-    const [
-        groups,
-        setGroups
-    ] = useState([]);
+const [  
+    groups,  
+    setGroups  
+] = useState([]);  
 
 
-    useEffect(() => {
+useEffect(() => {  
 
-        if (
-            names.length > 0 &&
-            groupCount > names.length
-        ) {
+    if (  
+        names.length > 0 &&  
+        groupCount > names.length  
+    ) {  
 
-            setGroupCount(
-                names.length
-            );
-        }
+        setGroupCount(  
+            names.length  
+        );  
+    }  
 
-    }, [names.length]);
+}, [names.length]);  
 
 
-    function mixGroups() {
+function mixGroups() {  
 
-        if (!names.length) {
+    if (!names.length) {  
 
-            showToast(
-                "Tambahkan peserta terlebih dahulu.",
-                "error"
-            );
+        showToast(  
+            "Tambahkan peserta terlebih dahulu.",  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        const result =
-            splitIntoGroups(
-                names,
-                groupCount
-            );
+    const result =  
+        splitIntoGroups(  
+            names,  
+            groupCount  
+        );  
 
 
-        setGroups(result);
+    setGroups(result);  
 
-        showToast(
-            `${groupCount} kelompok berhasil dibuat.`
-        );
-    }
+    showToast(  
+        `${groupCount} kelompok berhasil dibuat.`  
+    );  
+}  
 
 
-    async function copyGroups() {
+async function copyGroups() {  
 
-        if (!groups.length) {
-            return;
-        }
+    if (!groups.length) {  
+        return;  
+    }  
 
 
-        const text =
-            groups
-                .map(
-                    (group, index) =>
-                        `Kelompok ${
-                            index + 1
-                        }\n` +
-                        group
-                            .map(
-                                name =>
-                                    `- ${name}`
-                            )
-                            .join("\n")
-                )
-                .join("\n\n");
+    const text =  
+        groups  
+            .map(  
+                (group, index) =>  
+                    `Kelompok ${  
+                        index + 1  
+                    }\n` +  
+                    group  
+                        .map(  
+                            name =>  
+                                `- ${name}`  
+                        )  
+                        .join("\n")  
+            )  
+            .join("\n\n");  
 
 
-        const success =
-            await copyText(text);
+    const success =  
+        await copyText(text);  
 
 
-        showToast(
-            success
-                ? "Hasil berhasil disalin."
-                : "Gagal menyalin.",
-            success
-                ? "default"
-                : "error"
-        );
-    }
+    showToast(  
+        success  
+            ? "Hasil berhasil disalin."  
+            : "Gagal menyalin.",  
+        success  
+            ? "default"  
+            : "error"  
+    );  
+}  
 
 
-    return (
-        <div className="tool-panel">
+return (  
+    <div className="tool-panel">  
 
-            <div className="tool-header">
+        <div className="tool-header">  
 
-                <div>
-
-                    <div className="eyebrow">
-                        <Icon
-                            name="users"
-                            size={15}
-                        />
-                        PEMBAGI KELOMPOK
-                    </div>
-
-                    <h2>
-                        Bagi peserta secara adil
-                    </h2>
-
-                </div>
-
-            </div>
-
-
-            <div className="group-control">
-
-                <label>
-                    Jumlah kelompok
-                </label>
-
-                <select
-                    value={groupCount}
-                    onChange={e =>
-                        setGroupCount(
-                            Number(e.target.value)
-                        )
-                    }
-                    disabled={!names.length}
-                >
-
-                    {Array.from(
-                        {
-                            length:
-                                names.length || 1
-                        },
-                        (_, i) => (
-
-                            <option
-                                key={i + 1}
-                                value={i + 1}
-                            >
-                                {i + 1} kelompok
-                            </option>
-
-                        )
-                    )}
-
-                </select>
-
-                <small>
-                    Maksimal{" "}
-                    {names.length}{" "}
-                    kelompok untuk{" "}
-                    {names.length}{" "}
-                    peserta.
-                </small>
-
-            </div>
-
-function GroupMode({
-    names,
-    showToast
-}) {
-
-    const [
-        groupCount,
-        setGroupCount
-    ] = useState(
-        Math.min(4, names.length || 1)
-    );
-
-
-    const [
-        groups,
-        setGroups
-    ] = useState([]);
-
-
-    const [
-        history,
-        setHistory
-    ] = useState(() =>
-        readStorage(
-            STORAGE_KEYS.history,
-            []
-        )
-    );
-
-
-    const [
-        showHistory,
-        setShowHistory
-    ] = useState(false);
-
-
-    useEffect(() => {
-
-        if (
-            names.length > 0 &&
-            groupCount > names.length
-        ) {
-
-            setGroupCount(
-                names.length
-            );
-        }
-
-    }, [names.length]);
-
-
-    function mixGroups() {
-
-        if (!names.length) {
-
-            showToast(
-                "Tambahkan peserta terlebih dahulu.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const result =
-            splitIntoGroups(
-                names,
-                groupCount
-            );
-
-
-        setGroups(result);
-
-
-        /*
-           Simpan hasil pembagian
-           ke histori.
-        */
-
-        const historyItem = {
-
-            id:
-                Date.now(),
-
-            createdAt:
-                new Date().toISOString(),
-
-            groupCount:
-                groupCount,
-
-            groups:
-                result
-
-        };
-
-
-        const newHistory = [
-
-            historyItem,
-
-            ...history
-
-        ].slice(0, 20);
-
-
-        setHistory(
-            newHistory
-        );
-
-
-        writeStorage(
-            STORAGE_KEYS.history,
-            newHistory
-        );
-
-
-        showToast(
-            `${groupCount} kelompok berhasil dibuat.`
-        );
-    }
-
-
-    function clearHistory() {
-
-        if (
-            !history.length
-        ) {
-            return;
-        }
-
-
-        if (
-            !window.confirm(
-                "Hapus seluruh histori pembagian?"
-            )
-        ) {
-            return;
-        }
-
-
-        setHistory([]);
-
-
-        writeStorage(
-            STORAGE_KEYS.history,
-            []
-        );
-
-
-        showToast(
-            "Histori pembagian dihapus."
-        );
-    }
-
-
-    function openHistory(item) {
-
-        setGroups(
-            item.groups
-        );
-
-
-        setGroupCount(
-            item.groupCount
-        );
-
-
-        setShowHistory(false);
-
-
-        showToast(
-            "Hasil histori dibuka kembali."
-        );
-    }
-
-
-    async function copyGroups() {
-
-        if (!groups.length) {
-            return;
-        }
-
-
-        const text =
-            groups
-                .map(
-                    (group, index) =>
-                        `Kelompok ${
-                            index + 1
-                        }\n` +
-                        group
-                            .map(
-                                name =>
-                                    `- ${name}`
-                            )
-                            .join("\n")
-                )
-                .join("\n\n");
-
-
-        const success =
-            await copyText(text);
-
-
-        showToast(
-            success
-                ? "Hasil berhasil disalin."
-                : "Gagal menyalin.",
-            success
-                ? "default"
-                : "error"
-        );
-    }
-
-
-    function formatHistoryDate(
-        date
-    ) {
-
-        try {
-
-            return new Date(
-                date
-            ).toLocaleString(
-                "id-ID",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            );
-
-        } catch {
-
-            return "Waktu tidak diketahui";
-        }
-    }
-
-
-    return (
-        <div className="tool-panel">
-
-            <div className="tool-header">
-
-                <div>
-
-                    <div className="eyebrow">
-                        <Icon
-                            name="users"
-                            size={15}
-                        />
-                        PEMBAGI KELOMPOK
-                    </div>
-
-                    <h2>
-                        Bagi peserta secara adil
-                    </h2>
-
-                </div>
-
-            </div>
-
-
-            <div className="group-control">
-
-                <label>
-                    Jumlah kelompok
-                </label>
-
-                <select
-                    value={groupCount}
-                    onChange={e =>
-                        setGroupCount(
-                            Number(
-                                e.target.value
-                            )
-                        )
-                    }
-                    disabled={!names.length}
-                >
-
-                    {Array.from(
-                        {
-                            length:
-                                names.length || 1
-                        },
-                        (_, i) => (
-
-                            <option
-                                key={i + 1}
-                                value={i + 1}
-                            >
-                                {i + 1} kelompok
-                            </option>
-
-                        )
-                    )}
-
-                </select>
-
-                <small>
-                    Maksimal{" "}
-                    {names.length}{" "}
-                    kelompok untuk{" "}
-                    {names.length}{" "}
-                    peserta.
-                </small>
-
-            </div>
-
-
-            <button
-                className="primary-button full"
-                onClick={mixGroups}
-            >
-
-                <Icon
-                    name="shuffle"
-                    size={18}
-                />
-
-                Acak & Bagi Kelompok
-
-            </button>
-
-
-            {/* HASIL TERBARU */}
-
-            {groups.length > 0 && (
-
-                <div className="groups-results">
-
-                    <div className="results-heading">
-
-                        <h3>
-                            Hasil pembagian
-                        </h3>
-
-                        <button
-                            className="secondary-button"
-                            onClick={copyGroups}
-                        >
-                            <Icon
-                                name="copy"
-                                size={16}
-                            />
-                            Salin
-                        </button>
-
-                    </div>
-
-
-                    <div className="groups-grid">
-
-                        {groups.map(
-                            (group, index) => (
-
-                                <div
-                                    className="group-card"
-                                    key={index}
-                                    style={{
-                                        borderTop:
-                                            `5px solid ${
-                                                GROUP_COLORS[
-                                                    index %
-                                                    GROUP_COLORS.length
-                                                ]
-                                            }`
-                                    }}
-                                >
-
-                                    <h4>
-                                        Kelompok{" "}
-                                        {index + 1}
-                                    </h4>
-
-                                    <ol>
-
-                                        {group.map(
-                                            (
-                                                name,
-                                                i
-                                            ) => (
-
-                                                <li
-                                                    key={
-                                                        `${name}-${i}`
-                                                    }
-                                                >
-                                                    {name}
-                                                </li>
-
-                                            )
-                                        )}
-
-                                    </ol>
-
-                                </div>
-
-                            )
-                        )}
-
-                    </div>
-
-                </div>
-
-            )}
-
-
-            {/* HISTORI */}
-
-            <div className="history-section">
-
-                <button
-                    className="saved-lists-toggle"
-                    onClick={() =>
-                        setShowHistory(
-                            !showHistory
-                        )
-                    }
-                >
-
-                    <span>
-                        📜 Histori Pembagian
-                        {" "}
-                        ({history.length})
-                    </span>
-
-                    <span>
-                        {showHistory
-                            ? "▲"
-                            : "▼"}
-                    </span>
-
-                </button>
-
-
-                {showHistory && (
-
-                    <div className="history-list">
-
-                        {!history.length && (
-
-                            <div className="empty-saved">
-                                Belum ada histori
-                                pembagian.
-                            </div>
-
-                        )}
-
-
-                        {history.map(
-                            item => (
-
-                                <button
-                                    key={item.id}
-                                    className="history-item"
-                                    onClick={() =>
-                                        openHistory(
-                                            item
-                                        )
-                                    }
-                                >
-
-                                    <strong>
-                                        {
-                                            item.groupCount
-/* =========================================================
-   GROUP MODE
-========================================================= */
-
-function GroupMode({
-    names,
-    showToast
-}) {
-
-    /* -----------------------------------------------------
-       STATE
-    ----------------------------------------------------- */
-
-    const [
-        groupCount,
-        setGroupCount
-    ] = useState(4);
-
-    const [
-        groups,
-        setGroups
-    ] = useState([]);
-
-    const [
-        history,
-        setHistory
-    ] = useState(() =>
-        readStorage(
-            STORAGE_KEYS.history,
-            []
-        )
-    );
-
-    const [
-        showHistory,
-        setShowHistory
-    ] = useState(false);
-
-
-    /* -----------------------------------------------------
-       SESUAIKAN JUMLAH KELOMPOK
-       DENGAN JUMLAH PESERTA
-    ----------------------------------------------------- */
-
-    useEffect(() => {
-
-        if (!names.length) {
-            setGroups([]);
-            return;
-        }
-
-        if (groupCount > names.length) {
-
-            setGroupCount(
-                Math.max(
-                    1,
-                    names.length
-                )
-            );
-
-        }
-
-    }, [
-        names.length,
-        groupCount
-    ]);
-
-
-    /* -----------------------------------------------------
-       BAGI KELOMPOK
-    ----------------------------------------------------- */
-
-    function mixGroups() {
-
-        if (!names.length) {
-
-            showToast(
-                "Belum ada peserta.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const safeGroupCount =
-            Math.min(
-                Math.max(
-                    1,
-                    Number(groupCount)
-                ),
-                names.length
-            );
-
-
-        const result =
-            splitIntoGroups(
-                names,
-                safeGroupCount
-            );
-
-
-        /* Simpan hasil ke layar */
-
-        setGroups(
-            result
-        );
-
-
-        /* -------------------------------------------------
-           SIMPAN HISTORI
-        ------------------------------------------------- */
-
-        const historyItem = {
-
-            id:
-                Date.now(),
-
-            createdAt:
-                new Date().toISOString(),
-
-            groupCount:
-                safeGroupCount,
-
-            groups:
-                result
-
-        };
-
-
-        const newHistory = [
-
-            historyItem,
-
-            ...history
-
-        ].slice(
-            0,
-            20
-        );
-
-
-        setHistory(
-            newHistory
-        );
-
-
-        writeStorage(
-            STORAGE_KEYS.history,
-            newHistory
-        );
-
-
-        showToast(
-            `Berhasil membagi ${names.length} peserta menjadi ${safeGroupCount} kelompok.`
-        );
-    }
-
-
-    /* -----------------------------------------------------
-       HAPUS SEMUA HISTORI
-    ----------------------------------------------------- */
-
-    function clearHistory() {
-
-        if (!history.length) {
-
-            showToast(
-                "Belum ada histori."
-            );
-
-            return;
-        }
-
-
-        const confirmed =
-            window.confirm(
-                "Hapus seluruh histori pembagian?"
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
-        setHistory(
-            []
-        );
-
-
-        writeStorage(
-            STORAGE_KEYS.history,
-            []
-        );
-
-
-        showToast(
-            "Histori pembagian dihapus."
-        );
-    }
-
-
-    /* -----------------------------------------------------
-       BUKA HASIL DARI HISTORI
-    ----------------------------------------------------- */
-
-    function openHistory(
-        item
-    ) {
-
-        if (
-            !item ||
-            !Array.isArray(
-                item.groups
-            )
-        ) {
-
-            showToast(
-                "Histori ini tidak valid.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        setGroups(
-            item.groups
-        );
-
-
-        setGroupCount(
-            item.groupCount
-        );
-
-
-        setShowHistory(
-            false
-        );
-
-
-        showToast(
-            "Hasil histori dibuka kembali."
-        );
-    }
-
-
-    /* -----------------------------------------------------
-       COPY HASIL KE CLIPBOARD
-    ----------------------------------------------------- */
-
-    async function copyGroups() {
-
-        if (!groups.length) {
-
-            showToast(
-                "Belum ada hasil pembagian.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const text =
-            groups
-                .map(
-                    (
-                        group,
-                        index
-                    ) => {
-
-                        return [
-                            `KELOMPOK ${index + 1}`,
-                            ...group.map(
-                                (
-                                    name,
-                                    personIndex
-                                ) =>
-                                    `${personIndex + 1}. ${name}`
-                            )
-                        ].join("\n");
-
-                    }
-                )
-                .join(
-                    "\n\n"
-                );
-
-
-        try {
-
-            await navigator.clipboard.writeText(
-                text
-            );
-
-
-            showToast(
-                "Hasil pembagian berhasil disalin."
-            );
-
-        } catch {
-
-            showToast(
-                "Gagal menyalin hasil.",
-                "error"
-            );
-
-        }
-    }
-
-
-    /* -----------------------------------------------------
-       FORMAT TANGGAL HISTORI
-    ----------------------------------------------------- */
-
-    function formatHistoryDate(
-        date
-    ) {
-
-        try {
-
-            return new Date(
-                date
-            ).toLocaleString(
-                "id-ID",
-                {
-                    day:
-                        "2-digit",
-
-                    month:
-                        "short",
-
-                    year:
-                        "numeric",
-
-                    hour:
-                        "2-digit",
-
-                    minute:
-                        "2-digit"
-                }
-            );
-
-        } catch {
-
-            return "Waktu tidak diketahui";
-
-        }
-    }
-
-
-    /* =====================================================
-       RENDER
-    ===================================================== */
-
-    return (
-
-        <div className="tool-panel">
-
-            {/* -------------------------------------------------
-                HEADER
-            ------------------------------------------------- */}
-
-            <div className="tool-header">
-
-                <div>
-
-                    <h2>
-                        Pembagi Kelompok
-                    </h2>
-
-                    <p>
-                        Acak peserta menjadi
-                        kelompok secara seimbang.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            {/* -------------------------------------------------
-                KONTROL JUMLAH KELOMPOK
-            ------------------------------------------------- */}
-
-            <div className="group-control">
-
-                <div>
-
-                    <label>
-                        Jumlah kelompok
-                    </label>
-
-                    <p>
-                        {names.length
-                            ? `${names.length} peserta tersedia`
-                            : "Belum ada peserta"}
-                    </p>
-
-                </div>
-
-
-                <div className="number-control">
-
-                    <button
-                        type="button"
-                        className="small-icon-button"
-                        onClick={() =>
-                            setGroupCount(
-                                previous =>
-                                    Math.max(
-                                        1,
-                                        previous - 1
-                                    )
-                            )
-                        }
-                        disabled={
-                            groupCount <= 1
-                        }
-                    >
-                        −
-                    </button>
-
-
-                    <strong>
-                        {groupCount}
-                    </strong>
-
-
-                    <button
-                        type="button"
-                        className="small-icon-button"
-                        onClick={() =>
-                            setGroupCount(
-                                previous =>
-                                    Math.min(
-                                        names.length || 1,
-                                        previous + 1
-                                    )
-                            )
-                        }
-                        disabled={
-                            !names.length ||
-                            groupCount >= names.length
-                        }
-                    >
-                        +
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            {/* -------------------------------------------------
-                TOMBOL ACAK
-            ------------------------------------------------- */}
-
-            <button
-                type="button"
-                className="primary-button full"
-                onClick={
-                    mixGroups
-                }
-                disabled={
-                    !names.length
-                }
-            >
-
-                <Icon
-                    name="shuffle"
-                    size={18}
-                />
-
-                Acak & Bagi Kelompok
-
-            </button>
-
-
-            {/* =================================================
-                HASIL PEMBAGIAN
-            ================================================= */}
-
-            {groups.length > 0 && (
-
-                <div className="groups-results">
-
-                    <div className="results-header">
-
-                        <div>
-
-                            <h3>
-                                Hasil Pembagian
-                            </h3>
-
-                            <p>
-                                {groups.length} kelompok
-                                {" · "}
-                                {groups.reduce(
-                                    (
-                                        total,
-                                        group
-                                    ) =>
-                                        total +
-                                        group.length,
-                                    0
-                                )} peserta
-                            </p>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={
-                                copyGroups
-                            }
-                        >
-
-                            <Icon
-                                name="copy"
-                                size={16}
-                            />
-
-                            Salin
-
-                        </button>
-
-                    </div>
-
-
-                    <div className="groups-grid">
-
-                        {groups.map(
-                            (
-                                group,
-                                index
-                            ) => (
-
-                                <div
-                                    className="group-card"
-                                    key={
-                                        `group-${index}`
-                                    }
-                                >
-
-                                    <div className="group-card-header">
-
-                                        <strong>
-                                            Kelompok{" "}
-                                            {index + 1}
-                                        </strong>
-
-                                        <span>
-                                            {
-                                                group.length
-                                            }{" "}
-                                            peserta
-                                        </span>
-
-                                    </div>
-
-
-                                    <ol>
-
-                                        {group.map(
-                                            (
-                                                name,
-                                                personIndex
-                                            ) => (
-
-                                                <li
-                                                    key={
-                                                        `${name}-${personIndex}`
-                                                    }
-                                                >
-
-                                                    {name}
-
-                                                </li>
-
-                                            )
-                                        )}
-
-                                    </ol>
-
-                                </div>
-
-                            )
-                        )}
-
-                    </div>
-
-                </div>
-
-            )}
-
-
-            {/* =================================================
-                HISTORI
-            ================================================= */}
-
-            <div className="history-section">
-
-                <button
-                    type="button"
-                    className="saved-lists-toggle"
-                    onClick={() =>
-                        setShowHistory(
-                            previous =>
-                                !previous
-                        )
-                    }
-                >
-
-                    <span>
-
-                        📜 Histori Pembagian
-                        {" "}
-                        ({history.length})
-
-                    </span>
-
-
-                    <span>
-
-                        {
-                            showHistory
-                                ? "▲"
-                                : "▼"
-                        }
-
-                    </span>
-
-                </button>
-
-
-                {showHistory && (
-
-                    <div className="history-list">
-
-                        {/* -----------------------------------------
-                            KOSONG
-                        ----------------------------------------- */}
-
-                        {!history.length && (
-
-                            <div className="empty-saved">
-
-                                Belum ada histori
-                                pembagian.
-
-                            </div>
-
-                        )}
-
-
-                        {/* -----------------------------------------
-                            DAFTAR HISTORI
-                        ----------------------------------------- */}
-
-                        {history.map(
-                            item => (
-
-                                <button
-                                    type="button"
-                                    key={
-                                        item.id
-                                    }
-                                    className="history-item"
-                                    onClick={() =>
-                                        openHistory(
-                                            item
-                                        )
-                                    }
-                                >
-
-                                    <strong>
-
-                                        {
-                                            item.groupCount
-                                        }{" "}
-                                        kelompok
-
-                                    </strong>
-
-
-                                    <small>
-
-                                        {
-                                            formatHistoryDate(
-                                                item.createdAt
-                                            )
-                                        }
-
-                                    </small>
-
-
-                                    <small>
-
-                                        {
-                                            Array.isArray(
-                                                item.groups
-                                            )
-                                                ? item.groups.reduce(
-                                                    (
-                                                        total,
-                                                        group
-                                                    ) =>
-                                                        total +
-                                                        group.length,
-                                                    0
-                                                )
-                                                : 0
-                                        }{" "}
-                                        peserta
-
-                                    </small>
-
-                                </button>
-
-                            )
-                        )}
-
-
-                        {/* -----------------------------------------
-                            HAPUS HISTORI
-                        ----------------------------------------- */}
-
-                        {history.length > 0 && (
-
-                            <button
-                                type="button"
-                                className="secondary-button full"
-                                onClick={
-                                    clearHistory
-                                }
-                            >
-
-                                <Icon
-                                    name="trash"
-                                    size={16}
-                                />
-
-                                Hapus Histori
-
-                            </button>
-
-                        )}
-
-                    </div>
-
-                )}
-
-            </div>
+            <div>  
+
+                <div className="eyebrow">  
+                    <Icon  
+                        name="users"  
+                        size={15}  
+                    />  
+                    PEMBAGI KELOMPOK  
+                </div>  
+
+                <h2>  
+                    Bagi peserta secara adil  
+                </h2>  
+
+            </div>  
+
+        </div>  
+
+
+        <div className="group-control">  
+
+            <label>  
+                Jumlah kelompok  
+            </label>  
+
+            <select  
+                value={groupCount}  
+                onChange={e =>  
+                    setGroupCount(  
+                        Number(e.target.value)  
+                    )  
+                }  
+                disabled={!names.length}  
+            >  
+
+                {Array.from(  
+                    {  
+                        length:  
+                            names.length || 1  
+                    },  
+                    (_, i) => (  
+
+                        <option  
+                            key={i + 1}  
+                            value={i + 1}  
+                        >  
+                            {i + 1} kelompok  
+                        </option>  
+
+                    )  
+                )}  
+
+            </select>  
+
+            <small>  
+                Maksimal{" "}  
+                {names.length}{" "}  
+                kelompok untuk{" "}  
+                {names.length}{" "}  
+                peserta.  
+            </small>  
 
         </div>
 
-    );
-    }
+function GroupMode({
+names,
+showToast
+}) {
 
+const [  
+    groupCount,  
+    setGroupCount  
+] = useState(  
+    Math.min(4, names.length || 1)  
+);  
+
+
+const [  
+    groups,  
+    setGroups  
+] = useState([]);  
+
+
+const [  
+    history,  
+    setHistory  
+] = useState(() =>  
+    readStorage(  
+        STORAGE_KEYS.history,  
+        []  
+    )  
+);  
+
+
+const [  
+    showHistory,  
+    setShowHistory  
+] = useState(false);  
+
+
+useEffect(() => {  
+
+    if (  
+        names.length > 0 &&  
+        groupCount > names.length  
+    ) {  
+
+        setGroupCount(  
+            names.length  
+        );  
+    }  
+
+}, [names.length]);  
+
+
+function mixGroups() {  
+
+    if (!names.length) {  
+
+        showToast(  
+            "Tambahkan peserta terlebih dahulu.",  
+            "error"  
+        );  
+
+        return;  
+    }  
+
+
+    const result =  
+        splitIntoGroups(  
+            names,  
+            groupCount  
+        );  
+
+
+    setGroups(result);  
+
+
+    /*  
+       Simpan hasil pembagian  
+       ke histori.  
+    */  
+
+    const historyItem = {  
+
+        id:  
+            Date.now(),  
+
+        createdAt:  
+            new Date().toISOString(),  
+
+        groupCount:  
+            groupCount,  
+
+        groups:  
+            result  
+
+    };  
+
+
+    const newHistory = [  
+
+        historyItem,  
+
+        ...history  
+
+    ].slice(0, 20);  
+
+
+    setHistory(  
+        newHistory  
+    );  
+
+
+    writeStorage(  
+        STORAGE_KEYS.history,  
+        newHistory  
+    );  
+
+
+    showToast(  
+        `${groupCount} kelompok berhasil dibuat.`  
+    );  
+}  
+
+
+function clearHistory() {  
+
+    if (  
+        !history.length  
+    ) {  
+        return;  
+    }  
+
+
+    if (  
+        !window.confirm(  
+            "Hapus seluruh histori pembagian?"  
+        )  
+    ) {  
+        return;  
+    }  
+
+
+    setHistory([]);  
+
+
+    writeStorage(  
+        STORAGE_KEYS.history,  
+        []  
+    );  
+
+
+    showToast(  
+        "Histori pembagian dihapus."  
+    );  
+}  
+
+
+function openHistory(item) {  
+
+    setGroups(  
+        item.groups  
+    );  
+
+
+    setGroupCount(  
+        item.groupCount  
+    );  
+
+
+    setShowHistory(false);  
+
+
+    showToast(  
+        "Hasil histori dibuka kembali."  
+    );  
+}  
+
+
+async function copyGroups() {  
+
+    if (!groups.length) {  
+        return;  
+    }  
+
+
+    const text =  
+        groups  
+            .map(  
+                (group, index) =>  
+                    `Kelompok ${  
+                        index + 1  
+                    }\n` +  
+                    group  
+                        .map(  
+                            name =>  
+                                `- ${name}`  
+                        )  
+                        .join("\n")  
+            )  
+            .join("\n\n");  
+
+
+    const success =  
+        await copyText(text);  
+
+
+    showToast(  
+        success  
+            ? "Hasil berhasil disalin."  
+            : "Gagal menyalin.",  
+        success  
+            ? "default"  
+            : "error"  
+    );  
+}  
+
+
+function formatHistoryDate(  
+    date  
+) {  
+
+    try {  
+
+        return new Date(  
+            date  
+        ).toLocaleString(  
+            "id-ID",  
+            {  
+                day: "2-digit",  
+                month: "short",  
+                year: "numeric",  
+                hour: "2-digit",  
+                minute: "2-digit"  
+            }  
+        );  
+
+    } catch {  
+
+        return "Waktu tidak diketahui";  
+    }  
+}  
+
+
+return (  
+    <div className="tool-panel">  
+
+        <div className="tool-header">  
+
+            <div>  
+
+                <div className="eyebrow">  
+                    <Icon  
+                        name="users"  
+                        size={15}  
+                    />  
+                    PEMBAGI KELOMPOK  
+                </div>  
+
+                <h2>  
+                    Bagi peserta secara adil  
+                </h2>  
+
+            </div>  
+
+        </div>  
+
+
+        <div className="group-control">  
+
+            <label>  
+                Jumlah kelompok  
+            </label>  
+
+            <select  
+                value={groupCount}  
+                onChange={e =>  
+                    setGroupCount(  
+                        Number(  
+                            e.target.value  
+                        )  
+                    )  
+                }  
+                disabled={!names.length}  
+            >  
+
+                {Array.from(  
+                    {  
+                        length:  
+                            names.length || 1  
+                    },  
+                    (_, i) => (  
+
+                        <option  
+                            key={i + 1}  
+                            value={i + 1}  
+                        >  
+                            {i + 1} kelompok  
+                        </option>  
+
+                    )  
+                )}  
+
+            </select>  
+
+            <small>  
+                Maksimal{" "}  
+                {names.length}{" "}  
+                kelompok untuk{" "}  
+                {names.length}{" "}  
+                peserta.  
+            </small>  
+
+        </div>  
+
+
+        <button  
+            className="primary-button full"  
+            onClick={mixGroups}  
+        >  
+
+            <Icon  
+                name="shuffle"  
+                size={18}  
+            />  
+
+            Acak & Bagi Kelompok  
+
+        </button>  
+
+
+        {/* HASIL TERBARU */}  
+
+        {groups.length > 0 && (  
+
+            <div className="groups-results">  
+
+                <div className="results-heading">  
+
+                    <h3>  
+                        Hasil pembagian  
+                    </h3>  
+
+                    <button  
+                        className="secondary-button"  
+                        onClick={copyGroups}  
+                    >  
+                        <Icon  
+                            name="copy"  
+                            size={16}  
+                        />  
+                        Salin  
+                    </button>  
+
+                </div>  
+
+
+                <div className="groups-grid">  
+
+                    {groups.map(  
+                        (group, index) => (  
+
+                            <div  
+                                className="group-card"  
+                                key={index}  
+                                style={{  
+                                    borderTop:  
+                                        `5px solid ${  
+                                            GROUP_COLORS[  
+                                                index %  
+                                                GROUP_COLORS.length  
+                                            ]  
+                                        }`  
+                                }}  
+                            >  
+
+                                <h4>  
+                                    Kelompok{" "}  
+                                    {index + 1}  
+                                </h4>  
+
+                                <ol>  
+
+                                    {group.map(  
+                                        (  
+                                            name,  
+                                            i  
+                                        ) => (  
+
+                                            <li  
+                                                key={  
+                                                    `${name}-${i}`  
+                                                }  
+                                            >  
+                                                {name}  
+                                            </li>  
+
+                                        )  
+                                    )}  
+
+                                </ol>  
+
+                            </div>  
+
+                        )  
+                    )}  
+
+                </div>  
+
+            </div>  
+
+        )}  
+
+
+        {/* HISTORI */}  
+
+        <div className="history-section">  
+
+            <button  
+                className="saved-lists-toggle"  
+                onClick={() =>  
+                    setShowHistory(  
+                        !showHistory  
+                    )  
+                }  
+            >  
+
+                <span>  
+                    📜 Histori Pembagian  
+                    {" "}  
+                    ({history.length})  
+                </span>  
+
+                <span>  
+                    {showHistory  
+                        ? "▲"  
+                        : "▼"}  
+                </span>  
+
+            </button>  
+
+
+            {showHistory && (  
+
+                <div className="history-list">  
+
+                    {!history.length && (  
+
+                        <div className="empty-saved">  
+                            Belum ada histori  
+                            pembagian.  
+                        </div>  
+
+                    )}  
+
+
+                    {history.map(  
+                        item => (  
+
+                            <button  
+                                key={item.id}  
+                                className="history-item"  
+                                onClick={() =>  
+                                    openHistory(  
+                                        item  
+                                    )  
+                                }  
+                            >  
+
+                                <strong>  
+                                    {  
+                                        item.groupCount  
+                                    }{" "}  
+                                    kelompok  
+                                </strong>  
+
+                                <small>  
+                                    {  
+                                        formatHistoryDate(  
+                                            item.createdAt  
+                                        )  
+                                    }  
+                                </small>  
+
+                                <small>  
+                                    {  
+                                        item.groups  
+                                            .reduce(  
+                                                (  
+                                                    total,  
+                                                    group  
+                                                ) =>  
+                                                    total +  
+                                                    group.length,  
+                                                0  
+                                            )  
+                                    }{" "}  
+                                    peserta  
+                                </small>  
+
+                            </button>  
+
+                        )  
+                    )}  
+
+
+                    {history.length > 0 && (  
+
+                        <button  
+                            className="secondary-button full"  
+                            onClick={  
+                                clearHistory  
+                            }  
+                        >  
+
+                            <Icon  
+                                name="trash"  
+                                size={16}  
+                            />  
+
+                            Hapus Histori  
+
+                        </button>  
+
+                    )}  
+
+                </div>  
+
+            )}  
+
+        </div>  
+
+    </div>  
+);  
+                        }
 
 /* =========================================================
-   REAL SPIN WHEEL
+REAL SPIN WHEEL
 ========================================================= */
 
 function SpinWheel({
-    names,
-    showToast
+names,
+showToast
 }) {
 
-    const [
-        spinning,
-        setSpinning
-    ] = useState(false);
+const [  
+    spinning,  
+    setSpinning  
+] = useState(false);  
 
 
-    const [
-        rotation,
-        setRotation
-    ] = useState(0);
+const [  
+    rotation,  
+    setRotation  
+] = useState(0);  
 
 
-    const [
-        winner,
-        setWinner
-    ] = useState(null);
+const [  
+    winner,  
+    setWinner  
+] = useState(null);  
 
 
-    const total =
-        names.length;
+const total =  
+    names.length;  
 
 
-    /*
-       Setiap peserta mendapat SATU sektor.
-       Urutannya tidak pernah berubah selama
-       wheel dibuat.
+/*  
+   Setiap peserta mendapat SATU sektor.  
+   Urutannya tidak pernah berubah selama  
+   wheel dibuat.  
 
-       Ini penting untuk menghindari bug:
-       "yang terlihat Wa Ode I tapi hasil Ainul".
-    */
+   Ini penting untuk menghindari bug:  
+   "yang terlihat Wa Ode I tapi hasil Ainul".  
+*/  
 
-    const sector =
-        total > 0
-            ? 360 / total
-            : 360;
+const sector =  
+    total > 0  
+        ? 360 / total  
+        : 360;  
 
 
-    const gradient = useMemo(() => {
+const gradient = useMemo(() => {  
 
-        if (!total) {
-            return "conic-gradient(#ddd 0deg 360deg)";
-        }
+    if (!total) {  
+        return "conic-gradient(#ddd 0deg 360deg)";  
+    }  
 
 
-        const colors = [
-            "#e87868",
-            "#e8b34d",
-            "#76a99a",
-            "#4b304d",
-            "#86abb4",
-            "#d78b88",
-            "#93b99d",
-            "#ba8850"
-        ];
+    const colors = [  
+        "#e87868",  
+        "#e8b34d",  
+        "#76a99a",  
+        "#4b304d",  
+        "#86abb4",  
+        "#d78b88",  
+        "#93b99d",  
+        "#ba8850"  
+    ];  
 
 
-        const stops = [];
+    const stops = [];  
 
 
-        names.forEach(
-            (_, index) => {
+    names.forEach(  
+        (_, index) => {  
 
-                const start =
-                    index * sector;
+            const start =  
+                index * sector;  
 
-                const end =
-                    (index + 1) *
-                    sector;
+            const end =  
+                (index + 1) *  
+                sector;  
 
-                const color =
-                    colors[
-                        index %
-                        colors.length
-                    ];
+            const color =  
+                colors[  
+                    index %  
+                    colors.length  
+                ];  
 
 
-                stops.push(
-                    `${color} ${start}deg ${end}deg`
-                );
-            }
-        );
+            stops.push(  
+                `${color} ${start}deg ${end}deg`  
+            );  
+        }  
+    );  
 
 
-        return `
-            conic-gradient(
-                from -90deg,
-                ${stops.join(",")}
-            )
-        `;
+    return `  
+        conic-gradient(  
+            from -90deg,  
+            ${stops.join(",")}  
+        )  
+    `;  
 
-    }, [
-        names,
-        sector,
-        total
-    ]);
+}, [  
+    names,  
+    sector,  
+    total  
+]);  
 
 
-    /*
-       Ukuran teks menyesuaikan jumlah peserta.
-    */
+/*  
+   Ukuran teks menyesuaikan jumlah peserta.  
+*/  
 
-    const labelFontSize =
-        total <= 10
-            ? 12
-            : total <= 18
-                ? 9
-                : total <= 25
-                    ? 7
-                    : 5.5;
+const labelFontSize =  
+    total <= 10  
+        ? 12  
+        : total <= 18  
+            ? 9  
+            : total <= 25  
+                ? 7  
+                : 5.5;  
 
 
-    /*
-       Posisi label.
+/*  
+   Posisi label.  
 
-       Kita letakkan label di tengah wheel,
-       kemudian putar berdasarkan sektor.
+   Kita letakkan label di tengah wheel,  
+   kemudian putar berdasarkan sektor.  
 
-       Karena transform dan pointer harus
-       menggunakan acuan yang sama,
-       index label = index peserta.
-    */
+   Karena transform dan pointer harus  
+   menggunakan acuan yang sama,  
+   index label = index peserta.  
+*/  
 
-    function labelStyle(index) {
+function labelStyle(index) {  
 
-        const center =
-            index * sector +
-            sector / 2;
+    const center =  
+        index * sector +  
+        sector / 2;  
 
 
-        return {
-            position: "absolute",
+    return {  
+        position: "absolute",  
 
-            left: "50%",
-            top: "50%",
+        left: "50%",  
+        top: "50%",  
 
-            width: "48%",
+        width: "48%",  
 
-            transform:
-                `rotate(${center}deg)
-                 translateX(4%)`,
+        transform:  
+            `rotate(${center}deg)  
+             translateX(4%)`,  
 
-            transformOrigin:
-                "0 50%",
+        transformOrigin:  
+            "0 50%",  
 
-            fontSize:
-                `${labelFontSize}px`,
+        fontSize:  
+            `${labelFontSize}px`,  
 
-            lineHeight: "1",
+        lineHeight: "1",  
 
-            textAlign: "right",
+        textAlign: "right",  
 
-            color: "#fff",
+        color: "#fff",  
 
-            fontWeight: 700,
+        fontWeight: 700,  
 
-            textShadow:
-                "0 1px 2px rgba(0,0,0,.45)",
+        textShadow:  
+            "0 1px 2px rgba(0,0,0,.45)",  
 
-            whiteSpace:
-                "nowrap",
+        whiteSpace:  
+            "nowrap",  
 
-            overflow:
-                "hidden",
+        overflow:  
+            "hidden",  
 
-            textOverflow:
-                "ellipsis",
+        textOverflow:  
+            "ellipsis",  
 
-            pointerEvents:
-                "none"
-        };
-    }
+        pointerEvents:  
+            "none"  
+    };  
+}  
 
 
-    /*
-       Cari index peserta berdasarkan posisi
-       pointer.
+/*  
+   Cari index peserta berdasarkan posisi  
+   pointer.  
 
-       Wheel menggunakan:
+   Wheel menggunakan:  
 
-       conic-gradient(from -90deg)
+   conic-gradient(from -90deg)  
 
-       Pointer berada di posisi atas.
+   Pointer berada di posisi atas.  
 
-       Karena wheel diputar dengan CSS,
-       arah sektor terhadap pointer adalah
-       kebalikan dari rotation.
-    */
+   Karena wheel diputar dengan CSS,  
+   arah sektor terhadap pointer adalah  
+   kebalikan dari rotation.  
+*/  
 
-    function calculateWinnerIndex(
-        finalRotation
-    ) {
+function calculateWinnerIndex(  
+    finalRotation  
+) {  
 
-        if (!total) {
-            return -1;
-        }
+    if (!total) {  
+        return -1;  
+    }  
 
 
-        const normalized =
-            (
-                finalRotation % 360 +
-                360
-            ) % 360;
+    const normalized =  
+        (  
+            finalRotation % 360 +  
+            360  
+        ) % 360;  
 
 
-        /*
-           Pointer berada di -90deg.
+    /*  
+       Pointer berada di -90deg.  
 
-           Dengan gradient yang dimulai
-           dari -90deg, sektor pertama
-           tepat dimulai dari pointer.
+       Dengan gradient yang dimulai  
+       dari -90deg, sektor pertama  
+       tepat dimulai dari pointer.  
 
-           Kita cari posisi lokal sektor
-           terhadap titik awal tersebut.
-        */
+       Kita cari posisi lokal sektor  
+       terhadap titik awal tersebut.  
+    */  
 
-        const localAngle =
-            (
-                -normalized +
-                360
-            ) % 360;
+    const localAngle =  
+        (  
+            -normalized +  
+            360  
+        ) % 360;  
 
 
-        let index =
-            Math.floor(
-                localAngle / sector
-            );
+    let index =  
+        Math.floor(  
+            localAngle / sector  
+        );  
 
 
-        /*
-           Pengaman floating point
-        */
+    /*  
+       Pengaman floating point  
+    */  
 
-        if (
-            index < 0
-        ) {
-            index = 0;
-        }
+    if (  
+        index < 0  
+    ) {  
+        index = 0;  
+    }  
 
 
-        if (
-            index >= total
-        ) {
-            index = total - 1;
-        }
+    if (  
+        index >= total  
+    ) {  
+        index = total - 1;  
+    }  
 
 
-        return index;
-    }
+    return index;  
+}  
 
 
-    function spin() {
+function spin() {  
 
-        if (
-            spinning ||
-            !total
-        ) {
-            return;
-        }
+    if (  
+        spinning ||  
+        !total  
+    ) {  
+        return;  
+    }  
 
 
-        setSpinning(true);
+    setSpinning(true);  
 
-        setWinner(null);
+    setWinner(null);  
 
 
-        /*
-           Random sektor target.
+    /*  
+       Random sektor target.  
 
-           Kita sengaja menentukan index
-           terlebih dahulu, kemudian menghitung
-           rotasi yang membuat sektor tersebut
-           berada di pointer.
+       Kita sengaja menentukan index  
+       terlebih dahulu, kemudian menghitung  
+       rotasi yang membuat sektor tersebut  
+       berada di pointer.  
 
-           Jadi pemenang ditentukan oleh
-           sektor roda, bukan random terpisah.
-        */
+       Jadi pemenang ditentukan oleh  
+       sektor roda, bukan random terpisah.  
+    */  
 
-        const targetIndex =
-            Math.floor(
-                Math.random() * total
-            );
+    const targetIndex =  
+        Math.floor(  
+            Math.random() * total  
+        );  
 
 
-        /*
-           Target sudut tengah sektor.
-        */
+    /*  
+       Target sudut tengah sektor.  
+    */  
 
-        const targetCenter =
-            targetIndex * sector +
-            sector / 2;
+    const targetCenter =  
+        targetIndex * sector +  
+        sector / 2;  
 
 
-        /*
-           Kita ingin targetCenter berada
-           tepat di posisi awal pointer.
+    /*  
+       Kita ingin targetCenter berada  
+       tepat di posisi awal pointer.  
 
-           Karena pointer berada di 0deg
-           setelah normalisasi gradient,
-           roda harus bergerak sebesar:
+       Karena pointer berada di 0deg  
+       setelah normalisasi gradient,  
+       roda harus bergerak sebesar:  
 
-           360 - targetCenter
-        */
+       360 - targetCenter  
+    */  
 
-        const targetNormalized =
-            (
-                360 -
-                targetCenter
-            ) % 360;
+    const targetNormalized =  
+        (  
+            360 -  
+            targetCenter  
+        ) % 360;  
 
 
-        const currentNormalized =
-            (
-                rotation % 360 +
-                360
-            ) % 360;
+    const currentNormalized =  
+        (  
+            rotation % 360 +  
+            360  
+        ) % 360;  
 
 
-        const delta =
-            (
-                targetNormalized -
-                currentNormalized +
-                360
-            ) % 360;
+    const delta =  
+        (  
+            targetNormalized -  
+            currentNormalized +  
+            360  
+        ) % 360;  
 
 
-        const extraTurns =
-            5 +
-            Math.floor(
-                Math.random() * 3
-            );
+    const extraTurns =  
+        5 +  
+        Math.floor(  
+            Math.random() * 3  
+        );  
 
 
-        const finalRotation =
-            rotation +
-            extraTurns * 360 +
-            delta;
+    const finalRotation =  
+        rotation +  
+        extraTurns * 360 +  
+        delta;  
 
 
-        setRotation(
-            finalRotation
-        );
+    setRotation(  
+        finalRotation  
+    );  
 
 
-        setTimeout(() => {
+    setTimeout(() => {  
 
-            /*
-               Karena targetIndex sudah
-               ditentukan berdasarkan sektor
-               yang diputar, kita gunakan target
-               yang sama sebagai hasil.
+        /*  
+           Karena targetIndex sudah  
+           ditentukan berdasarkan sektor  
+           yang diputar, kita gunakan target  
+           yang sama sebagai hasil.  
 
-               Tidak ada random kedua.
-            */
+           Tidak ada random kedua.  
+        */  
 
-            const selected =
-                names[targetIndex];
+        const selected =  
+            names[targetIndex];  
 
 
-            setWinner(selected);
+        setWinner(selected);  
 
-            setSpinning(false);
+        setSpinning(false);  
 
 
-            showToast(
-                `Pemenang: ${selected}`
-            );
+        showToast(  
+            `Pemenang: ${selected}`  
+        );  
 
-        }, 4600);
-    }
+    }, 4600);  
+}  
 
 
-    return (
-        <div className="wheel-panel">
+return (  
+    <div className="wheel-panel">  
 
-            <div className="wheel-header">
+        <div className="wheel-header">  
 
-                <div className="eyebrow">
-                    <Icon
-                        name="rotate"
-                        size={15}
-                    />
-                    RODA PUTAR
-                </div>
+            <div className="eyebrow">  
+                <Icon  
+                    name="rotate"  
+                    size={15}  
+                />  
+                RODA PUTAR  
+            </div>  
 
-                <h2>
-                    Putar Nama Peserta
-                </h2>
+            <h2>  
+                Putar Nama Peserta  
+            </h2>  
 
-                <p>
-                    Nama tercantum di roda
-                    dan siap diundi.
-                </p>
+            <p>  
+                Nama tercantum di roda  
+                dan siap diundi.  
+            </p>  
 
-            </div>
+        </div>  
 
 
-            <div className="wheel-wrapper">
+        <div className="wheel-wrapper">  
 
-                <div className="wheel-pointer">
-                    ▼
-                </div>
+            <div className="wheel-pointer">  
+                ▼  
+            </div>  
 
 
-                <div
-                    className={
-                        `spin-wheel ${
-                            spinning
-                                ? "spinning"
-                                : ""
-                        }`
-                    }
-                    style={{
-                        background:
-                            gradient,
+            <div  
+                className={  
+                    `spin-wheel ${  
+                        spinning  
+                            ? "spinning"  
+                            : ""  
+                    }`  
+                }  
+                style={{  
+                    background:  
+                        gradient,  
 
-                        transform:
-                            `rotate(${rotation}deg)`,
+                    transform:  
+                        `rotate(${rotation}deg)`,  
 
-                        transition:
-                            spinning
-                                ? "transform 4.6s cubic-bezier(.12,.7,.18,1)"
-                                : "none"
-                    }}
-                >
+                    transition:  
+                        spinning  
+                            ? "transform 4.6s cubic-bezier(.12,.7,.18,1)"  
+                            : "none"  
+                }}  
+            >  
 
-                    {names.map(
-                        (name, index) => (
+                {names.map(  
+                    (name, index) => (  
 
-                            <div
-                                key={
-                                    `${name}-${index}`
-                                }
-                                className="wheel-label"
-                                style={
-                                    labelStyle(index)
-                                }
-                            >
-                                {
-                                    shortWheelName(
-                                        name
-                                    )
-                                }
-                            </div>
+                        <div  
+                            key={  
+                                `${name}-${index}`  
+                            }  
+                            className="wheel-label"  
+                            style={  
+                                labelStyle(index)  
+                            }  
+                        >  
+                            {  
+                                shortWheelName(  
+                                    name  
+                                )  
+                            }  
+                        </div>  
 
-                        )
-                    )}
+                    )  
+                )}  
 
 
-                    <div className="wheel-center">
-                        ◉
+                <div className="wheel-center">  
+                    ◉
+
 function SpinWheel({
-    names,
-    showToast
+names,
+showToast
 }) {
 
-    const [
-        spinning,
-        setSpinning
-    ] = useState(false);
+const [  
+    spinning,  
+    setSpinning  
+] = useState(false);  
 
 
-    const [
-        rotation,
-        setRotation
-    ] = useState(0);
+const [  
+    rotation,  
+    setRotation  
+] = useState(0);  
 
 
-    const [
-        winner,
-        setWinner
-    ] = useState(null);
+const [  
+    winner,  
+    setWinner  
+] = useState(null);  
 
 
-    const total =
-        names.length;
+const total =  
+    names.length;  
 
 
-    const sector =
-        total > 0
-            ? 360 / total
-            : 360;
+const sector =  
+    total > 0  
+        ? 360 / total  
+        : 360;  
 
 
-    const gradient = useMemo(() => {
+const gradient = useMemo(() => {  
 
-        if (!total) {
+    if (!total) {  
 
-            return (
-                "conic-gradient(#ddd 0deg 360deg)"
-            );
-        }
+        return (  
+            "conic-gradient(#ddd 0deg 360deg)"  
+        );  
+    }  
 
 
-        const colors = [
-            "#e87868",
-            "#e8b34d",
-            "#76a99a",
-            "#4b304d",
-            "#86abb4",
-            "#d78b88",
-            "#93b99d",
-            "#ba8850"
-        ];
+    const colors = [  
+        "#e87868",  
+        "#e8b34d",  
+        "#76a99a",  
+        "#4b304d",  
+        "#86abb4",  
+        "#d78b88",  
+        "#93b99d",  
+        "#ba8850"  
+    ];  
 
 
-        const stops = [];
+    const stops = [];  
 
 
-        names.forEach(
-            (_, index) => {
+    names.forEach(  
+        (_, index) => {  
 
-                const start =
-                    index * sector;
+            const start =  
+                index * sector;  
 
-                const end =
-                    (index + 1) *
-                    sector;
+            const end =  
+                (index + 1) *  
+                sector;  
 
-                const color =
-                    colors[
-                        index %
-                        colors.length
-                    ];
+            const color =  
+                colors[  
+                    index %  
+                    colors.length  
+                ];  
 
 
-                stops.push(
-                    `${color} ${start}deg ${end}deg`
-                );
+            stops.push(  
+                `${color} ${start}deg ${end}deg`  
+            );  
 
-            }
-        );
+        }  
+    );  
 
 
-        return `
-            conic-gradient(
-                from -90deg,
-                ${stops.join(",")}
-            )
-        `;
+    return `  
+        conic-gradient(  
+            from -90deg,  
+            ${stops.join(",")}  
+        )  
+    `;  
 
-    }, [
-        names,
-        sector,
-        total
-    ]);
+}, [  
+    names,  
+    sector,  
+    total  
+]);  
 
 
-    /*
-       Ukuran nama.
-    */
+/*  
+   Ukuran nama.  
+*/  
 
-    const labelFontSize =
-        total <= 10
-            ? 12
-            : total <= 18
-                ? 9
-                : total <= 25
-                    ? 7
-                    : 5.5;
+const labelFontSize =  
+    total <= 10  
+        ? 12  
+        : total <= 18  
+            ? 9  
+            : total <= 25  
+                ? 7  
+                : 5.5;  
 
 
-    /*
-       Setiap label ditempatkan tepat
-       di tengah sektornya.
-    */
+/*  
+   Setiap label ditempatkan tepat  
+   di tengah sektornya.  
+*/  
 
-    function labelStyle(index) {
+function labelStyle(index) {  
 
-        const center =
-            index * sector +
-            sector / 2;
+    const center =  
+        index * sector +  
+        sector / 2;  
 
 
-        return {
+    return {  
 
-            position: "absolute",
+        position: "absolute",  
 
-            left: "50%",
-            top: "50%",
+        left: "50%",  
+        top: "50%",  
 
-            width: "45%",
+        width: "45%",  
 
-            transform:
-                `rotate(${center}deg)
-                 translateX(0)`,
+        transform:  
+            `rotate(${center}deg)  
+             translateX(0)`,  
 
-            transformOrigin:
-                "0 50%",
+        transformOrigin:  
+            "0 50%",  
 
-            fontSize:
-                `${labelFontSize}px`,
+        fontSize:  
+            `${labelFontSize}px`,  
 
-            lineHeight: "1",
+        lineHeight: "1",  
 
-            textAlign: "right",
+        textAlign: "right",  
 
-            color: "#fff",
+        color: "#fff",  
 
-            fontWeight: 700,
+        fontWeight: 700,  
 
-            textShadow:
-                "0 1px 2px rgba(0,0,0,.45)",
+        textShadow:  
+            "0 1px 2px rgba(0,0,0,.45)",  
 
-            whiteSpace:
-                "nowrap",
+        whiteSpace:  
+            "nowrap",  
 
-            overflow:
-                "hidden",
+        overflow:  
+            "hidden",  
 
-            textOverflow:
-                "ellipsis",
+        textOverflow:  
+            "ellipsis",  
 
-            pointerEvents:
-                "none"
-        };
-    }
+        pointerEvents:  
+            "none"  
+    };  
+}  
 
 
-    function spin() {
+function spin() {  
 
-        if (
-            spinning ||
-            !total
-        ) {
-            return;
-        }
+    if (  
+        spinning ||  
+        !total  
+    ) {  
+        return;  
+    }  
 
 
-        setSpinning(true);
+    setSpinning(true);  
 
-        setWinner(null);
+    setWinner(null);  
 
 
-        /*
-           SATU-SATUNYA random:
-           tentukan peserta pemenang.
-        */
+    /*  
+       SATU-SATUNYA random:  
+       tentukan peserta pemenang.  
+    */  
 
-        const targetIndex =
-            Math.floor(
-                Math.random() * total
-            );
+    const targetIndex =  
+        Math.floor(  
+            Math.random() * total  
+        );  
 
 
-        const targetName =
-            names[targetIndex];
+    const targetName =  
+        names[targetIndex];  
 
 
-        /*
-           Titik tengah sektor target.
-        */
+    /*  
+       Titik tengah sektor target.  
+    */  
 
-        const targetCenter =
-            targetIndex * sector +
-            sector / 2;
+    const targetCenter =  
+        targetIndex * sector +  
+        sector / 2;  
 
 
-        /*
-           Karena gradient dimulai dari
-           posisi pointer (-90deg),
-           kita ingin targetCenter
-           berpindah ke posisi pointer.
+    /*  
+       Karena gradient dimulai dari  
+       posisi pointer (-90deg),  
+       kita ingin targetCenter  
+       berpindah ke posisi pointer.  
 
-           Posisi target dalam koordinat roda:
-             targetCenter
+       Posisi target dalam koordinat roda:  
+         targetCenter  
 
-           Rotasi yang dibutuhkan:
-             -targetCenter
-        */
+       Rotasi yang dibutuhkan:  
+         -targetCenter  
+    */  
 
-        const targetRotation =
-            (
-                360 -
-                targetCenter
-            ) % 360;
+    const targetRotation =  
+        (  
+            360 -  
+            targetCenter  
+        ) % 360;  
 
 
-        const currentNormalized =
-            (
-                rotation % 360 +
-                360
-            ) % 360;
+    const currentNormalized =  
+        (  
+            rotation % 360 +  
+            360  
+        ) % 360;  
 
 
-        const delta =
-            (
-                targetRotation -
-                currentNormalized +
-                360
-            ) % 360;
+    const delta =  
+        (  
+            targetRotation -  
+            currentNormalized +  
+            360  
+        ) % 360;  
 
 
-        const extraTurns =
-            5 +
-            Math.floor(
-                Math.random() * 3
-            );
+    const extraTurns =  
+        5 +  
+        Math.floor(  
+            Math.random() * 3  
+        );  
 
 
-        const finalRotation =
-            rotation +
-            extraTurns * 360 +
-            delta;
+    const finalRotation =  
+        rotation +  
+        extraTurns * 360 +  
+        delta;  
 
 
-        setRotation(
-            finalRotation
-        );
+    setRotation(  
+        finalRotation  
+    );  
 
 
-        /*
-           Hasil menggunakan targetName
-           yang SAMA dengan sektor target.
+    /*  
+       Hasil menggunakan targetName  
+       yang SAMA dengan sektor target.  
 
-           Tidak ada random kedua.
-        */
+       Tidak ada random kedua.  
+    */  
 
-        setTimeout(() => {
+    setTimeout(() => {  
 
-            setWinner(
-                targetName
-            );
+        setWinner(  
+            targetName  
+        );  
 
-            setSpinning(false);
+        setSpinning(false);  
 
-            showToast(
-                `Pemenang: ${targetName}`
-            );
+        showToast(  
+            `Pemenang: ${targetName}`  
+        );  
 
-        }, 4600);
-    }
+    }, 4600);  
+}  
 
 
-    return (
-        <div className="wheel-panel">
+return (  
+    <div className="wheel-panel">  
 
-            <div className="wheel-header">
+        <div className="wheel-header">  
 
-                <div className="eyebrow">
+            <div className="eyebrow">  
 
-                    <Icon
-                        name="rotate"
-                        size={15}
-                    />
+                <Icon  
+                    name="rotate"  
+                    size={15}  
+                />  
 
-                    RODA PUTAR
+                RODA PUTAR  
 
-                </div>
+            </div>  
 
 
-                <h2>
-                    Putar Nama Peserta
-                </h2>
+            <h2>  
+                Putar Nama Peserta  
+            </h2>  
 
 
-                <p>
-                    Setiap nama memiliki
-                    satu sektor yang sama
-                    dengan hasil undian.
-                </p>
+            <p>  
+                Setiap nama memiliki  
+                satu sektor yang sama  
+                dengan hasil undian.  
+            </p>  
 
-            </div>
+        </div>  
 
 
-            <div className="wheel-wrapper">
+        <div className="wheel-wrapper">  
 
-                <div className="wheel-pointer">
-                    ▼
-                </div>
+            <div className="wheel-pointer">  
+                ▼  
+            </div>  
 
 
-                <div
-                    className={
-                        `spin-wheel ${
-                            spinning
-                                ? "spinning"
-                                : ""
-                        }`
+            <div  
+                className={  
+                    `spin-wheel ${  
+                        spinning  
+                            ? "spinning"  
+                            : ""  
+                    }`  
+                }  
+                style={{  
+
+                    background:  
+                        gradient,  
+
+                    transform:  
+                        `rotate(${rotation}deg)`,  
+
+                    transition:  
+                        spinning  
+                            ? "transform 4.6s cubic-bezier(.12,.7,.18,1)"  
+                            : "none"  
+
+                }}  
+            >  
+
+                {names.map(  
+                    (  
+                        name,  
+                        index  
+                    ) => (  
+
+                        <div  
+                            key={  
+                                `${name}-${index}`  
+                            }  
+                            className="wheel-label"  
+                            style={  
+                                labelStyle(  
+                                    index  
+                                )  
+                            }  
+                        >  
+
+                            {  
+                                shortWheelName(  
+                                    name  
+                                )  
+                            }  
+
+                        </div>  
+
+                    )  
+                )}  
+
+
+                <div className="wheel-center">  
+                    ◉  
+                </div>  
+
+            </div>  
+
+        </div>  
+
+
+        <button  
+            className="primary-button full"  
+            onClick={spin}  
+            disabled={  
+                spinning ||  
+                !names.length  
+            }  
+        >  
+
+            <Icon  
+                name="rotate"  
+                size={18}  
+            />  
+
+            {spinning  
+                ? "Memutar..."  
+                : "Putar Roda"}  
+
+        </button>  
+
+
+        {winner && (  
+
+            <div className="winner-box">  
+
+                🎉 Pemenang:{" "}  
+
+                <strong>  
+                    {winner}  
+                </strong>  
+
+            </div>  
+
+        )}  
+
+    </div>  
+);  
                     }
-                    style={{
-
-                        background:
-                            gradient,
-
-                        transform:
-                            `rotate(${rotation}deg)`,
-
-                        transition:
-                            spinning
-                                ? "transform 4.6s cubic-bezier(.12,.7,.18,1)"
-                                : "none"
-
-                    }}
-                >
-
-                    {names.map(
-                        (
-                            name,
-                            index
-                        ) => (
-
-                            <div
-                                key={
-                                    `${name}-${index}`
-                                }
-                                className="wheel-label"
-                                style={
-                                    labelStyle(
-                                        index
-                                    )
-                                }
-                            >
-
-                                {
-                                    shortWheelName(
-                                        name
-                                    )
-                                }
-
-                            </div>
-
-                        )
-                    )}
-
-
-                    <div className="wheel-center">
-                        ◉
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <button
-                className="primary-button full"
-                onClick={spin}
-                disabled={
-                    spinning ||
-                    !names.length
-                }
-            >
-
-                <Icon
-                    name="rotate"
-                    size={18}
-                />
-
-                {spinning
-                    ? "Memutar..."
-                    : "Putar Roda"}
-
-            </button>
-
-
-            {winner && (
-
-                <div className="winner-box">
-
-                    🎉 Pemenang:{" "}
-
-                    <strong>
-                        {winner}
-                    </strong>
-
-                </div>
-
-            )}
-
-        </div>
-    );
-                        }
-
 
 /* =========================================================
-   DUEL
+DUEL
 ========================================================= */
 
 function DuelTool({
-    names,
-    showToast
+names,
+showToast
 }) {
 
-    const [
-        pairs,
-        setPairs
-    ] = useState([]);
+const [  
+    pairs,  
+    setPairs  
+] = useState([]);  
 
 
-    function drawDuel() {
+function drawDuel() {  
 
-        if (names.length < 2) {
+    if (names.length < 2) {  
 
-            showToast(
-                "Minimal 2 peserta diperlukan.",
-                "error"
-            );
+        showToast(  
+            "Minimal 2 peserta diperlukan.",  
+            "error"  
+        );  
 
-            return;
-        }
-
-
-        setPairs(
-            makeDuelPairs(names)
-        );
-
-        showToast(
-            "Pasangan berhasil diundi."
-        );
-    }
+        return;  
+    }  
 
 
-    return (
-        <div className="tool-panel">
+    setPairs(  
+        makeDuelPairs(names)  
+    );  
 
-            <div className="eyebrow">
-                <Icon
-                    name="shuffle"
-                    size={15}
-                />
-                UNDIAN BERPASANGAN
-            </div>
+    showToast(  
+        "Pasangan berhasil diundi."  
+    );  
+}  
 
 
-            <h2>
-                Duel Antar Peserta
-            </h2>
+return (  
+    <div className="tool-panel">  
+
+        <div className="eyebrow">  
+            <Icon  
+                name="shuffle"  
+                size={15}  
+            />  
+            UNDIAN BERPASANGAN  
+        </div>  
 
 
-            <p className="panel-description">
-                Peserta diacak menjadi pasangan
-                secara otomatis.
-            </p>
+        <h2>  
+            Duel Antar Peserta  
+        </h2>  
 
 
-            <button
-                className="primary-button"
-                onClick={drawDuel}
-            >
-
-                <Icon
-                    name="shuffle"
-                    size={18}
-                />
-
-                Undi Pasangan
-
-            </button>
+        <p className="panel-description">  
+            Peserta diacak menjadi pasangan  
+            secara otomatis.  
+        </p>  
 
 
-            {pairs.length > 0 && (
+        <button  
+            className="primary-button"  
+            onClick={drawDuel}  
+        >  
 
-                <div className="duel-results">
+            <Icon  
+                name="shuffle"  
+                size={18}  
+            />  
 
-                    {pairs.map(
-                        (pair, index) => (
+            Undi Pasangan  
 
-                            <div
-                                className="duel-card"
-                                key={index}
-                            >
+        </button>  
 
-                                <span>
-                                    Duel{" "}
-                                    {index + 1}
-                                </span>
 
-                                <strong>
-                                    {pair[0]}
-                                </strong>
+        {pairs.length > 0 && (  
 
-                                <div>
-                                    VS
-                                </div>
+            <div className="duel-results">  
 
-                                <strong>
-                                    {pair[1] ||
-                                        "BYE"}
-                                </strong>
+                {pairs.map(  
+                    (pair, index) => (  
 
-                            </div>
+                        <div  
+                            className="duel-card"  
+                            key={index}  
+                        >  
 
-                        )
-                    )}
+                            <span>  
+                                Duel{" "}  
+                                {index + 1}  
+                            </span>  
 
-                </div>
+                            <strong>  
+                                {pair[0]}  
+                            </strong>  
 
-            )}
+                            <div>  
+                                VS  
+                            </div>  
 
-        </div>
-    );
+                            <strong>  
+                                {pair[1] ||  
+                                    "BYE"}  
+                            </strong>  
+
+                        </div>  
+
+                    )  
+                )}  
+
+            </div>  
+
+        )}  
+
+    </div>  
+);
+
 }
 
-
 /* =========================================================
-   QUEUE
+QUEUE
 ========================================================= */
 
 function QueueTool({
-    names,
-    showToast
+names,
+showToast
 }) {
 
-    const [
-        queue,
-        setQueue
-    ] = useState([]);
+const [  
+    queue,  
+    setQueue  
+] = useState([]);  
 
 
-    function makeQueue() {
+function makeQueue() {  
 
-        if (!names.length) {
+    if (!names.length) {  
 
-            showToast(
-                "Tambahkan peserta terlebih dahulu.",
-                "error"
-            );
+        showToast(  
+            "Tambahkan peserta terlebih dahulu.",  
+            "error"  
+        );  
 
-            return;
-        }
-
-
-        setQueue(
-            shuffleArray(names)
-        );
+        return;  
+    }  
 
 
-        showToast(
-            "Urutan antrean dibuat."
-        );
-    }
+    setQueue(  
+        shuffleArray(names)  
+    );  
 
 
-    async function copyQueue() {
-
-        if (!queue.length) {
-            return;
-        }
-
-
-        const text =
-            queue
-                .map(
-                    (name, index) =>
-                        `${index + 1}. ${name}`
-                )
-                .join("\n");
+    showToast(  
+        "Urutan antrean dibuat."  
+    );  
+}  
 
 
-        const success =
-            await copyText(text);
+async function copyQueue() {  
+
+    if (!queue.length) {  
+        return;  
+    }  
 
 
-        showToast(
-            success
-                ? "Urutan berhasil disalin."
-                : "Gagal menyalin.",
-            success
-                ? "default"
-                : "error"
-        );
-    }
+    const text =  
+        queue  
+            .map(  
+                (name, index) =>  
+                    `${index + 1}. ${name}`  
+            )  
+            .join("\n");  
 
 
-    return (
-        <div className="tool-panel">
-
-            <div className="eyebrow">
-                <Icon
-                    name="list"
-                    size={15}
-                />
-                URUTAN ANTREAN / GILIRAN
-            </div>
+    const success =  
+        await copyText(text);  
 
 
-            <h2>
-                Acak urutan peserta
-            </h2>
+    showToast(  
+        success  
+            ? "Urutan berhasil disalin."  
+            : "Gagal menyalin.",  
+        success  
+            ? "default"  
+            : "error"  
+    );  
+}  
 
 
-            <p className="panel-description">
-                Buat urutan giliran baru
-                tanpa mengubah daftar peserta.
-            </p>
+return (  
+    <div className="tool-panel">  
+
+        <div className="eyebrow">  
+            <Icon  
+                name="list"  
+                size={15}  
+            />  
+            URUTAN ANTREAN / GILIRAN  
+        </div>  
 
 
-            <button
-                className="primary-button"
-                onClick={makeQueue}
-            >
-
-                <Icon
-                    name="shuffle"
-                    size={18}
-                />
-
-                Buat Urutan
-
-            </button>
+        <h2>  
+            Acak urutan peserta  
+        </h2>  
 
 
-            {queue.length > 0 && (
-
-                <div className="queue-results">
-
-                    <div className="results-heading">
-
-                        <h3>
-                            Urutan Giliran
-                        </h3>
-
-                        <button
-                            className="secondary-button"
-                            onClick={copyQueue}
-                        >
-                            <Icon
-                                name="copy"
-                                size={16}
-                            />
-                            Salin
-                        </button>
-
-                    </div>
+        <p className="panel-description">  
+            Buat urutan giliran baru  
+            tanpa mengubah daftar peserta.  
+        </p>  
 
 
-                    <div className="queue-list">
+        <button  
+            className="primary-button"  
+            onClick={makeQueue}  
+        >  
 
-                        {queue.map(
-                            (name, index) => (
+            <Icon  
+                name="shuffle"  
+                size={18}  
+            />  
 
-                                <div
-                                    className="queue-row"
-                                    key={`${name}-${index}`}
-                                >
+            Buat Urutan  
 
-                                    <span>
-                                        {index + 1}
-                                    </span>
+        </button>  
 
-                                    <strong>
-                                        {name}
-                                    </strong>
 
-                                </div>
+        {queue.length > 0 && (  
 
-                            )
-                        )}
+            <div className="queue-results">  
 
-                    </div>
+                <div className="results-heading">  
 
-                </div>
+                    <h3>  
+                        Urutan Giliran  
+                    </h3>  
 
-            )}
+                    <button  
+                        className="secondary-button"  
+                        onClick={copyQueue}  
+                    >  
+                        <Icon  
+                            name="copy"  
+                            size={16}  
+                        />  
+                        Salin  
+                    </button>  
 
-        </div>
-    );
+                </div>  
+
+
+                <div className="queue-list">  
+
+                    {queue.map(  
+                        (name, index) => (  
+
+                            <div  
+                                className="queue-row"  
+                                key={`${name}-${index}`}  
+                            >  
+
+                                <span>  
+                                    {index + 1}  
+                                </span>  
+
+                                <strong>  
+                                    {name}  
+                                </strong>  
+
+                            </div>  
+
+                        )  
+                    )}  
+
+                </div>  
+
+            </div>  
+
+        )}  
+
+    </div>  
+);
+
 }
 
-
 /* =========================================================
-   AUTH
+AUTH
 ========================================================= */
 
 function AuthPanel({
-    user,
-    showToast
+user,
+showToast
 }) {
 
-    const [
-        email,
-        setEmail
-    ] = useState("");
+const [  
+    email,  
+    setEmail  
+] = useState("");  
 
 
-    const [
-        password,
-        setPassword
-    ] = useState("");
+const [  
+    password,  
+    setPassword  
+] = useState("");  
 
 
-    const [
-        loading,
-        setLoading
-    ] = useState(false);
+const [  
+    loading,  
+    setLoading  
+] = useState(false);  
 
 
-    async function signIn() {
+async function signIn() {  
 
-        if (
-            !email ||
-            !password
-        ) {
+    if (  
+        !email ||  
+        !password  
+    ) {  
 
-            showToast(
-                "Masukkan email dan password.",
-                "error"
-            );
+        showToast(  
+            "Masukkan email dan password.",  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        setLoading(true);
+    setLoading(true);  
 
 
-        const {
-            error
-        } = await supabaseClient
-            .auth
-            .signInWithPassword({
-                email,
-                password
-            });
+    const {  
+        error  
+    } = await supabaseClient  
+        .auth  
+        .signInWithPassword({  
+            email,  
+            password  
+        });  
 
 
-        setLoading(false);
+    setLoading(false);  
 
 
-        if (error) {
+    if (error) {  
 
-            showToast(
-                error.message,
-                "error"
-            );
+        showToast(  
+            error.message,  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        showToast(
-            "Berhasil masuk."
-        );
-    }
+    showToast(  
+        "Berhasil masuk."  
+    );  
+}  
 
 
-    async function signUp() {
+async function signUp() {  
 
-        if (
-            !email ||
-            !password
-        ) {
+    if (  
+        !email ||  
+        !password  
+    ) {  
 
-            showToast(
-                "Masukkan email dan password.",
-                "error"
-            );
+        showToast(  
+            "Masukkan email dan password.",  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        if (password.length < 6) {
+    if (password.length < 6) {  
 
-            showToast(
-                "Password minimal 6 karakter.",
-                "error"
-            );
+        showToast(  
+            "Password minimal 6 karakter.",  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        setLoading(true);
+    setLoading(true);  
 
 
-        const redirectUrl =
-            window.location.origin +
-            window.location.pathname;
+    const redirectUrl =  
+        window.location.origin +  
+        window.location.pathname;  
 
 
-        const {
-            error
-        } = await supabaseClient
-            .auth
-            .signUp({
+    const {  
+        error  
+    } = await supabaseClient  
+        .auth  
+        .signUp({  
 
-                email,
-                password,
+            email,  
+            password,  
 
-                options: {
-                    emailRedirectTo:
-                        redirectUrl
-                }
+            options: {  
+                emailRedirectTo:  
+                    redirectUrl  
+            }  
 
-            });
+        });  
 
 
-        setLoading(false);
+    setLoading(false);  
 
 
-        if (error) {
+    if (error) {  
 
-            showToast(
-                error.message,
-                "error"
-            );
+        showToast(  
+            error.message,  
+            "error"  
+        );  
 
-            return;
-        }
+        return;  
+    }  
 
 
-        showToast(
-            "Akun dibuat. Cek email untuk konfirmasi."
-        );
-    }
+    showToast(  
+        "Akun dibuat. Cek email untuk konfirmasi."  
+    );  
+}  
 
 
-    async function signOut() {
+async function signOut() {  
 
-        await supabaseClient
-            .auth
-            .signOut();
+    await supabaseClient  
+        .auth  
+        .signOut();  
 
 
-        showToast(
-            "Berhasil keluar."
-        );
-    }
+    showToast(  
+        "Berhasil keluar."  
+    );  
+}  
 
 
-    if (user) {
+if (user) {  
 
-        return (
-            <div className="auth-box logged-in">
+    return (  
+        <div className="auth-box logged-in">  
 
-                <span>
-                    {user.email}
-                </span>
+            <span>  
+                {user.email}  
+            </span>  
 
-                <button
-                    className="secondary-button"
-                    onClick={signOut}
-                >
-                    Keluar
-                </button>
+            <button  
+                className="secondary-button"  
+                onClick={signOut}  
+            >  
+                Keluar  
+            </button>  
 
-            </div>
-        );
-    }
+        </div>  
+    );  
+}  
 
 
-    return (
-        <div className="auth-box">
+return (  
+    <div className="auth-box">  
 
-            <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={e =>
-                    setEmail(e.target.value)
-                }
-            />
+        <input  
+            type="email"  
+            placeholder="Email"  
+            value={email}  
+            onChange={e =>  
+                setEmail(e.target.value)  
+            }  
+        />  
 
 
-            <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={e =>
-                    setPassword(e.target.value)
-                }
-            />
+        <input  
+            type="password"  
+            placeholder="Password"  
+            value={password}  
+            onChange={e =>  
+                setPassword(e.target.value)  
+            }  
+        />  
 
 
-            <button
-                className="primary-button"
-                onClick={signIn}
-                disabled={loading}
-            >
-                Masuk
-            </button>
+        <button  
+            className="primary-button"  
+            onClick={signIn}  
+            disabled={loading}  
+        >  
+            Masuk  
+        </button>  
 
 
-            <button
-                className="secondary-button"
-                onClick={signUp}
-                disabled={loading}
-            >
-                Daftar
-            </button>
+        <button  
+            className="secondary-button"  
+            onClick={signUp}  
+            disabled={loading}  
+        >  
+            Daftar  
+        </button>  
 
-        </div>
-    );
+    </div>  
+);
+
 }
 
-
 /* =========================================================
-   APP
+APP
 ========================================================= */
 
 function App() {
 
-    const [
-        user,
-        setUser
-    ] = useState(null);
+const [  
+    user,  
+    setUser  
+] = useState(null);  
 
 
-    const [
-        names,
-        setNames
-    ] = useState(
-        () =>
-            readStorage(
-                STORAGE_KEYS.currentAttendance,
-                DEFAULT_NAMES
-            )
-    );
+const [  
+    names,  
+    setNames  
+] = useState(  
+    () =>  
+        readStorage(  
+            STORAGE_KEYS.currentAttendance,  
+            DEFAULT_NAMES  
+        )  
+);  
 
 
-    const [
-        selectedList,
-        setSelectedList
-    ] = useState(null);
+const [  
+    selectedList,  
+    setSelectedList  
+] = useState(null);  
 
 
-    const [
-        mode,
-        setMode
-    ] = useState("groups");
+const [  
+    mode,  
+    setMode  
+] = useState("groups");  
 
 
-    const {
-        toast,
-        showToast
-    } = useToast();
+const {  
+    toast,  
+    showToast  
+} = useToast();  
 
 
-    /* -----------------------------------------
-       Auth
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Auth  
+----------------------------------------- */  
 
-    useEffect(() => {
+useEffect(() => {  
 
-        let mounted = true;
+    let mounted = true;  
 
 
-        supabaseClient
-            .auth
-            .getSession()
-            .then(({
-                data
-            }) => {
+    supabaseClient  
+        .auth  
+        .getSession()  
+        .then(({  
+            data  
+        }) => {  
 
-                if (!mounted) {
-                    return;
-                }
+            if (!mounted) {  
+                return;  
+            }  
 
-                setUser(
-                    data.session?.user ||
-                    null
-                );
+            setUser(  
+                data.session?.user ||  
+                null  
+            );  
 
-            });
+        });  
 
 
-        const {
-            data: listener
-        } =
-            supabaseClient
-                .auth
-                .onAuthStateChange(
-                    (
-                        _event,
-                        session
-                    ) => {
+    const {  
+        data: listener  
+    } =  
+        supabaseClient  
+            .auth  
+            .onAuthStateChange(  
+                (  
+                    _event,  
+                    session  
+                ) => {  
 
-                        setUser(
-                            session?.user ||
-                            null
-                        );
+                    setUser(  
+                        session?.user ||  
+                        null  
+                    );  
 
-                    }
-                );
+                }  
+            );  
 
 
-        return () => {
+    return () => {  
 
-            mounted = false;
+        mounted = false;  
 
-            listener
-                ?.subscription
-                ?.unsubscribe();
+        listener  
+            ?.subscription  
+            ?.unsubscribe();  
 
-        };
+    };  
 
-    }, []);
+}, []);  
 
 
-    /* -----------------------------------------
-       Local current names backup
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Local current names backup  
+----------------------------------------- */  
 
-    useEffect(() => {
+useEffect(() => {  
 
-        writeStorage(
-            STORAGE_KEYS.currentAttendance,
-            names
-        );
+    writeStorage(  
+        STORAGE_KEYS.currentAttendance,  
+        names  
+    );  
 
-    }, [names]);
+}, [names]);  
 
 
-    /* -----------------------------------------
-       Create Arunika for first account login
-    ----------------------------------------- */
+/* -----------------------------------------  
+   Create Arunika for first account login  
+----------------------------------------- */  
 
-    useEffect(() => {
+useEffect(() => {  
 
-        if (!user) {
-            return;
-        }
+    if (!user) {  
+        return;  
+    }  
 
 
-        async function ensureArunika() {
+    async function ensureArunika() {  
 
-            const {
-                data,
-                error
-            } = await supabaseClient
-                .from("attendance_lists")
-                .select("id")
-                .eq(
-                    "user_id",
-                    user.id
-                )
-                .limit(1);
+        const {  
+            data,  
+            error  
+        } = await supabaseClient  
+            .from("attendance_lists")  
+            .select("id")  
+            .eq(  
+                "user_id",  
+                user.id  
+            )  
+            .limit(1);  
 
 
-            if (error) {
+        if (error) {  
 
-                console.error(error);
+            console.error(error);  
 
-                return;
-            }
+            return;  
+        }  
 
 
-            /*
-               Kalau akun belum punya
-               daftar sama sekali,
-               buat template Arunika.
-            */
+        /*  
+           Kalau akun belum punya  
+           daftar sama sekali,  
+           buat template Arunika.  
+        */  
 
-            if (
-                !data ||
-                data.length === 0
-            ) {
+        if (  
+            !data ||  
+            data.length === 0  
+        ) {  
 
-                const {
-                    data: created,
-                    error:
-                        createError
-                } =
-                    await supabaseClient
-                        .from(
-                            "attendance_lists"
-                        )
-                        .insert({
-                            user_id:
-                                user.id,
+            const {  
+                data: created,  
+                error:  
+                    createError  
+            } =  
+                await supabaseClient  
+                    .from(  
+                        "attendance_lists"  
+                    )  
+                    .insert({  
+                        user_id:  
+                            user.id,  
 
-                            name:
-                                DEFAULT_TEMPLATE_NAME,
+                        name:  
+                            DEFAULT_TEMPLATE_NAME,  
 
-                            names:
-                                DEFAULT_NAMES
-                        })
-                        .select()
-                        .single();
+                        names:  
+                            DEFAULT_NAMES  
+                    })  
+                    .select()  
+                    .single();  
 
 
-                if (createError) {
+            if (createError) {  
 
-                    console.error(
-                        createError
-                    );
+                console.error(  
+                    createError  
+                );  
 
-                    return;
-                }
+                return;  
+            }  
 
 
-                setSelectedList(
-                    created
-                );
+            setSelectedList(  
+                created  
+            );  
 
 
-                setNames([
-                    ...DEFAULT_NAMES
-                ]);
-            }
-        }
+            setNames([  
+                ...DEFAULT_NAMES  
+            ]);  
+        }  
+    }  
 
 
-        ensureArunika();
+    ensureArunika();  
 
-    }, [user]);
+}, [user]);  
 
 
-    return (
-        <>
+return (  
+    <>  
 
-            <header className="site-header">
+        <header className="site-header">  
 
-                <div className="brand">
+            <div className="brand">  
 
-                    <div className="brand-mark">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
+                <div className="brand-mark">  
+                    <span></span>  
+                    <span></span>  
+                    <span></span>  
+                </div>  
 
-                    <div>
-                        <strong>
-                            ArunikaMix
-                        </strong>
+                <div>  
+                    <strong>  
+                        ArunikaMix  
+                    </strong>  
 
-                        <small>
-                            PEMBAGI KELOMPOK ACAK
-                            & MINI GAMES
-                        </small>
-                    </div>
+                    <small>  
+                        PEMBAGI KELOMPOK ACAK  
+                        & MINI GAMES  
+                    </small>  
+                </div>  
 
-                </div>
+            </div>  
 
 
-                <AuthPanel
-                    user={user}
-                    showToast={showToast}
-                />
+            <AuthPanel  
+                user={user}  
+                showToast={showToast}  
+            />  
 
-            </header>
+        </header>  
 
 
-            <main className="app-shell">
+        <main className="app-shell">  
 
-                <section className="hero">
+            <section className="hero">  
 
-                    <div>
+                <div>  
 
-                        <div className="eyebrow">
-                            ARUNIKA
-                        </div>
+                    <div className="eyebrow">  
+                        ARUNIKA  
+                    </div>  
 
-                        <h1>
-                            Pembagi kelompok
-                            <br />
-                            & mini games.
-                        </h1>
+                    <h1>  
+                        Pembagi kelompok  
+                        <br />  
+                        & mini games.  
+                    </h1>  
 
-                        <p>
-                            Beri ruang untuk kejutan.
-                        </p>
+                    <p>  
+                        Beri ruang untuk kejutan.  
+                    </p>  
 
-                    </div>
+                </div>  
 
-                </section>
+            </section>  
 
 
-                {/* MODE */}
+            {/* MODE */}  
 
-                <ModeNavigation
-                    mode={mode}
-                    setMode={setMode}
-                />
+            <ModeNavigation  
+                mode={mode}  
+                setMode={setMode}  
+            />  
 
 
-                {/* WORKSPACE */}
+            {/* WORKSPACE */}  
 
-                <section className="workspace">
+            <section className="workspace">  
 
-                    <AttendanceManager
-                        names={names}
-                        setNames={setNames}
-                        user={user}
-                        selectedList={selectedList}
-                        setSelectedList={
-                            setSelectedList
-                        }
-                        showToast={showToast}
-                    />
+                <AttendanceManager  
+                    names={names}  
+                    setNames={setNames}  
+                    user={user}  
+                    selectedList={selectedList}  
+                    setSelectedList={  
+                        setSelectedList  
+                    }  
+                    showToast={showToast}  
+                />  
 
 
-                    <div className="mode-content">
+                <div className="mode-content">  
 
-                        {mode === "groups" && (
+                    {mode === "groups" && (  
 
-                            <GroupMode
-                                names={names}
-                                showToast={
-                                    showToast
-                                }
-                            />
+                        <GroupMode  
+                            names={names}  
+                            showToast={  
+                                showToast  
+                            }  
+                        />  
 
-                        )}
+                    )}  
 
 
-                        {mode === "wheel" && (
+                    {mode === "wheel" && (  
 
-                            <SpinWheel
-                                names={names}
-                                showToast={
-                                    showToast
-                                }
-                            />
+                        <SpinWheel  
+                            names={names}  
+                            showToast={  
+                                showToast  
+                            }  
+                        />  
 
-                        )}
+                    )}  
 
 
-                        {mode === "duel" && (
+                    {mode === "duel" && (  
 
-                            <DuelTool
-                                names={names}
-                                showToast={
-                                    showToast
-                                }
-                            />
+                        <DuelTool  
+                            names={names}  
+                            showToast={  
+                                showToast  
+                            }  
+                        />  
 
-                        )}
+                    )}  
 
 
-                        {mode === "queue" && (
+                    {mode === "queue" && (  
 
-                            <QueueTool
-                                names={names}
-                                showToast={
-                                    showToast
-                                }
-                            />
+                        <QueueTool  
+                            names={names}  
+                            showToast={  
+                                showToast  
+                            }  
+                        />  
 
-                        )}
+                    )}  
 
-                    </div>
+                </div>  
 
-                </section>
+            </section>  
 
 
-                <footer className="site-footer">
+            <footer className="site-footer">  
 
-                    <span>
-                        LOKAL SAJA
-                    </span>
+                <span>  
+                    LOKAL SAJA  
+                </span>  
 
-                    <span>
-                        /
-                    </span>
+                <span>  
+                    /  
+                </span>  
 
-                    <span>
-                        TANPA LOGIN UNTUK
-                        MENGACAK
-                    </span>
+                <span>  
+                    TANPA LOGIN UNTUK  
+                    MENGACAK  
+                </span>  
 
-                </footer>
+            </footer>  
 
-            </main>
+        </main>  
 
 
-            <Toast
-                toast={toast}
-            />
+        <Toast  
+            toast={toast}  
+        />  
 
-        </>
-    );
+    </>  
+);
+
 }
 
-
 /* =========================================================
-   START
+START
 ========================================================= */
 
 const rootElement =
-    document.getElementById("root");
-
+document.getElementById("root");
 
 if (rootElement) {
 
-    const root =
-        ReactDOM.createRoot(
-            rootElement
-        );
+const root =  
+    ReactDOM.createRoot(  
+        rootElement  
+    );  
 
-    root.render(
-        React.createElement(App)
-    );
-                    }
+root.render(  
+    React.createElement(App)  
+);  
+                }
