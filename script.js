@@ -1,5 +1,5 @@
 const {
-    useState,
+   1 useState,
     useEffect,
     useMemo
 } = React;
@@ -2164,22 +2164,714 @@ function GroupMode({
                                     <strong>
                                         {
                                             item.groupCount
+/* =========================================================
+   GROUP MODE
+========================================================= */
+
+function GroupMode({
+    names,
+    showToast
+}) {
+
+    /* -----------------------------------------------------
+       STATE
+    ----------------------------------------------------- */
+
+    const [
+        groupCount,
+        setGroupCount
+    ] = useState(4);
+
+    const [
+        groups,
+        setGroups
+    ] = useState([]);
+
+    const [
+        history,
+        setHistory
+    ] = useState(() =>
+        readStorage(
+            STORAGE_KEYS.history,
+            []
+        )
+    );
+
+    const [
+        showHistory,
+        setShowHistory
+    ] = useState(false);
+
+
+    /* -----------------------------------------------------
+       SESUAIKAN JUMLAH KELOMPOK
+       DENGAN JUMLAH PESERTA
+    ----------------------------------------------------- */
+
+    useEffect(() => {
+
+        if (!names.length) {
+            setGroups([]);
+            return;
+        }
+
+        if (groupCount > names.length) {
+
+            setGroupCount(
+                Math.max(
+                    1,
+                    names.length
+                )
+            );
+
+        }
+
+    }, [
+        names.length,
+        groupCount
+    ]);
+
+
+    /* -----------------------------------------------------
+       BAGI KELOMPOK
+    ----------------------------------------------------- */
+
+    function mixGroups() {
+
+        if (!names.length) {
+
+            showToast(
+                "Belum ada peserta.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const safeGroupCount =
+            Math.min(
+                Math.max(
+                    1,
+                    Number(groupCount)
+                ),
+                names.length
+            );
+
+
+        const result =
+            splitIntoGroups(
+                names,
+                safeGroupCount
+            );
+
+
+        /* Simpan hasil ke layar */
+
+        setGroups(
+            result
+        );
+
+
+        /* -------------------------------------------------
+           SIMPAN HISTORI
+        ------------------------------------------------- */
+
+        const historyItem = {
+
+            id:
+                Date.now(),
+
+            createdAt:
+                new Date().toISOString(),
+
+            groupCount:
+                safeGroupCount,
+
+            groups:
+                result
+
+        };
+
+
+        const newHistory = [
+
+            historyItem,
+
+            ...history
+
+        ].slice(
+            0,
+            20
+        );
+
+
+        setHistory(
+            newHistory
+        );
+
+
+        writeStorage(
+            STORAGE_KEYS.history,
+            newHistory
+        );
+
+
+        showToast(
+            `Berhasil membagi ${names.length} peserta menjadi ${safeGroupCount} kelompok.`
+        );
+    }
+
+
+    /* -----------------------------------------------------
+       HAPUS SEMUA HISTORI
+    ----------------------------------------------------- */
+
+    function clearHistory() {
+
+        if (!history.length) {
+
+            showToast(
+                "Belum ada histori."
+            );
+
+            return;
+        }
+
+
+        const confirmed =
+            window.confirm(
+                "Hapus seluruh histori pembagian?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        setHistory(
+            []
+        );
+
+
+        writeStorage(
+            STORAGE_KEYS.history,
+            []
+        );
+
+
+        showToast(
+            "Histori pembagian dihapus."
+        );
+    }
+
+
+    /* -----------------------------------------------------
+       BUKA HASIL DARI HISTORI
+    ----------------------------------------------------- */
+
+    function openHistory(
+        item
+    ) {
+
+        if (
+            !item ||
+            !Array.isArray(
+                item.groups
+            )
+        ) {
+
+            showToast(
+                "Histori ini tidak valid.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        setGroups(
+            item.groups
+        );
+
+
+        setGroupCount(
+            item.groupCount
+        );
+
+
+        setShowHistory(
+            false
+        );
+
+
+        showToast(
+            "Hasil histori dibuka kembali."
+        );
+    }
+
+
+    /* -----------------------------------------------------
+       COPY HASIL KE CLIPBOARD
+    ----------------------------------------------------- */
+
+    async function copyGroups() {
+
+        if (!groups.length) {
+
+            showToast(
+                "Belum ada hasil pembagian.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const text =
+            groups
+                .map(
+                    (
+                        group,
+                        index
+                    ) => {
+
+                        return [
+                            `KELOMPOK ${index + 1}`,
+                            ...group.map(
+                                (
+                                    name,
+                                    personIndex
+                                ) =>
+                                    `${personIndex + 1}. ${name}`
+                            )
+                        ].join("\n");
+
+                    }
+                )
+                .join(
+                    "\n\n"
+                );
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                text
+            );
+
+
+            showToast(
+                "Hasil pembagian berhasil disalin."
+            );
+
+        } catch {
+
+            showToast(
+                "Gagal menyalin hasil.",
+                "error"
+            );
+
+        }
+    }
+
+
+    /* -----------------------------------------------------
+       FORMAT TANGGAL HISTORI
+    ----------------------------------------------------- */
+
+    function formatHistoryDate(
+        date
+    ) {
+
+        try {
+
+            return new Date(
+                date
+            ).toLocaleString(
+                "id-ID",
+                {
+                    day:
+                        "2-digit",
+
+                    month:
+                        "short",
+
+                    year:
+                        "numeric",
+
+                    hour:
+                        "2-digit",
+
+                    minute:
+                        "2-digit"
+                }
+            );
+
+        } catch {
+
+            return "Waktu tidak diketahui";
+
+        }
+    }
+
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
+    return (
+
+        <div className="tool-panel">
+
+            {/* -------------------------------------------------
+                HEADER
+            ------------------------------------------------- */}
+
+            <div className="tool-header">
+
+                <div>
+
+                    <h2>
+                        Pembagi Kelompok
+                    </h2>
+
+                    <p>
+                        Acak peserta menjadi
+                        kelompok secara seimbang.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {/* -------------------------------------------------
+                KONTROL JUMLAH KELOMPOK
+            ------------------------------------------------- */}
+
+            <div className="group-control">
+
+                <div>
+
+                    <label>
+                        Jumlah kelompok
+                    </label>
+
+                    <p>
+                        {names.length
+                            ? `${names.length} peserta tersedia`
+                            : "Belum ada peserta"}
+                    </p>
+
+                </div>
+
+
+                <div className="number-control">
+
+                    <button
+                        type="button"
+                        className="small-icon-button"
+                        onClick={() =>
+                            setGroupCount(
+                                previous =>
+                                    Math.max(
+                                        1,
+                                        previous - 1
+                                    )
+                            )
+                        }
+                        disabled={
+                            groupCount <= 1
+                        }
+                    >
+                        −
+                    </button>
+
+
+                    <strong>
+                        {groupCount}
+                    </strong>
+
+
+                    <button
+                        type="button"
+                        className="small-icon-button"
+                        onClick={() =>
+                            setGroupCount(
+                                previous =>
+                                    Math.min(
+                                        names.length || 1,
+                                        previous + 1
+                                    )
+                            )
+                        }
+                        disabled={
+                            !names.length ||
+                            groupCount >= names.length
+                        }
+                    >
+                        +
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            {/* -------------------------------------------------
+                TOMBOL ACAK
+            ------------------------------------------------- */}
+
+            <button
+                type="button"
+                className="primary-button full"
+                onClick={
+                    mixGroups
+                }
+                disabled={
+                    !names.length
+                }
+            >
+
+                <Icon
+                    name="shuffle"
+                    size={18}
+                />
+
+                Acak & Bagi Kelompok
+
+            </button>
+
+
+            {/* =================================================
+                HASIL PEMBAGIAN
+            ================================================= */}
+
+            {groups.length > 0 && (
+
+                <div className="groups-results">
+
+                    <div className="results-header">
+
+                        <div>
+
+                            <h3>
+                                Hasil Pembagian
+                            </h3>
+
+                            <p>
+                                {groups.length} kelompok
+                                {" · "}
+                                {groups.reduce(
+                                    (
+                                        total,
+                                        group
+                                    ) =>
+                                        total +
+                                        group.length,
+                                    0
+                                )} peserta
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={
+                                copyGroups
+                            }
+                        >
+
+                            <Icon
+                                name="copy"
+                                size={16}
+                            />
+
+                            Salin
+
+                        </button>
+
+                    </div>
+
+
+                    <div className="groups-grid">
+
+                        {groups.map(
+                            (
+                                group,
+                                index
+                            ) => (
+
+                                <div
+                                    className="group-card"
+                                    key={
+                                        `group-${index}`
+                                    }
+                                >
+
+                                    <div className="group-card-header">
+
+                                        <strong>
+                                            Kelompok{" "}
+                                            {index + 1}
+                                        </strong>
+
+                                        <span>
+                                            {
+                                                group.length
+                                            }{" "}
+                                            peserta
+                                        </span>
+
+                                    </div>
+
+
+                                    <ol>
+
+                                        {group.map(
+                                            (
+                                                name,
+                                                personIndex
+                                            ) => (
+
+                                                <li
+                                                    key={
+                                                        `${name}-${personIndex}`
+                                                    }
+                                                >
+
+                                                    {name}
+
+                                                </li>
+
+                                            )
+                                        )}
+
+                                    </ol>
+
+                                </div>
+
+                            )
+                        )}
+
+                    </div>
+
+                </div>
+
+            )}
+
+
+            {/* =================================================
+                HISTORI
+            ================================================= */}
+
+            <div className="history-section">
+
+                <button
+                    type="button"
+                    className="saved-lists-toggle"
+                    onClick={() =>
+                        setShowHistory(
+                            previous =>
+                                !previous
+                        )
+                    }
+                >
+
+                    <span>
+
+                        📜 Histori Pembagian
+                        {" "}
+                        ({history.length})
+
+                    </span>
+
+
+                    <span>
+
+                        {
+                            showHistory
+                                ? "▲"
+                                : "▼"
+                        }
+
+                    </span>
+
+                </button>
+
+
+                {showHistory && (
+
+                    <div className="history-list">
+
+                        {/* -----------------------------------------
+                            KOSONG
+                        ----------------------------------------- */}
+
+                        {!history.length && (
+
+                            <div className="empty-saved">
+
+                                Belum ada histori
+                                pembagian.
+
+                            </div>
+
+                        )}
+
+
+                        {/* -----------------------------------------
+                            DAFTAR HISTORI
+                        ----------------------------------------- */}
+
+                        {history.map(
+                            item => (
+
+                                <button
+                                    type="button"
+                                    key={
+                                        item.id
+                                    }
+                                    className="history-item"
+                                    onClick={() =>
+                                        openHistory(
+                                            item
+                                        )
+                                    }
+                                >
+
+                                    <strong>
+
+                                        {
+                                            item.groupCount
                                         }{" "}
                                         kelompok
+
                                     </strong>
 
+
                                     <small>
+
                                         {
                                             formatHistoryDate(
                                                 item.createdAt
                                             )
                                         }
+
                                     </small>
 
+
                                     <small>
+
                                         {
-                                            item.groups
-                                                .reduce(
+                                            Array.isArray(
+                                                item.groups
+                                            )
+                                                ? item.groups.reduce(
                                                     (
                                                         total,
                                                         group
@@ -2188,8 +2880,10 @@ function GroupMode({
                                                         group.length,
                                                     0
                                                 )
+                                                : 0
                                         }{" "}
                                         peserta
+
                                     </small>
 
                                 </button>
@@ -2198,9 +2892,14 @@ function GroupMode({
                         )}
 
 
+                        {/* -----------------------------------------
+                            HAPUS HISTORI
+                        ----------------------------------------- */}
+
                         {history.length > 0 && (
 
                             <button
+                                type="button"
                                 className="secondary-button full"
                                 onClick={
                                     clearHistory
@@ -2225,8 +2924,9 @@ function GroupMode({
             </div>
 
         </div>
+
     );
-                            }
+    }
 
 
 /* =========================================================
