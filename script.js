@@ -996,12 +996,21 @@ function AttendanceManager({
                 `Daftar "${name.trim()}" dibuat.`
             );
 
-        } catch (error) {
+                } catch (error) {
 
-            console.error(error);
+            console.error(
+                "CREATE LIST ERROR:",
+                error
+            );
+
+            const errorMessage =
+                error?.message ||
+                error?.details ||
+                error?.hint ||
+                "Gagal membuat daftar.";
 
             showToast(
-                "Gagal membuat daftar.",
+                errorMessage,
                 "error"
             );
 
