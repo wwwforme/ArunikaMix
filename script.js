@@ -4197,7 +4197,55 @@ function DesignOverrides() {
 
                 }
             `}
-        </style>
+        
+/* =========================================================
+   AUTH TOUCH / HITBOX REPAIR
+========================================================= */
+
+.login-modal-backdrop {
+    pointer-events: auto !important;
+    z-index: 9990 !important;
+}
+
+.login-modal {
+    position: relative !important;
+    z-index: 9991 !important;
+    pointer-events: auto !important;
+}
+
+.login-form-row,
+.auth-fields,
+.auth-actions {
+    position: relative !important;
+    z-index: 9992 !important;
+    pointer-events: auto !important;
+}
+
+.auth-button {
+    position: relative !important;
+    z-index: 9993 !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.auth-button.modal-primary,
+.auth-button.modal-secondary {
+    width: 100%;
+    min-height: 44px;
+}
+
+.toast {
+    position: fixed !important;
+    z-index: 99999 !important;
+    pointer-events: none !important;
+}
+
+.toast-message {
+    pointer-events: none !important;
+}
+
+</style>
     );
 }
 
@@ -4599,4 +4647,4 @@ const root =
 
 root.render(
     <App />
-);
+);s
