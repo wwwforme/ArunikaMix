@@ -552,7 +552,9 @@ function Toast({
             style={{
                 color: "var(--plum)",
                 background:
-                    "var(--paper-light)"
+                    "var(--paper-light)",
+                zIndex: 99999,
+                position: "fixed"
             }}
         >
             <span
@@ -689,28 +691,52 @@ function AttendanceManager({
             return;
         }
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("attendance_lists")
-                .select("*")
-                .order(
-                    "updated_at",
-                    {
-                        ascending: false
-                    }
+        try {
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("attendance_lists")
+                    .select("*")
+                    .order(
+                        "updated_at",
+                        {
+                            ascending: false
+                        }
+                    );
+
+            if (error) {
+                console.error(
+                    "Gagal memuat daftar:",
+                    error
                 );
 
-        if (error) {
-            console.error(error);
-            return;
-        }
+                showToast(
+                    `Gagal memuat daftar: ${
+                        error.message ||
+                        "Coba lagi."
+                    }`,
+                    "error"
+                );
 
-        setSavedLists(
-            data || []
-        );
+                return;
+            }
+
+            setSavedLists(
+                data || []
+            );
+        } catch (error) {
+            console.error(
+                "Gagal memuat daftar:",
+                error
+            );
+
+            showToast(
+                "Gagal memuat daftar tersimpan.",
+                "error"
+            );
+        }
     }
 
 
@@ -1789,7 +1815,6 @@ function HistoryPanel({
                                             </button>
 
                                         </div>
-
                                     )
                                 )}
 
@@ -3116,7 +3141,17 @@ function QueueTool({
                                         className="queue-item-content"
                                         style={{
                                             color:
-                                                "var(--ink)"
+                                                "var(--ink)",
+                                            minWidth:
+                                                0,
+                                            flex:
+                                                "1",
+                                            display:
+                                                "flex",
+                                            flexDirection:
+                                                "column",
+                                            justifyContent:
+                                                "center"
                                         }}
                                     >
 
@@ -3124,7 +3159,11 @@ function QueueTool({
                                             className="queue-position-label"
                                             style={{
                                                 color:
-                                                    "var(--coral-deep)"
+                                                    "var(--coral-deep)",
+                                                display:
+                                                    "block",
+                                                lineHeight:
+                                                    "1.2"
                                             }}
                                         >
                                             {index === 0
@@ -3142,7 +3181,21 @@ function QueueTool({
                                                     "var(--ink)",
                                                 opacity: 1,
                                                 display:
-                                                    "block"
+                                                    "block",
+                                                visibility:
+                                                    "visible",
+                                                position:
+                                                    "relative",
+                                                zIndex:
+                                                    1,
+                                                fontSize:
+                                                    "16px",
+                                                lineHeight:
+                                                    "1.4",
+                                                fontFamily:
+                                                    "var(--font-body, inherit)",
+                                                minHeight:
+                                                    "22px"
                                             }}
                                         >
                                             {name}
@@ -3236,12 +3289,36 @@ function AuthPanel({
 
 
     async function signIn() {
+
+        /*
+         * Tes cepat:
+         * fungsi ini harus selalu memberikan
+         * reaksi walaupun field kosong.
+         */
+
         if (
             !email.trim() ||
             !password
         ) {
             showToast(
                 "Isi email dan password.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (
+            !window.supabase ||
+            !supabaseClient ||
+            !supabaseClient.auth
+        ) {
+            console.error(
+                "Supabase Auth tidak tersedia."
+            );
+
+            showToast(
+                "Sistem login belum siap. Muat ulang halaman.",
                 "error"
             );
 
@@ -3268,7 +3345,7 @@ function AuthPanel({
             }
 
             onUserChange(
-                data.user || null
+                data?.user || null
             );
 
             setShowLogin(false);
@@ -3279,7 +3356,9 @@ function AuthPanel({
                 "Berhasil masuk.",
                 "success"
             );
+
         } catch (error) {
+
             console.error(
                 "Gagal masuk:",
                 error
@@ -3290,6 +3369,7 @@ function AuthPanel({
                     "Gagal masuk. Coba lagi.",
                 "error"
             );
+
         } finally {
             setLoading(false);
         }
@@ -3297,12 +3377,30 @@ function AuthPanel({
 
 
     async function signUp() {
+
         if (
             !email.trim() ||
             !password
         ) {
             showToast(
                 "Isi email dan password.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (
+            !window.supabase ||
+            !supabaseClient ||
+            !supabaseClient.auth
+        ) {
+            console.error(
+                "Supabase Auth tidak tersedia."
+            );
+
+            showToast(
+                "Sistem login belum siap. Muat ulang halaman.",
                 "error"
             );
 
@@ -3337,7 +3435,7 @@ function AuthPanel({
                 throw error;
             }
 
-            if (data.user) {
+            if (data?.user) {
                 onUserChange(
                     data.user
                 );
@@ -3348,12 +3446,14 @@ function AuthPanel({
             setPassword("");
 
             showToast(
-                data.session
+                data?.session
                     ? "Akun berhasil dibuat dan kamu sudah masuk."
                     : "Akun berhasil dibuat. Cek email untuk konfirmasi.",
                 "success"
             );
+
         } catch (error) {
+
             console.error(
                 "Gagal daftar:",
                 error
@@ -3364,6 +3464,7 @@ function AuthPanel({
                     "Gagal membuat akun. Coba lagi.",
                 "error"
             );
+
         } finally {
             setLoading(false);
         }
@@ -3387,7 +3488,9 @@ function AuthPanel({
                 "Berhasil keluar.",
                 "success"
             );
+
         } catch (error) {
+
             console.error(
                 "Gagal keluar:",
                 error
@@ -3447,6 +3550,9 @@ function AuthPanel({
 
                 <div
                     className="login-modal-backdrop"
+                    style={{
+                        zIndex: 9990
+                    }}
                     onMouseDown={event => {
 
                         if (
@@ -3562,6 +3668,7 @@ function AuthPanel({
                                             event.key ===
                                             "Enter"
                                         ) {
+                                            event.preventDefault();
                                             signIn();
                                         }
 
@@ -3604,7 +3711,9 @@ function AuthPanel({
                                 onClick={signUp}
                                 disabled={loading}
                             >
-                                Daftar akun
+                                {loading
+                                    ? "Memproses..."
+                                    : "Daftar akun"}
                             </button>
 
                         </div>
@@ -3757,14 +3866,57 @@ function DesignOverrides() {
                     color: var(--ink);
                 }
 
+                /*
+                 * QUEUE FIX
+                 * Memastikan nama peserta tidak tertimpa
+                 * oleh style dari CSS utama.
+                 */
+
+                .queue-item-content {
+                    min-width: 0 !important;
+                    flex: 1 1 auto !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    justify-content: center !important;
+                }
+
+                .queue-position-label {
+                    display: block !important;
+                    visibility: visible !important;
+                }
+
                 .queue-name {
-                    color: var(--ink) !important;
+                    display: block !important;
+                    visibility: visible !important;
                     opacity: 1 !important;
+                    color: var(--ink) !important;
+                    position: relative !important;
+                    z-index: 2 !important;
+                    font-size: 16px !important;
+                    line-height: 1.4 !important;
+                    min-height: 22px !important;
+                    overflow: visible !important;
+                    white-space: normal !important;
+                }
+
+                /*
+                 * TOAST FIX
+                 * Toast harus berada di atas modal,
+                 * supaya error login benar-benar terlihat.
+                 */
+
+                .toast {
+                    z-index: 99999 !important;
+                    pointer-events: none !important;
                 }
 
                 .toast-message {
                     color: var(--plum) !important;
                     opacity: 1 !important;
+                }
+
+                .login-modal-backdrop {
+                    z-index: 9990 !important;
                 }
 
                 @media (max-width: 700px) {
@@ -3783,6 +3935,10 @@ function DesignOverrides() {
 
                     .history-item-preview {
                         display: none !important;
+                    }
+
+                    .queue-name {
+                        font-size: 15px !important;
                     }
                 }
             `}
@@ -3906,6 +4062,11 @@ function App() {
                         return;
                     }
 
+                    /*
+                     * Jangan reset daftar ketika Supabase
+                     * hanya melakukan refresh token.
+                     * State user cukup diperbarui di sini.
+                     */
                     setUser(
                         session?.user ||
                         null
