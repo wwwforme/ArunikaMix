@@ -3148,56 +3148,19 @@ function QueueTool({
                                                 "1",
                                             display:
                                                 "flex",
-                                            flexDirection:
-                                                "column",
+                                            alignItems:
+                                                "flex-start",
                                             justifyContent:
                                                 "center"
                                         }}
                                     >
 
                                         <span
-                                            className="queue-position-label"
-                                            style={{
-                                                color:
-                                                    "var(--coral-deep)",
-                                                display:
-                                                    "block",
-                                                lineHeight:
-                                                    "1.2"
-                                            }}
-                                        >
-                                            {index === 0
-                                                ? "PERTAMA"
-                                                : `URUTAN ${
-                                                    index +
-                                                    1
-                                                }`}
-                                        </span>
-
-                                        <span
                                             className="queue-name"
-                                            style={{
-                                                color:
-                                                    "var(--ink)",
-                                                opacity: 1,
-                                                display:
-                                                    "block",
-                                                visibility:
-                                                    "visible",
-                                                position:
-                                                    "relative",
-                                                zIndex:
-                                                    1,
-                                                fontSize:
-                                                    "16px",
-                                                lineHeight:
-                                                    "1.4",
-                                                fontFamily:
-                                                    "var(--font-body, inherit)",
-                                                minHeight:
-                                                    "22px"
-                                            }}
                                         >
+                                            Urutan{" "}
+                                            {index + 1}
+                                            {": "}
                                             {name}
                                         </span>
 
@@ -3260,9 +3223,15 @@ function AuthPanel({
         setShowLogin
     ] = useState(false);
 
+    const [
+        authError,
+        setAuthError
+    ] = useState("");
+
 
     useEffect(() => {
         if (!showLogin) {
+            setAuthError("");
             return;
         }
 
@@ -3288,20 +3257,44 @@ function AuthPanel({
     }, [showLogin]);
 
 
+    function clearAuthError() {
+        if (authError) {
+            setAuthError("");
+        }
+    }
+
+
+    function openLogin() {
+        setAuthError("");
+        setShowLogin(true);
+    }
+
+
+    function closeLogin() {
+        if (loading) {
+            return;
+        }
+
+        setAuthError("");
+        setShowLogin(false);
+    }
+
+
     async function signIn() {
 
-        /*
-         * Tes cepat:
-         * fungsi ini harus selalu memberikan
-         * reaksi walaupun field kosong.
-         */
+        setAuthError("");
 
         if (
             !email.trim() ||
             !password
         ) {
+            const message =
+                "Isi email dan password.";
+
+            setAuthError(message);
+
             showToast(
-                "Isi email dan password.",
+                message,
                 "error"
             );
 
@@ -3313,12 +3306,17 @@ function AuthPanel({
             !supabaseClient ||
             !supabaseClient.auth
         ) {
+            const message =
+                "Sistem login belum siap. Muat ulang halaman.";
+
             console.error(
                 "Supabase Auth tidak tersedia."
             );
 
+            setAuthError(message);
+
             showToast(
-                "Sistem login belum siap. Muat ulang halaman.",
+                message,
                 "error"
             );
 
@@ -3344,13 +3342,21 @@ function AuthPanel({
                 throw error;
             }
 
+            if (!data?.user) {
+                throw new Error(
+                    "Login tidak menghasilkan data pengguna."
+                );
+            }
+
             onUserChange(
-                data?.user || null
+                data.user
             );
 
             setShowLogin(false);
 
             setPassword("");
+
+            setAuthError("");
 
             showToast(
                 "Berhasil masuk.",
@@ -3364,9 +3370,16 @@ function AuthPanel({
                 error
             );
 
-            showToast(
+            const message =
                 error?.message ||
-                    "Gagal masuk. Coba lagi.",
+                "Gagal masuk. Coba lagi.";
+
+            setAuthError(
+                message
+            );
+
+            showToast(
+                message,
                 "error"
             );
 
@@ -3378,12 +3391,19 @@ function AuthPanel({
 
     async function signUp() {
 
+        setAuthError("");
+
         if (
             !email.trim() ||
             !password
         ) {
+            const message =
+                "Isi email dan password.";
+
+            setAuthError(message);
+
             showToast(
-                "Isi email dan password.",
+                message,
                 "error"
             );
 
@@ -3395,12 +3415,17 @@ function AuthPanel({
             !supabaseClient ||
             !supabaseClient.auth
         ) {
+            const message =
+                "Sistem login belum siap. Muat ulang halaman.";
+
             console.error(
                 "Supabase Auth tidak tersedia."
             );
 
+            setAuthError(message);
+
             showToast(
-                "Sistem login belum siap. Muat ulang halaman.",
+                message,
                 "error"
             );
 
@@ -3435,20 +3460,34 @@ function AuthPanel({
                 throw error;
             }
 
-            if (data?.user) {
+            if (
+                data?.session &&
+                data?.user
+            ) {
                 onUserChange(
                     data.user
                 );
+
+                setShowLogin(false);
+
+                setPassword("");
+
+                setAuthError("");
+
+                showToast(
+                    "Akun berhasil dibuat dan kamu sudah masuk.",
+                    "success"
+                );
+
+                return;
             }
 
-            setShowLogin(false);
-
-            setPassword("");
+            setAuthError(
+                "Akun berhasil dibuat. Cek email untuk konfirmasi."
+            );
 
             showToast(
-                data?.session
-                    ? "Akun berhasil dibuat dan kamu sudah masuk."
-                    : "Akun berhasil dibuat. Cek email untuk konfirmasi.",
+                "Akun berhasil dibuat. Cek email untuk konfirmasi.",
                 "success"
             );
 
@@ -3459,9 +3498,16 @@ function AuthPanel({
                 error
             );
 
-            showToast(
+            const message =
                 error?.message ||
-                    "Gagal membuat akun. Coba lagi.",
+                "Gagal membuat akun. Coba lagi.";
+
+            setAuthError(
+                message
+            );
+
+            showToast(
+                message,
                 "error"
             );
 
@@ -3538,9 +3584,7 @@ function AuthPanel({
             <button
                 type="button"
                 className="auth-button login-trigger"
-                onClick={() =>
-                    setShowLogin(true)
-                }
+                onClick={openLogin}
             >
                 Masuk
             </button>
@@ -3559,7 +3603,7 @@ function AuthPanel({
                             event.target ===
                             event.currentTarget
                         ) {
-                            setShowLogin(false);
+                            closeLogin();
                         }
 
                     }}
@@ -3601,12 +3645,9 @@ function AuthPanel({
                                     alignSelf:
                                         "stretch"
                                 }}
-                                onClick={() =>
-                                    setShowLogin(
-                                        false
-                                    )
-                                }
+                                onClick={closeLogin}
                                 aria-label="Tutup"
+                                disabled={loading}
                             >
                                 <Icon
                                     name="x"
@@ -3637,11 +3678,12 @@ function AuthPanel({
                                     value={email}
                                     autoComplete="email"
                                     aria-label="Email"
-                                    onChange={e =>
+                                    onChange={e => {
                                         setEmail(
                                             e.target.value
-                                        )
-                                    }
+                                        );
+                                        clearAuthError();
+                                    }}
                                     style={{
                                         width:
                                             "100%",
@@ -3657,11 +3699,12 @@ function AuthPanel({
                                     value={password}
                                     autoComplete="current-password"
                                     aria-label="Password"
-                                    onChange={e =>
+                                    onChange={e => {
                                         setPassword(
                                             e.target.value
-                                        )
-                                    }
+                                        );
+                                        clearAuthError();
+                                    }}
                                     onKeyDown={event => {
 
                                         if (
@@ -3669,7 +3712,10 @@ function AuthPanel({
                                             "Enter"
                                         ) {
                                             event.preventDefault();
-                                            signIn();
+
+                                            if (!loading) {
+                                                signIn();
+                                            }
                                         }
 
                                     }}
@@ -3684,6 +3730,18 @@ function AuthPanel({
                             </div>
 
                         </div>
+
+
+                        {authError && (
+
+                            <div
+                                className="auth-error-message"
+                                role="alert"
+                            >
+                                {authError}
+                            </div>
+
+                        )}
 
 
                         <div
@@ -3866,23 +3924,18 @@ function DesignOverrides() {
                     color: var(--ink);
                 }
 
-                /*
-                 * QUEUE FIX
-                 * Memastikan nama peserta tidak tertimpa
-                 * oleh style dari CSS utama.
-                 */
+
+                /* =================================================
+                   QUEUE
+                ================================================= */
 
                 .queue-item-content {
                     min-width: 0 !important;
                     flex: 1 1 auto !important;
                     display: flex !important;
-                    flex-direction: column !important;
+                    align-items: flex-start !important;
                     justify-content: center !important;
-                }
-
-                .queue-position-label {
-                    display: block !important;
-                    visibility: visible !important;
+                    overflow: visible !important;
                 }
 
                 .queue-name {
@@ -3892,18 +3945,35 @@ function DesignOverrides() {
                     color: var(--ink) !important;
                     position: relative !important;
                     z-index: 2 !important;
-                    font-size: 16px !important;
-                    line-height: 1.4 !important;
-                    min-height: 22px !important;
+
+                    /*
+                     * Semua nama berada pada satu baris.
+                     */
+                    white-space: nowrap !important;
+
+                    /*
+                     * Ukuran diperkecil supaya nama panjang
+                     * seperti "Rasya Muhammad Athaya" tetap
+                     * terasa seperti satu kalimat.
+                     */
+                    font-size: 14px !important;
+                    line-height: 1.35 !important;
+
+                    min-height: 0 !important;
                     overflow: visible !important;
-                    white-space: normal !important;
+
+                    font-family:
+                        var(
+                            --font-body,
+                            "DM Sans",
+                            sans-serif
+                        ) !important;
                 }
 
-                /*
-                 * TOAST FIX
-                 * Toast harus berada di atas modal,
-                 * supaya error login benar-benar terlihat.
-                 */
+
+                /* =================================================
+                   TOAST
+                ================================================= */
 
                 .toast {
                     z-index: 99999 !important;
@@ -3915,11 +3985,42 @@ function DesignOverrides() {
                     opacity: 1 !important;
                 }
 
+
+                /* =================================================
+                   LOGIN
+                ================================================= */
+
                 .login-modal-backdrop {
                     z-index: 9990 !important;
                 }
 
+                .auth-error-message {
+                    width: 100%;
+                    box-sizing: border-box;
+                    margin-top: 12px;
+                    padding: 10px 12px;
+                    border: 1px solid rgba(216, 120, 104, .38);
+                    border-radius: 9px;
+                    background: rgba(232, 120, 104, .10);
+                    color: var(--coral-deep);
+                    font-family:
+                        var(
+                            --font-body,
+                            "DM Sans",
+                            sans-serif
+                        );
+                    font-size: 12px;
+                    line-height: 1.45;
+                    overflow-wrap: anywhere;
+                }
+
+                .auth-button:disabled {
+                    cursor: wait;
+                }
+
+
                 @media (max-width: 700px) {
+
                     .attendance-panel {
                         padding-left: 22px !important;
                         padding-right: 22px !important;
@@ -3938,8 +4039,9 @@ function DesignOverrides() {
                     }
 
                     .queue-name {
-                        font-size: 15px !important;
+                        font-size: 13px !important;
                     }
+
                 }
             `}
         </style>
@@ -4065,7 +4167,6 @@ function App() {
                     /*
                      * Jangan reset daftar ketika Supabase
                      * hanya melakukan refresh token.
-                     * State user cukup diperbarui di sini.
                      */
                     setUser(
                         session?.user ||
