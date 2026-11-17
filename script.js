@@ -75,22 +75,19 @@ const GROUP_COLORS = [
 ========================================================= */
 
 const STORAGE_KEYS = {
-    currentAttendance:
-        "arunikamix_current_attendance_v4",
-
     history:
-        "arunikamix_shuffle_history_v5"
+        "arunikamix_shuffle_history_v6"
 };
 
 
 /* =========================================================
-   STORAGE HELPERS
+   SESSION STORAGE HELPERS
 ========================================================= */
 
-function readStorage(key, fallback) {
+function readSessionStorage(key, fallback) {
     try {
         const raw =
-            localStorage.getItem(key);
+            sessionStorage.getItem(key);
 
         if (!raw) {
             return fallback;
@@ -103,15 +100,27 @@ function readStorage(key, fallback) {
 }
 
 
-function writeStorage(key, value) {
+function writeSessionStorage(key, value) {
     try {
-        localStorage.setItem(
+        sessionStorage.setItem(
             key,
             JSON.stringify(value)
         );
     } catch (error) {
         console.error(
-            "Gagal menyimpan localStorage:",
+            "Gagal menyimpan sessionStorage:",
+            error
+        );
+    }
+}
+
+
+function clearSessionStorage(key) {
+    try {
+        sessionStorage.removeItem(key);
+    } catch (error) {
+        console.error(
+            "Gagal menghapus sessionStorage:",
             error
         );
     }
@@ -252,10 +261,11 @@ function makeDuelPairs(names) {
 function saveHistory(
     type,
     title,
-    data
+    data,
+    names = []
 ) {
     const history =
-        readStorage(
+        readSessionStorage(
             STORAGE_KEYS.history,
             []
         );
@@ -271,6 +281,11 @@ function saveHistory(
 
         data,
 
+        names:
+            Array.isArray(names)
+                ? [...names]
+                : [],
+
         createdAt:
             new Date().toISOString()
     };
@@ -281,7 +296,7 @@ function saveHistory(
             ...history
         ].slice(0, 50);
 
-    writeStorage(
+    writeSessionStorage(
         STORAGE_KEYS.history,
         updated
     );
@@ -609,6 +624,7 @@ function ModeNav({
                                 : ""
                         }`
                     }
+                    type="button"
                     onClick={() =>
                         setMode(item.id)
                     }
@@ -807,42 +823,47 @@ function AttendanceManager({
 
         setLoading(true);
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("attendance_lists")
-                .insert({
-                    user_id: user.id,
-                    name: name.trim(),
-                    names: []
-                })
-                .select("*")
-                .single();
+        try {
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("attendance_lists")
+                    .insert({
+                        user_id: user.id,
+                        name: name.trim(),
+                        names: []
+                    })
+                    .select("*")
+                    .single();
 
-        setLoading(false);
+            if (error) {
+                throw error;
+            }
 
-        if (error) {
+            setSelectedList(data);
+            setNames([]);
+
+            await loadLists();
+
+            showToast(
+                "Daftar baru dibuat.",
+                "success"
+            );
+        } catch (error) {
             console.error(error);
 
             showToast(
-                `Gagal membuat daftar: ${error.message}`,
+                `Gagal membuat daftar: ${
+                    error?.message ||
+                    "Coba lagi."
+                }`,
                 "error"
             );
-
-            return;
+        } finally {
+            setLoading(false);
         }
-
-        setSelectedList(data);
-        setNames([]);
-
-        await loadLists();
-
-        showToast(
-            "Daftar baru dibuat.",
-            "success"
-        );
     }
 
 
@@ -858,74 +879,79 @@ function AttendanceManager({
 
         setLoading(true);
 
-        let data;
-        let error;
+        try {
+            let data;
+            let error;
 
-        if (
-            selectedList &&
-            selectedList.id
-        ) {
-            ({
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from("attendance_lists")
-                    .update({
-                        name:
-                            selectedList.name,
+            if (
+                selectedList &&
+                selectedList.id
+            ) {
+                ({
+                    data,
+                    error
+                } =
+                    await supabaseClient
+                        .from("attendance_lists")
+                        .update({
+                            name:
+                                selectedList.name,
 
-                        names,
+                            names,
 
-                        updated_at:
-                            new Date().toISOString()
-                    })
-                    .eq(
-                        "id",
-                        selectedList.id
-                    )
-                    .select("*")
-                    .single());
-        } else {
-            ({
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from("attendance_lists")
-                    .insert({
-                        user_id: user.id,
+                            updated_at:
+                                new Date().toISOString()
+                        })
+                        .eq(
+                            "id",
+                            selectedList.id
+                        )
+                        .select("*")
+                        .single());
+            } else {
+                ({
+                    data,
+                    error
+                } =
+                    await supabaseClient
+                        .from("attendance_lists")
+                        .insert({
+                            user_id: user.id,
 
-                        name:
-                            DEFAULT_TEMPLATE_NAME,
+                            name:
+                                DEFAULT_TEMPLATE_NAME,
 
-                        names
-                    })
-                    .select("*")
-                    .single());
-        }
+                            names
+                        })
+                        .select("*")
+                        .single());
+            }
 
-        setLoading(false);
+            if (error) {
+                throw error;
+            }
 
-        if (error) {
+            setSelectedList(data);
+
+            await loadLists();
+
+            showToast(
+                "Daftar berhasil disimpan.",
+                "success"
+            );
+        } catch (error) {
             console.error(error);
 
             showToast(
-                `Gagal menyimpan: ${error.message}`,
+                `Gagal menyimpan: ${
+                    error?.message ||
+                    "Coba lagi."
+                }`,
                 "error"
             );
-
-            return;
+        } finally {
+            setLoading(false);
         }
-
-        setSelectedList(data);
-
-        await loadLists();
-
-        showToast(
-            "Daftar berhasil disimpan.",
-            "success"
-        );
     }
 
 
@@ -943,47 +969,54 @@ function AttendanceManager({
             return;
         }
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .from("attendance_lists")
-                .update({
-                    name: name.trim(),
+        try {
+            const {
+                data,
+                error
+            } =
+                await supabaseClient
+                    .from("attendance_lists")
+                    .update({
+                        name: name.trim(),
 
-                    updated_at:
-                        new Date().toISOString()
-                })
-                .eq(
-                    "id",
-                    list.id
-                )
-                .select("*")
-                .single();
+                        updated_at:
+                            new Date().toISOString()
+                    })
+                    .eq(
+                        "id",
+                        list.id
+                    )
+                    .select("*")
+                    .single();
 
-        if (error) {
+            if (error) {
+                throw error;
+            }
+
+            if (
+                selectedList &&
+                selectedList.id === list.id
+            ) {
+                setSelectedList(data);
+            }
+
+            await loadLists();
+
             showToast(
-                `Gagal mengubah nama: ${error.message}`,
+                "Nama daftar diperbarui.",
+                "success"
+            );
+        } catch (error) {
+            console.error(error);
+
+            showToast(
+                `Gagal mengubah nama: ${
+                    error?.message ||
+                    "Coba lagi."
+                }`,
                 "error"
             );
-
-            return;
         }
-
-        if (
-            selectedList &&
-            selectedList.id === list.id
-        ) {
-            setSelectedList(data);
-        }
-
-        await loadLists();
-
-        showToast(
-            "Nama daftar diperbarui.",
-            "success"
-        );
     }
 
 
@@ -997,40 +1030,49 @@ function AttendanceManager({
             return;
         }
 
-        const {
-            error
-        } =
-            await supabaseClient
-                .from("attendance_lists")
-                .delete()
-                .eq(
-                    "id",
-                    list.id
-                );
+        try {
+            const {
+                error
+            } =
+                await supabaseClient
+                    .from("attendance_lists")
+                    .delete()
+                    .eq(
+                        "id",
+                        list.id
+                    );
 
-        if (error) {
+            if (error) {
+                throw error;
+            }
+
+            if (
+                selectedList &&
+                selectedList.id === list.id
+            ) {
+                setSelectedList(null);
+                setNames([
+                    ...DEFAULT_NAMES
+                ]);
+            }
+
+            await loadLists();
+
             showToast(
-                `Gagal menghapus: ${error.message}`,
+                "Daftar dihapus.",
+                "success"
+            );
+        } catch (error) {
+            console.error(error);
+
+            showToast(
+                `Gagal menghapus: ${
+                    error?.message ||
+                    "Coba lagi."
+                }`,
                 "error"
             );
-
-            return;
         }
-
-        if (
-            selectedList &&
-            selectedList.id === list.id
-        ) {
-            setSelectedList(null);
-            setNames([]);
-        }
-
-        await loadLists();
-
-        showToast(
-            "Daftar dihapus.",
-            "success"
-        );
     }
 
 
@@ -1115,6 +1157,7 @@ function AttendanceManager({
                 />
 
                 <button
+                    type="button"
                     className="btn btn-secondary add-member-button"
                     onClick={addNames}
                     style={{
@@ -1137,6 +1180,7 @@ function AttendanceManager({
             <div className="attendance-actions">
 
                 <button
+                    type="button"
                     className="small-action"
                     onClick={resetDefault}
                 >
@@ -1149,6 +1193,7 @@ function AttendanceManager({
                 </button>
 
                 <button
+                    type="button"
                     className="small-action danger"
                     onClick={clearNames}
                 >
@@ -1195,6 +1240,7 @@ function AttendanceManager({
                                 </span>
 
                                 <button
+                                    type="button"
                                     className="participant-delete"
                                     onClick={() =>
                                         deleteName(
@@ -1224,6 +1270,7 @@ function AttendanceManager({
             <div className="saved-area">
 
                 <button
+                    type="button"
                     className={
                         `saved-toggle ${
                             showSaved
@@ -1268,6 +1315,7 @@ function AttendanceManager({
                         <div className="saved-list-actions">
 
                             <button
+                                type="button"
                                 className="small-action"
                                 onClick={
                                     createNewList
@@ -1283,6 +1331,7 @@ function AttendanceManager({
                             </button>
 
                             <button
+                                type="button"
                                 className="small-action accent"
                                 onClick={
                                     saveCurrentList
@@ -1323,6 +1372,7 @@ function AttendanceManager({
                                     >
 
                                         <button
+                                            type="button"
                                             className="saved-item-main"
                                             onClick={() =>
                                                 openList(
@@ -1347,6 +1397,7 @@ function AttendanceManager({
                                         </button>
 
                                         <button
+                                            type="button"
                                             className="saved-item-icon"
                                             onClick={() =>
                                                 renameList(
@@ -1362,6 +1413,7 @@ function AttendanceManager({
                                         </button>
 
                                         <button
+                                            type="button"
                                             className="saved-item-icon danger"
                                             onClick={() =>
                                                 deleteList(
@@ -1399,7 +1451,8 @@ function AttendanceManager({
 ========================================================= */
 
 function HistoryPanel({
-    showToast
+    showToast,
+    onSelectHistory
 }) {
     const [
         open,
@@ -1410,7 +1463,7 @@ function HistoryPanel({
         history,
         setHistory
     ] = useState(() =>
-        readStorage(
+        readSessionStorage(
             STORAGE_KEYS.history,
             []
         )
@@ -1419,7 +1472,7 @@ function HistoryPanel({
 
     function refreshHistory() {
         setHistory(
-            readStorage(
+            readSessionStorage(
                 STORAGE_KEYS.history,
                 []
             )
@@ -1452,7 +1505,7 @@ function HistoryPanel({
                     item.id !== id
             );
 
-        writeStorage(
+        writeSessionStorage(
             STORAGE_KEYS.history,
             updated
         );
@@ -1480,9 +1533,8 @@ function HistoryPanel({
             return;
         }
 
-        writeStorage(
-            STORAGE_KEYS.history,
-            []
+        clearSessionStorage(
+            STORAGE_KEYS.history
         );
 
         setHistory([]);
@@ -1503,6 +1555,7 @@ function HistoryPanel({
         >
 
             <button
+                type="button"
                 className="history-toggle"
                 onClick={() =>
                     setOpen(
@@ -1629,6 +1682,29 @@ function HistoryPanel({
                                                 borderColor:
                                                     "var(--line)"
                                             }}
+                                            onClick={() =>
+                                                onSelectHistory(
+                                                    item
+                                                )
+                                            }
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={
+                                                event => {
+                                                    if (
+                                                        event.key ===
+                                                            "Enter" ||
+                                                        event.key ===
+                                                            " "
+                                                    ) {
+                                                        event.preventDefault();
+
+                                                        onSelectHistory(
+                                                            item
+                                                        );
+                                                    }
+                                                }
+                                            }
                                         >
 
                                             <div
@@ -1693,11 +1769,16 @@ function HistoryPanel({
 
 
                                             <button
+                                                type="button"
                                                 className="history-item-delete"
-                                                onClick={() =>
-                                                    deleteHistory(
-                                                        item.id
-                                                    )
+                                                onClick={
+                                                    event => {
+                                                        event.stopPropagation();
+
+                                                        deleteHistory(
+                                                            item.id
+                                                        );
+                                                    }
                                                 }
                                                 aria-label="Hapus riwayat"
                                             >
@@ -1718,6 +1799,7 @@ function HistoryPanel({
                             <div className="history-footer">
 
                                 <button
+                                    type="button"
                                     className="history-clear"
                                     onClick={
                                         clearHistory
@@ -1752,7 +1834,8 @@ function HistoryPanel({
 
 function GroupMode({
     names,
-    showToast
+    showToast,
+    historySelection
 }) {
     const [
         groupCount,
@@ -1790,16 +1873,35 @@ function GroupMode({
     }, [names.length]);
 
 
+    useEffect(() => {
+        if (
+            historySelection &&
+            historySelection.type === "groups" &&
+            Array.isArray(historySelection.data)
+        ) {
+            setGroups(
+                historySelection.data
+            );
+
+            setGroupCount(
+                Math.min(
+                    Math.max(
+                        1,
+                        historySelection.data.length
+                    ),
+                    names.length || 1
+                )
+            );
+        }
+    }, [historySelection?.id]);
+
+
     function handleGroupCountChange(value) {
         if (!names.length) {
             setGroupCount(1);
             return;
         }
 
-        /*
-         * Input boleh kosong sementara ketika pengguna
-         * sedang mengetik. Nilai akan dirapikan ketika blur.
-         */
         if (
             value === "" ||
             value === null ||
@@ -1890,7 +1992,8 @@ function GroupMode({
         saveHistory(
             "groups",
             `${count} kelompok`,
-            result
+            result,
+            names
         );
 
         window.dispatchEvent(
@@ -2093,6 +2196,7 @@ function GroupMode({
 
 
                 <button
+                    type="button"
                     className="btn btn-primary group-mix-button"
                     onClick={mixGroups}
                     style={{
@@ -2122,6 +2226,7 @@ function GroupMode({
                     </span>
 
                     <button
+                        type="button"
                         className="small-action"
                         onClick={copyGroups}
                     >
@@ -2210,7 +2315,8 @@ function GroupMode({
 function SpinWheel({
     names,
     setNames,
-    showToast
+    showToast,
+    historySelection
 }) {
     const [
         spinning,
@@ -2240,6 +2346,72 @@ function SpinWheel({
         total > 0
             ? 360 / total
             : 360;
+
+
+    useEffect(() => {
+        if (
+            !historySelection ||
+            historySelection.type !== "wheel"
+        ) {
+            return;
+        }
+
+        const savedNames =
+            Array.isArray(
+                historySelection.names
+            ) &&
+            historySelection.names.length
+                ? historySelection.names
+                : names;
+
+        const savedWinner =
+            historySelection.data?.winner ||
+            null;
+
+        if (
+            !savedWinner ||
+            !savedNames.length
+        ) {
+            setWinner(savedWinner);
+            return;
+        }
+
+        const targetIndex =
+            savedNames.indexOf(
+                savedWinner
+            );
+
+        if (targetIndex < 0) {
+            setWinner(savedWinner);
+            setRotation(0);
+            return;
+        }
+
+        const restoredSector =
+            360 / savedNames.length;
+
+        const restoredCenter =
+            targetIndex *
+                restoredSector +
+            restoredSector / 2;
+
+        const restoredRotation =
+            (
+                360 -
+                restoredCenter +
+                360
+            ) % 360;
+
+        setRotation(
+            restoredRotation
+        );
+
+        setWinner(
+            savedWinner
+        );
+
+        setSpinning(false);
+    }, [historySelection?.id]);
 
 
     function spin() {
@@ -2313,7 +2485,8 @@ function SpinWheel({
                     {
                         winner:
                             targetName
-                    }
+                    },
+                    names
                 );
 
 
@@ -2456,6 +2629,7 @@ function SpinWheel({
                     <div className="wheel-controls">
 
                         <button
+                            type="button"
                             className="btn btn-primary wheel-spin-button"
                             onClick={spin}
                             disabled={
@@ -2534,12 +2708,26 @@ function SpinWheel({
 
 function DuelTool({
     names,
-    showToast
+    showToast,
+    historySelection
 }) {
     const [
         pairs,
         setPairs
     ] = useState([]);
+
+
+    useEffect(() => {
+        if (
+            historySelection &&
+            historySelection.type === "duel" &&
+            Array.isArray(historySelection.data)
+        ) {
+            setPairs(
+                historySelection.data
+            );
+        }
+    }, [historySelection?.id]);
 
 
     function drawDuel() {
@@ -2560,7 +2748,8 @@ function DuelTool({
         saveHistory(
             "duel",
             "Undian Berpasangan",
-            result
+            result,
+            names
         );
 
         window.dispatchEvent(
@@ -2631,6 +2820,7 @@ function DuelTool({
 
 
             <button
+                type="button"
                 className="btn btn-primary"
                 onClick={drawDuel}
             >
@@ -2656,6 +2846,7 @@ function DuelTool({
                         </span>
 
                         <button
+                            type="button"
                             className="small-action"
                             onClick={copyDuel}
                         >
@@ -2733,12 +2924,26 @@ function DuelTool({
 
 function QueueTool({
     names,
-    showToast
+    showToast,
+    historySelection
 }) {
     const [
         queue,
         setQueue
     ] = useState([]);
+
+
+    useEffect(() => {
+        if (
+            historySelection &&
+            historySelection.type === "queue" &&
+            Array.isArray(historySelection.data)
+        ) {
+            setQueue(
+                historySelection.data
+            );
+        }
+    }, [historySelection?.id]);
 
 
     function makeQueue() {
@@ -2759,7 +2964,8 @@ function QueueTool({
         saveHistory(
             "queue",
             "Urutan Antrean",
-            result
+            result,
+            names
         );
 
         window.dispatchEvent(
@@ -2824,6 +3030,7 @@ function QueueTool({
 
 
             <button
+                type="button"
                 className="btn btn-primary"
                 onClick={makeQueue}
             >
@@ -2849,6 +3056,7 @@ function QueueTool({
                         </span>
 
                         <button
+                            type="button"
                             className="small-action"
                             onClick={copyQueue}
                         >
@@ -3042,41 +3250,49 @@ function AuthPanel({
 
         setLoading(true);
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth
-                .signInWithPassword({
-                    email:
-                        email.trim(),
+        try {
+            const {
+                data,
+                error
+            } =
+                await supabaseClient.auth
+                    .signInWithPassword({
+                        email:
+                            email.trim(),
 
-                    password
-                });
+                        password
+                    });
 
-        setLoading(false);
+            if (error) {
+                throw error;
+            }
 
-        if (error) {
-            showToast(
-                error.message,
-                "error"
+            onUserChange(
+                data.user || null
             );
 
-            return;
+            setShowLogin(false);
+
+            setPassword("");
+
+            showToast(
+                "Berhasil masuk.",
+                "success"
+            );
+        } catch (error) {
+            console.error(
+                "Gagal masuk:",
+                error
+            );
+
+            showToast(
+                error?.message ||
+                    "Gagal masuk. Coba lagi.",
+                "error"
+            );
+        } finally {
+            setLoading(false);
         }
-
-        onUserChange(
-            data.user
-        );
-
-        setShowLogin(false);
-
-        setPassword("");
-
-        showToast(
-            "Berhasil masuk.",
-            "success"
-        );
     }
 
 
@@ -3095,64 +3311,94 @@ function AuthPanel({
 
         setLoading(true);
 
-        const redirectUrl =
-            window.location.origin +
-            window.location.pathname;
+        try {
+            const redirectUrl =
+                window.location.origin +
+                window.location.pathname;
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth
-                .signUp({
-                    email:
-                        email.trim(),
+            const {
+                data,
+                error
+            } =
+                await supabaseClient.auth
+                    .signUp({
+                        email:
+                            email.trim(),
 
-                    password,
+                        password,
 
-                    options: {
-                        emailRedirectTo:
-                            redirectUrl
-                    }
-                });
+                        options: {
+                            emailRedirectTo:
+                                redirectUrl
+                        }
+                    });
 
-        setLoading(false);
+            if (error) {
+                throw error;
+            }
 
-        if (error) {
+            if (data.user) {
+                onUserChange(
+                    data.user
+                );
+            }
+
+            setShowLogin(false);
+
+            setPassword("");
+
             showToast(
-                error.message,
+                data.session
+                    ? "Akun berhasil dibuat dan kamu sudah masuk."
+                    : "Akun berhasil dibuat. Cek email untuk konfirmasi.",
+                "success"
+            );
+        } catch (error) {
+            console.error(
+                "Gagal daftar:",
+                error
+            );
+
+            showToast(
+                error?.message ||
+                    "Gagal membuat akun. Coba lagi.",
                 "error"
             );
-
-            return;
+        } finally {
+            setLoading(false);
         }
-
-        if (data.user) {
-            onUserChange(
-                data.user
-            );
-        }
-
-        setShowLogin(false);
-
-        setPassword("");
-
-        showToast(
-            "Pendaftaran berhasil. Cek email jika konfirmasi diperlukan.",
-            "success"
-        );
     }
 
 
     async function signOut() {
-        await supabaseClient.auth.signOut();
+        try {
+            const {
+                error
+            } =
+                await supabaseClient.auth.signOut();
 
-        onUserChange(null);
+            if (error) {
+                throw error;
+            }
 
-        showToast(
-            "Berhasil keluar.",
-            "success"
-        );
+            onUserChange(null);
+
+            showToast(
+                "Berhasil keluar.",
+                "success"
+            );
+        } catch (error) {
+            console.error(
+                "Gagal keluar:",
+                error
+            );
+
+            showToast(
+                error?.message ||
+                    "Gagal keluar. Coba lagi.",
+                "error"
+            );
+        }
     }
 
 
@@ -3172,6 +3418,7 @@ function AuthPanel({
                 </div>
 
                 <button
+                    type="button"
                     className="auth-button"
                     onClick={signOut}
                 >
@@ -3186,6 +3433,7 @@ function AuthPanel({
     return (
         <>
             <button
+                type="button"
                 className="auth-button login-trigger"
                 onClick={() =>
                     setShowLogin(true)
@@ -3222,27 +3470,13 @@ function AuthPanel({
                         }}
                     >
 
-                        <button
-                            className="login-modal-close"
-                            onClick={() =>
-                                setShowLogin(false)
-                            }
-                            aria-label="Tutup"
-                        >
-                            <Icon
-                                name="x"
-                                size={17}
-                            />
-                        </button>
-
-
                         <div
-                            className="auth-fields"
+                            className="login-form-row"
                             style={{
                                 display:
                                     "flex",
-                                flexDirection:
-                                    "column",
+                                alignItems:
+                                    "stretch",
                                 gap:
                                     "10px",
                                 width:
@@ -3250,54 +3484,97 @@ function AuthPanel({
                             }}
                         >
 
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                value={email}
-                                autoComplete="email"
-                                aria-label="Email"
-                                onChange={e =>
-                                    setEmail(
-                                        e.target.value
+                            <button
+                                type="button"
+                                className="login-modal-close"
+                                style={{
+                                    position:
+                                        "static",
+                                    flex:
+                                        "0 0 42px",
+                                    alignSelf:
+                                        "stretch"
+                                }}
+                                onClick={() =>
+                                    setShowLogin(
+                                        false
                                     )
                                 }
+                                aria-label="Tutup"
+                            >
+                                <Icon
+                                    name="x"
+                                    size={17}
+                                />
+                            </button>
+
+
+                            <div
+                                className="auth-fields"
                                 style={{
+                                    display:
+                                        "flex",
+                                    flexDirection:
+                                        "column",
+                                    gap:
+                                        "10px",
                                     width:
                                         "100%",
-                                    boxSizing:
-                                        "border-box"
+                                    flex:
+                                        "1"
                                 }}
-                            />
+                            >
 
-
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                autoComplete="current-password"
-                                aria-label="Password"
-                                onChange={e =>
-                                    setPassword(
-                                        e.target.value
-                                    )
-                                }
-                                onKeyDown={event => {
-
-                                    if (
-                                        event.key ===
-                                        "Enter"
-                                    ) {
-                                        signIn();
+                                <input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={email}
+                                    autoComplete="email"
+                                    aria-label="Email"
+                                    onChange={e =>
+                                        setEmail(
+                                            e.target.value
+                                        )
                                     }
+                                    style={{
+                                        width:
+                                            "100%",
+                                        boxSizing:
+                                            "border-box"
+                                    }}
+                                />
 
-                                }}
-                                style={{
-                                    width:
-                                        "100%",
-                                    boxSizing:
-                                        "border-box"
-                                }}
-                            />
+
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    autoComplete="current-password"
+                                    aria-label="Password"
+                                    onChange={e =>
+                                        setPassword(
+                                            e.target.value
+                                        )
+                                    }
+                                    onKeyDown={event => {
+
+                                        if (
+                                            event.key ===
+                                            "Enter"
+                                        ) {
+                                            signIn();
+                                        }
+
+                                    }}
+                                    style={{
+                                        width:
+                                            "100%",
+                                        boxSizing:
+                                            "border-box"
+                                    }}
+                                />
+
+                            </div>
 
                         </div>
 
@@ -3311,6 +3588,7 @@ function AuthPanel({
                         >
 
                             <button
+                                type="button"
                                 className="auth-button modal-primary"
                                 onClick={signIn}
                                 disabled={loading}
@@ -3321,6 +3599,7 @@ function AuthPanel({
                             </button>
 
                             <button
+                                type="button"
                                 className="auth-button secondary modal-secondary"
                                 onClick={signUp}
                                 disabled={loading}
@@ -3423,6 +3702,21 @@ function DesignOverrides() {
                     box-sizing: border-box;
                     border: 1px solid var(--line);
                     border-radius: 9px;
+                    cursor: pointer;
+                    transition:
+                        transform .18s ease,
+                        border-color .18s ease,
+                        background .18s ease;
+                }
+
+                .history-item:hover {
+                    transform: translateY(-1px);
+                    border-color: var(--coral);
+                }
+
+                .history-item:focus-visible {
+                    outline: 2px solid var(--coral);
+                    outline-offset: 2px;
                 }
 
                 .history-item-content {
@@ -3446,6 +3740,7 @@ function DesignOverrides() {
 
                 .history-item-delete {
                     flex: 0 0 auto;
+                    cursor: pointer;
                 }
 
                 .hero-stamp {
@@ -3509,12 +3804,9 @@ function App() {
     const [
         names,
         setNames
-    ] = useState(() =>
-        readStorage(
-            STORAGE_KEYS.currentAttendance,
-            DEFAULT_NAMES
-        )
-    );
+    ] = useState([
+        ...DEFAULT_NAMES
+    ]);
 
     const [
         selectedList,
@@ -3526,27 +3818,75 @@ function App() {
         setMode
     ] = useState("groups");
 
+    const [
+        historySelection,
+        setHistorySelection
+    ] = useState(null);
+
     const {
         toast,
         showToast
     } = useToast();
 
 
+    function handleUserChange(nextUser) {
+        setUser(nextUser);
+
+        setHistorySelection(null);
+
+        setNames([
+            ...DEFAULT_NAMES
+        ]);
+
+        setSelectedList(null);
+
+        if (!nextUser) {
+            clearSessionStorage(
+                STORAGE_KEYS.history
+            );
+
+            window.dispatchEvent(
+                new Event(
+                    "arunikamix-history-updated"
+                )
+            );
+        }
+    }
+
+
     useEffect(() => {
         let mounted = true;
 
         async function loadSession() {
-            const {
-                data
-            } =
-                await supabaseClient.auth.getSession();
+            try {
+                const {
+                    data,
+                    error
+                } =
+                    await supabaseClient.auth.getSession();
 
-            if (
-                mounted &&
-                data.session
-            ) {
-                setUser(
-                    data.session.user
+                if (!mounted) {
+                    return;
+                }
+
+                if (error) {
+                    console.error(
+                        "Gagal memuat sesi:",
+                        error
+                    );
+
+                    return;
+                }
+
+                if (data.session?.user) {
+                    handleUserChange(
+                        data.session.user
+                    );
+                }
+            } catch (error) {
+                console.error(
+                    "Gagal memuat sesi:",
+                    error
                 );
             }
         }
@@ -3582,118 +3922,35 @@ function App() {
     }, []);
 
 
-    useEffect(() => {
-        writeStorage(
-            STORAGE_KEYS.currentAttendance,
-            names
-        );
-    }, [names]);
-
-
-    useEffect(() => {
-
-        if (!user) {
-            setSelectedList(null);
+    function restoreHistory(item) {
+        if (!item) {
             return;
         }
 
-        let cancelled = false;
-
-        async function loadUserLists() {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from("attendance_lists")
-                    .select("*")
-                    .order(
-                        "updated_at",
-                        {
-                            ascending: false
-                        }
-                    );
-
-            if (
-                cancelled ||
-                error
-            ) {
-                return;
-            }
-
-            if (
-                data &&
-                data.length > 0
-            ) {
-
-                const first =
-                    data[0];
-
-                setSelectedList(
-                    first
-                );
-
-                if (
-                    Array.isArray(
-                        first.names
-                    )
-                ) {
-                    setNames(
-                        first.names
-                    );
-                }
-
-                return;
-            }
-
-
-            const {
-                data: created,
-                error: createError
-            } =
-                await supabaseClient
-                    .from("attendance_lists")
-                    .insert({
-                        user_id:
-                            user.id,
-
-                        name:
-                            DEFAULT_TEMPLATE_NAME,
-
-                        names:
-                            DEFAULT_NAMES
-                    })
-                    .select("*")
-                    .single();
-
-            if (
-                cancelled ||
-                createError
-            ) {
-                console.error(
-                    createError
-                );
-
-                return;
-            }
-
-            setSelectedList(
-                created
-            );
-
-            setNames(
-                DEFAULT_NAMES
-            );
+        if (
+            Array.isArray(item.names) &&
+            item.names.length
+        ) {
+            setNames([
+                ...item.names
+            ]);
         }
 
-        loadUserLists();
+        setSelectedList(null);
 
-        return () => {
-            cancelled = true;
-        };
+        setMode(
+            item.type
+        );
 
-    }, [user]);
+        setHistorySelection(
+            item
+        );
+
+        showToast(
+            "Hasil riwayat dipulihkan.",
+            "success"
+        );
+    }
 
 
     function renderMode() {
@@ -3703,6 +3960,9 @@ function App() {
                 <GroupMode
                     names={names}
                     showToast={showToast}
+                    historySelection={
+                        historySelection
+                    }
                 />
             );
         }
@@ -3713,6 +3973,9 @@ function App() {
                     names={names}
                     setNames={setNames}
                     showToast={showToast}
+                    historySelection={
+                        historySelection
+                    }
                 />
             );
         }
@@ -3722,6 +3985,9 @@ function App() {
                 <DuelTool
                     names={names}
                     showToast={showToast}
+                    historySelection={
+                        historySelection
+                    }
                 />
             );
         }
@@ -3731,6 +3997,9 @@ function App() {
                 <QueueTool
                     names={names}
                     showToast={showToast}
+                    historySelection={
+                        historySelection
+                    }
                 />
             );
         }
@@ -3775,7 +4044,7 @@ function App() {
                     <AuthPanel
                         user={user}
                         onUserChange={
-                            setUser
+                            handleUserChange
                         }
                         showToast={
                             showToast
@@ -3868,6 +4137,9 @@ function App() {
 
                 <HistoryPanel
                     showToast={showToast}
+                    onSelectHistory={
+                        restoreHistory
+                    }
                 />
 
             </main>
