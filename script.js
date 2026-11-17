@@ -3282,10 +3282,17 @@ function AuthPanel({
 
     async function signIn() {
 
+        if (loading) {
+            return;
+        }
+
         setAuthError("");
 
+        const cleanEmail =
+            email.trim();
+
         if (
-            !email.trim() ||
+            !cleanEmail ||
             !password
         ) {
             const message =
@@ -3333,7 +3340,7 @@ function AuthPanel({
                 await supabaseClient.auth
                     .signInWithPassword({
                         email:
-                            email.trim(),
+                            cleanEmail,
 
                         password
                     });
@@ -3370,9 +3377,27 @@ function AuthPanel({
                 error
             );
 
-            const message =
+            let message =
                 error?.message ||
                 "Gagal masuk. Coba lagi.";
+
+            if (
+                /invalid login credentials/i.test(
+                    message
+                )
+            ) {
+                message =
+                    "Email atau password salah.";
+            }
+
+            if (
+                /email not confirmed/i.test(
+                    message
+                )
+            ) {
+                message =
+                    "Email belum dikonfirmasi. Cek email terlebih dahulu.";
+            }
 
             setAuthError(
                 message
@@ -3391,10 +3416,17 @@ function AuthPanel({
 
     async function signUp() {
 
+        if (loading) {
+            return;
+        }
+
         setAuthError("");
 
+        const cleanEmail =
+            email.trim();
+
         if (
-            !email.trim() ||
+            !cleanEmail ||
             !password
         ) {
             const message =
@@ -3446,7 +3478,7 @@ function AuthPanel({
                 await supabaseClient.auth
                     .signUp({
                         email:
-                            email.trim(),
+                            cleanEmail,
 
                         password,
 
@@ -3456,10 +3488,90 @@ function AuthPanel({
                         }
                     });
 
+            /*
+             * Supabase bisa mengembalikan error langsung
+             * ketika email sudah digunakan.
+             */
             if (error) {
+
+                const errorMessage =
+                    error?.message ||
+                    "";
+
+                if (
+                    /already registered/i.test(
+                        errorMessage
+                    ) ||
+                    /user already exists/i.test(
+                        errorMessage
+                    ) ||
+                    /email.*already/i.test(
+                        errorMessage
+                    ) ||
+                    /already.*email/i.test(
+                        errorMessage
+                    )
+                ) {
+                    const message =
+                        "Email sudah terdaftar. Silakan masuk menggunakan akun tersebut.";
+
+                    setAuthError(
+                        message
+                    );
+
+                    /*
+                     * Sengaja memakai "success" supaya
+                     * tampilannya tetap sama seperti
+                     * kotak oranye informasi akun berhasil
+                     * dibuat sebelumnya.
+                     */
+                    showToast(
+                        message,
+                        "success"
+                    );
+
+                    return;
+                }
+
                 throw error;
             }
 
+
+            /*
+             * Supabase juga dapat menyembunyikan keberadaan
+             * akun lama demi alasan keamanan. Pada kondisi
+             * tertentu, user dikembalikan tetapi identities
+             * kosong. Ini menandakan email tersebut sudah
+             * memiliki akun.
+             */
+            if (
+                data?.user &&
+                Array.isArray(
+                    data.user.identities
+                ) &&
+                data.user.identities.length === 0
+            ) {
+                const message =
+                    "Email sudah terdaftar. Silakan masuk menggunakan akun tersebut.";
+
+                setAuthError(
+                    message
+                );
+
+                showToast(
+                    message,
+                    "success"
+                );
+
+                return;
+            }
+
+
+            /*
+             * Jika langsung mendapatkan session,
+             * berarti akun berhasil dibuat sekaligus
+             * masuk tanpa perlu konfirmasi email.
+             */
             if (
                 data?.session &&
                 data?.user
@@ -3482,12 +3594,20 @@ function AuthPanel({
                 return;
             }
 
+
+            /*
+             * Akun baru berhasil dibuat tetapi session
+             * belum tersedia karena perlu konfirmasi email.
+             */
+            const message =
+                "Akun berhasil dibuat. Cek email untuk konfirmasi.";
+
             setAuthError(
-                "Akun berhasil dibuat. Cek email untuk konfirmasi."
+                message
             );
 
             showToast(
-                "Akun berhasil dibuat. Cek email untuk konfirmasi.",
+                message,
                 "success"
             );
 
@@ -3498,9 +3618,42 @@ function AuthPanel({
                 error
             );
 
-            const message =
+            let message =
                 error?.message ||
                 "Gagal membuat akun. Coba lagi.";
+
+            /*
+             * Jaga-jaga apabila Supabase mengembalikan
+             * variasi pesan duplicate-email yang berbeda.
+             */
+            if (
+                /already registered/i.test(
+                    message
+                ) ||
+                /user already exists/i.test(
+                    message
+                ) ||
+                /email.*already/i.test(
+                    message
+                ) ||
+                /already.*email/i.test(
+                    message
+                )
+            ) {
+                message =
+                    "Email sudah terdaftar. Silakan masuk menggunakan akun tersebut.";
+
+                setAuthError(
+                    message
+                );
+
+                showToast(
+                    message,
+                    "success"
+                );
+
+                return;
+            }
 
             setAuthError(
                 message
