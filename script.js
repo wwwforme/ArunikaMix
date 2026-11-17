@@ -535,7 +535,9 @@ function Toast({
                 `toast toast-${toast.type}`
             }
             style={{
-                color: "var(--plum)"
+                color: "var(--plum)",
+                background:
+                    "var(--paper-light)"
             }}
         >
             <span
@@ -547,9 +549,11 @@ function Toast({
             ></span>
 
             <span
+                className="toast-message"
                 style={{
                     color:
-                        "var(--plum)"
+                        "var(--plum)",
+                    opacity: 1
                 }}
             >
                 {toast.message}
@@ -1049,9 +1053,21 @@ function AttendanceManager({
 
 
     return (
-        <aside className="attendance-panel">
+        <aside
+            className="attendance-panel"
+            style={{
+                paddingLeft: "24px",
+                paddingRight: "24px"
+            }}
+        >
 
-            <div className="panel-heading">
+            <div
+                className="panel-heading"
+                style={{
+                    paddingLeft: 0,
+                    paddingRight: 0
+                }}
+            >
 
                 <div className="panel-heading-main">
 
@@ -1073,7 +1089,12 @@ function AttendanceManager({
             </div>
 
 
-            <div className="attendance-input">
+            <div
+                className="attendance-input"
+                style={{
+                    width: "100%"
+                }}
+            >
 
                 <textarea
                     value={input}
@@ -1086,11 +1107,19 @@ function AttendanceManager({
                         "Tambahkan nama...\nSatu nama per baris"
                     }
                     rows={4}
+                    style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        display: "block"
+                    }}
                 />
 
                 <button
                     className="btn btn-secondary add-member-button"
                     onClick={addNames}
+                    style={{
+                        width: "100%"
+                    }}
                 >
                     <span className="button-icon-box">
                         <Icon
@@ -1466,7 +1495,12 @@ function HistoryPanel({
 
 
     return (
-        <section className="history-section">
+        <section
+            className="history-section"
+            style={{
+                marginTop: "22px"
+            }}
+        >
 
             <button
                 className="history-toggle"
@@ -1475,24 +1509,47 @@ function HistoryPanel({
                         value => !value
                     )
                 }
+                style={{
+                    minHeight: "62px"
+                }}
             >
 
                 <span className="history-toggle-left">
 
-                    <span className="history-toggle-icon">
+                    <span
+                        className="history-toggle-icon"
+                        style={{
+                            background:
+                                "var(--paper)",
+                            color:
+                                "var(--plum)"
+                        }}
+                    >
                         <Icon
                             name="rotate"
-                            size={17}
+                            size={16}
                         />
                     </span>
 
                     <span>
 
-                        <span className="history-toggle-title">
+                        <span
+                            className="history-toggle-title"
+                            style={{
+                                color:
+                                    "var(--plum)"
+                            }}
+                        >
                             Riwayat Acakan
                         </span>
 
-                        <span className="history-toggle-subtitle">
+                        <span
+                            className="history-toggle-subtitle"
+                            style={{
+                                color:
+                                    "var(--ink-soft)"
+                            }}
+                        >
                             {history.length} hasil tersimpan
                         </span>
 
@@ -1503,7 +1560,13 @@ function HistoryPanel({
 
                 <span className="history-toggle-right">
 
-                    <span className="history-count">
+                    <span
+                        className="history-count"
+                        style={{
+                            color:
+                                "var(--plum)"
+                        }}
+                    >
                         {history.length}
                     </span>
 
@@ -1529,11 +1592,22 @@ function HistoryPanel({
 
             {open && (
 
-                <div className="history-body">
+                <div
+                    className="history-body"
+                    style={{
+                        paddingTop: "10px"
+                    }}
+                >
 
                     {history.length === 0 ? (
 
-                        <div className="history-empty">
+                        <div
+                            className="history-empty"
+                            style={{
+                                color:
+                                    "var(--ink-soft)"
+                            }}
+                        >
                             Belum ada hasil acakan.
                         </div>
 
@@ -1549,27 +1623,51 @@ function HistoryPanel({
                                         <div
                                             className="history-item"
                                             key={item.id}
+                                            style={{
+                                                background:
+                                                    "rgba(255,250,241,.72)",
+                                                borderColor:
+                                                    "var(--line)"
+                                            }}
                                         >
 
-                                            <div className="history-item-icon">
+                                            <div
+                                                className="history-item-icon"
+                                                style={{
+                                                    color:
+                                                        "var(--coral-deep)"
+                                                }}
+                                            >
                                                 <Icon
                                                     name={
                                                         getHistoryIcon(
                                                             item.type
                                                         )
                                                     }
-                                                    size={16}
+                                                    size={15}
                                                 />
                                             </div>
 
 
                                             <div className="history-item-content">
 
-                                                <div className="history-item-title">
+                                                <div
+                                                    className="history-item-title"
+                                                    style={{
+                                                        color:
+                                                            "var(--plum)"
+                                                    }}
+                                                >
                                                     {item.title}
                                                 </div>
 
-                                                <div className="history-item-date">
+                                                <div
+                                                    className="history-item-date"
+                                                    style={{
+                                                        color:
+                                                            "var(--ink-soft)"
+                                                    }}
+                                                >
                                                     {
                                                         formatHistoryDate(
                                                             item.createdAt
@@ -1577,7 +1675,13 @@ function HistoryPanel({
                                                     }
                                                 </div>
 
-                                                <div className="history-item-preview">
+                                                <div
+                                                    className="history-item-preview"
+                                                    style={{
+                                                        color:
+                                                            "var(--ink-soft)"
+                                                    }}
+                                                >
                                                     {
                                                         getHistoryPreview(
                                                             item
@@ -1599,7 +1703,7 @@ function HistoryPanel({
                                             >
                                                 <Icon
                                                     name="trash"
-                                                    size={15}
+                                                    size={14}
                                                 />
                                             </button>
 
@@ -1692,6 +1796,19 @@ function GroupMode({
             return;
         }
 
+        /*
+         * Input boleh kosong sementara ketika pengguna
+         * sedang mengetik. Nilai akan dirapikan ketika blur.
+         */
+        if (
+            value === "" ||
+            value === null ||
+            typeof value === "undefined"
+        ) {
+            setGroupCount("");
+            return;
+        }
+
         const numericValue =
             Number(value);
 
@@ -1716,6 +1833,27 @@ function GroupMode({
 
         setGroupCount(
             safeValue
+        );
+    }
+
+
+    function normalizeGroupCount() {
+        if (!names.length) {
+            setGroupCount(1);
+            return;
+        }
+
+        setGroupCount(
+            current =>
+                Math.max(
+                    1,
+                    Math.min(
+                        Math.floor(
+                            Number(current) || 1
+                        ),
+                        names.length
+                    )
+                )
         );
     }
 
@@ -1802,6 +1940,24 @@ function GroupMode({
     }
 
 
+    const safeGroupCount =
+        Math.max(
+            1,
+            Math.min(
+                Number(groupCount) || 1,
+                names.length || 1
+            )
+        );
+
+    const averagePerGroup =
+        names.length > 0
+            ? Math.ceil(
+                names.length /
+                safeGroupCount
+            )
+            : 0;
+
+
     return (
         <section className="mode-panel">
 
@@ -1823,19 +1979,53 @@ function GroupMode({
             </div>
 
 
-            <div className="group-controls">
+            <div
+                className="group-controls"
+                style={{
+                    display: "block"
+                }}
+            >
 
-                <div className="control-field group-count-field">
+                <div
+                    className="control-field group-count-field"
+                    style={{
+                        width: "100%"
+                    }}
+                >
 
-                    <label>
+                    <label
+                        style={{
+                            display: "block",
+                            marginBottom: "9px"
+                        }}
+                    >
                         Banyak kelompok
                     </label>
 
-                    <div className="group-count-input-wrap">
+
+                    <div
+                        className="group-count-input-wrap"
+                        style={{
+                            width: "100%",
+                            minHeight: "58px",
+                            display: "flex",
+                            alignItems: "center",
+                            boxSizing: "border-box",
+                            padding:
+                                "0 16px",
+                            border:
+                                "1px solid var(--line)",
+                            borderRadius:
+                                "14px",
+                            background:
+                                "var(--paper-light)"
+                        }}
+                    >
 
                         <input
                             className="group-count-input"
                             type="number"
+                            inputMode="numeric"
                             min="1"
                             max={
                                 Math.max(
@@ -1853,25 +2043,50 @@ function GroupMode({
                                     e.target.value
                                 )
                             }
-                            onBlur={e =>
-                                handleGroupCountChange(
-                                    e.target.value
-                                )
+                            onBlur={
+                                normalizeGroupCount
                             }
                             disabled={
                                 names.length === 0
                             }
                             aria-label="Banyak kelompok"
+                            placeholder="0"
+                            style={{
+                                flex: "1",
+                                width: "100%",
+                                minWidth: 0,
+                                border: "0",
+                                outline: "0",
+                                background:
+                                    "transparent",
+                                color:
+                                    "var(--plum)",
+                                fontFamily:
+                                    "var(--font-display)",
+                                fontSize:
+                                    "32px",
+                                fontWeight:
+                                    "400",
+                                textAlign:
+                                    "center"
+                            }}
                         />
-
-                        <span className="group-count-suffix">
-                            kelompok
-                        </span>
 
                     </div>
 
-                    <small className="group-count-hint">
-                        Maksimal {names.length || 0}
+
+                    <small
+                        className="group-count-hint"
+                        style={{
+                            display: "block",
+                            marginTop: "9px",
+                            color:
+                                "var(--ink-soft)"
+                        }}
+                    >
+                        ≈ {averagePerGroup} per grup
+                        {" • "}
+                        seimbang
                     </small>
 
                 </div>
@@ -1880,6 +2095,10 @@ function GroupMode({
                 <button
                     className="btn btn-primary group-mix-button"
                     onClick={mixGroups}
+                    style={{
+                        width: "100%",
+                        marginTop: "16px"
+                    }}
                 >
 
                     <Icon
@@ -2713,7 +2932,9 @@ function QueueTool({
                                             style={{
                                                 color:
                                                     "var(--ink)",
-                                                opacity: 1
+                                                opacity: 1,
+                                                display:
+                                                    "block"
                                             }}
                                         >
                                             {name}
@@ -2994,7 +3215,11 @@ function AuthPanel({
                         className="login-modal"
                         role="dialog"
                         aria-modal="true"
-                        aria-labelledby="login-modal-title"
+                        aria-label="Masuk ke ArunikaMix"
+                        style={{
+                            padding:
+                                "28px"
+                        }}
                     >
 
                         <button
@@ -3011,33 +3236,19 @@ function AuthPanel({
                         </button>
 
 
-                        <div className="login-modal-mark">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-
-
-                        <div className="login-modal-heading">
-
-                            <div className="eyebrow">
-                                ARUNIKAMIX
-                            </div>
-
-                            <h2 id="login-modal-title">
-                                Masuk ke akunmu
-                            </h2>
-
-                            <p>
-                                Simpan daftar peserta
-                                dan gunakan kembali
-                                kapan saja.
-                            </p>
-
-                        </div>
-
-
-                        <div className="auth-fields">
+                        <div
+                            className="auth-fields"
+                            style={{
+                                display:
+                                    "flex",
+                                flexDirection:
+                                    "column",
+                                gap:
+                                    "10px",
+                                width:
+                                    "100%"
+                            }}
+                        >
 
                             <input
                                 type="email"
@@ -3050,6 +3261,12 @@ function AuthPanel({
                                         e.target.value
                                     )
                                 }
+                                style={{
+                                    width:
+                                        "100%",
+                                    boxSizing:
+                                        "border-box"
+                                }}
                             />
 
 
@@ -3074,12 +3291,24 @@ function AuthPanel({
                                     }
 
                                 }}
+                                style={{
+                                    width:
+                                        "100%",
+                                    boxSizing:
+                                        "border-box"
+                                }}
                             />
 
                         </div>
 
 
-                        <div className="auth-actions">
+                        <div
+                            className="auth-actions"
+                            style={{
+                                marginTop:
+                                    "12px"
+                            }}
+                        >
 
                             <button
                                 className="auth-button modal-primary"
@@ -3101,12 +3330,6 @@ function AuthPanel({
 
                         </div>
 
-
-                        <div className="login-modal-note">
-                            Akun digunakan untuk menyimpan
-                            daftar peserta secara pribadi.
-                        </div>
-
                     </div>
 
                 </div>
@@ -3114,6 +3337,161 @@ function AuthPanel({
             )}
 
         </>
+    );
+}
+
+
+/* =========================================================
+   DESIGN OVERRIDES
+========================================================= */
+
+function DesignOverrides() {
+    return (
+        <style>
+            {`
+                /*
+                 * Override kecil untuk menjaga tampilan
+                 * tetap seperti desain editorial ArunikaMix.
+                 */
+
+                .attendance-panel {
+                    box-sizing: border-box;
+                }
+
+                .attendance-input {
+                    box-sizing: border-box;
+                }
+
+                .attendance-input textarea {
+                    width: 100% !important;
+                    box-sizing: border-box !important;
+                    min-height: 118px;
+                    resize: vertical;
+                }
+
+                .add-member-button {
+                    width: 100% !important;
+                }
+
+                .group-count-field {
+                    width: 100%;
+                }
+
+                .group-count-input-wrap {
+                    overflow: hidden;
+                }
+
+                .group-count-input {
+                    appearance: textfield;
+                }
+
+                .group-count-input::-webkit-outer-spin-button,
+                .group-count-input::-webkit-inner-spin-button {
+                    appearance: none;
+                    margin: 0;
+                }
+
+                .group-count-input:focus {
+                    outline: none;
+                }
+
+                .history-section {
+                    overflow: hidden;
+                }
+
+                .history-toggle {
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+
+                .history-body {
+                    box-sizing: border-box;
+                }
+
+                .history-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 7px;
+                }
+
+                .history-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 11px;
+                    min-height: 54px;
+                    padding: 9px 12px;
+                    box-sizing: border-box;
+                    border: 1px solid var(--line);
+                    border-radius: 9px;
+                }
+
+                .history-item-content {
+                    min-width: 0;
+                    flex: 1;
+                }
+
+                .history-item-title {
+                    font-weight: 600;
+                    line-height: 1.2;
+                }
+
+                .history-item-date {
+                    margin-top: 2px;
+                    font-size: 10px;
+                }
+
+                .history-item-preview {
+                    display: none;
+                }
+
+                .history-item-delete {
+                    flex: 0 0 auto;
+                }
+
+                .hero-stamp {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 9px;
+                }
+
+                .stamp-number {
+                    color: var(--coral);
+                }
+
+                .stamp-label {
+                    color: var(--ink);
+                }
+
+                .queue-name {
+                    color: var(--ink) !important;
+                    opacity: 1 !important;
+                }
+
+                .toast-message {
+                    color: var(--plum) !important;
+                    opacity: 1 !important;
+                }
+
+                @media (max-width: 700px) {
+                    .attendance-panel {
+                        padding-left: 22px !important;
+                        padding-right: 22px !important;
+                    }
+
+                    .group-count-input-wrap {
+                        min-height: 62px !important;
+                    }
+
+                    .group-count-input {
+                        font-size: 34px !important;
+                    }
+
+                    .history-item-preview {
+                        display: none !important;
+                    }
+                }
+            `}
+        </style>
     );
 }
 
@@ -3364,6 +3742,9 @@ function App() {
     return (
         <div className="app">
 
+            <DesignOverrides />
+
+
             <header className="site-header">
 
                 <div className="brand">
@@ -3431,7 +3812,15 @@ function App() {
                     </div>
 
 
-                    <div className="hero-stamp">
+                    <div
+                        className="hero-stamp"
+                        style={{
+                            justifyContent:
+                                "flex-end",
+                            whiteSpace:
+                                "nowrap"
+                        }}
+                    >
 
                         <span className="stamp-number">
                             {names.length}
