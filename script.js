@@ -71,49 +71,61 @@ const GROUP_COLORS = [
 
 
 /* =========================================================
-   STORAGE
+   SESSION STORAGE
 ========================================================= */
 
 const STORAGE_KEYS = {
-    currentAttendance:
-        "arunikamix_current_attendance_v4",
-
     history:
-        "arunikamix_shuffle_history_v5"
+        "arunikamix_session_history_v6"
 };
 
 
-/* =========================================================
-   STORAGE HELPERS
-========================================================= */
-
-function readStorage(key, fallback) {
+function readSessionStorage(
+    key,
+    fallback
+) {
     try {
         const raw =
-            localStorage.getItem(key);
+            sessionStorage.getItem(key);
 
         if (!raw) {
             return fallback;
         }
 
         return JSON.parse(raw);
+
     } catch (error) {
         return fallback;
     }
 }
 
 
-function writeStorage(key, value) {
+function writeSessionStorage(
+    key,
+    value
+) {
     try {
-        localStorage.setItem(
+        sessionStorage.setItem(
             key,
             JSON.stringify(value)
         );
+
     } catch (error) {
         console.error(
-            "Gagal menyimpan localStorage:",
+            "Gagal menyimpan sessionStorage:",
             error
         );
+    }
+}
+
+
+function clearSessionData() {
+    try {
+        sessionStorage.removeItem(
+            STORAGE_KEYS.history
+        );
+    } catch (error) {
+        console.error(error);
     }
 }
 
@@ -160,7 +172,9 @@ async function copyText(text) {
     try {
         await navigator.clipboard.writeText(text);
         return true;
+
     } catch (error) {
+
         try {
             const textarea =
                 document.createElement("textarea");
@@ -180,6 +194,7 @@ async function copyText(text) {
             textarea.remove();
 
             return true;
+
         } catch (fallbackError) {
             return false;
         }
@@ -191,7 +206,10 @@ async function copyText(text) {
    GROUP HELPERS
 ========================================================= */
 
-function splitIntoGroups(names, count) {
+function splitIntoGroups(
+    names,
+    count
+) {
     const safeCount =
         Math.max(
             1,
@@ -252,10 +270,11 @@ function makeDuelPairs(names) {
 function saveHistory(
     type,
     title,
-    data
+    data,
+    namesSnapshot = []
 ) {
     const history =
-        readStorage(
+        readSessionStorage(
             STORAGE_KEYS.history,
             []
         );
@@ -271,6 +290,11 @@ function saveHistory(
 
         data,
 
+        names:
+            Array.isArray(namesSnapshot)
+                ? [...namesSnapshot]
+                : [],
+
         createdAt:
             new Date().toISOString()
     };
@@ -281,9 +305,15 @@ function saveHistory(
             ...history
         ].slice(0, 50);
 
-    writeStorage(
+    writeSessionStorage(
         STORAGE_KEYS.history,
         updated
+    );
+
+    window.dispatchEvent(
+        new Event(
+            "arunikamix-history-updated"
+        )
     );
 }
 
@@ -299,6 +329,7 @@ function formatHistoryDate(date) {
         ).format(
             new Date(date)
         );
+
     } catch (error) {
         return "";
     }
@@ -535,11 +566,10 @@ function Toast({
                 `toast toast-${toast.type}`
             }
             style={{
-                color: "var(--plum)",
-                background:
-                    "var(--paper-light)"
+                color: "var(--plum)"
             }}
         >
+
             <span
                 className="toast-dot"
                 style={{
@@ -552,12 +582,12 @@ function Toast({
                 className="toast-message"
                 style={{
                     color:
-                        "var(--plum)",
-                    opacity: 1
+                        "var(--plum)"
                 }}
             >
                 {toast.message}
             </span>
+
         </div>
     );
 }
@@ -1022,7 +1052,9 @@ function AttendanceManager({
             selectedList.id === list.id
         ) {
             setSelectedList(null);
-            setNames([]);
+            setNames([
+                ...DEFAULT_NAMES
+            ]);
         }
 
         await loadLists();
@@ -1053,21 +1085,9 @@ function AttendanceManager({
 
 
     return (
-        <aside
-            className="attendance-panel"
-            style={{
-                paddingLeft: "24px",
-                paddingRight: "24px"
-            }}
-        >
+        <aside className="attendance-panel">
 
-            <div
-                className="panel-heading"
-                style={{
-                    paddingLeft: 0,
-                    paddingRight: 0
-                }}
-            >
+            <div className="panel-heading">
 
                 <div className="panel-heading-main">
 
@@ -1089,12 +1109,7 @@ function AttendanceManager({
             </div>
 
 
-            <div
-                className="attendance-input"
-                style={{
-                    width: "100%"
-                }}
-            >
+            <div className="attendance-input">
 
                 <textarea
                     value={input}
@@ -1107,19 +1122,12 @@ function AttendanceManager({
                         "Tambahkan nama...\nSatu nama per baris"
                     }
                     rows={4}
-                    style={{
-                        width: "100%",
-                        boxSizing: "border-box",
-                        display: "block"
-                    }}
                 />
 
                 <button
                     className="btn btn-secondary add-member-button"
                     onClick={addNames}
-                    style={{
-                        width: "100%"
-                    }}
+                    type="button"
                 >
                     <span className="button-icon-box">
                         <Icon
@@ -1139,6 +1147,7 @@ function AttendanceManager({
                 <button
                     className="small-action"
                     onClick={resetDefault}
+                    type="button"
                 >
                     <Icon
                         name="rotate"
@@ -1151,6 +1160,7 @@ function AttendanceManager({
                 <button
                     className="small-action danger"
                     onClick={clearNames}
+                    type="button"
                 >
                     <Icon
                         name="trash"
@@ -1204,6 +1214,7 @@ function AttendanceManager({
                                     aria-label={
                                         `Hapus ${name}`
                                     }
+                                    type="button"
                                 >
                                     <Icon
                                         name="x"
@@ -1236,6 +1247,7 @@ function AttendanceManager({
                             value => !value
                         )
                     }
+                    type="button"
                 >
 
                     <span className="saved-toggle-left">
@@ -1273,6 +1285,7 @@ function AttendanceManager({
                                     createNewList
                                 }
                                 disabled={loading}
+                                type="button"
                             >
                                 <Icon
                                     name="plus"
@@ -1288,6 +1301,7 @@ function AttendanceManager({
                                     saveCurrentList
                                 }
                                 disabled={loading}
+                                type="button"
                             >
                                 <Icon
                                     name="save"
@@ -1329,6 +1343,7 @@ function AttendanceManager({
                                                     list
                                                 )
                                             }
+                                            type="button"
                                         >
                                             <span>
                                                 {list.name}
@@ -1354,6 +1369,7 @@ function AttendanceManager({
                                                 )
                                             }
                                             aria-label="Ubah nama"
+                                            type="button"
                                         >
                                             <Icon
                                                 name="edit"
@@ -1369,6 +1385,7 @@ function AttendanceManager({
                                                 )
                                             }
                                             aria-label="Hapus daftar"
+                                            type="button"
                                         >
                                             <Icon
                                                 name="trash"
@@ -1399,7 +1416,8 @@ function AttendanceManager({
 ========================================================= */
 
 function HistoryPanel({
-    showToast
+    showToast,
+    onSelectHistory
 }) {
     const [
         open,
@@ -1410,7 +1428,7 @@ function HistoryPanel({
         history,
         setHistory
     ] = useState(() =>
-        readStorage(
+        readSessionStorage(
             STORAGE_KEYS.history,
             []
         )
@@ -1419,7 +1437,7 @@ function HistoryPanel({
 
     function refreshHistory() {
         setHistory(
-            readStorage(
+            readSessionStorage(
                 STORAGE_KEYS.history,
                 []
             )
@@ -1452,7 +1470,7 @@ function HistoryPanel({
                     item.id !== id
             );
 
-        writeStorage(
+        writeSessionStorage(
             STORAGE_KEYS.history,
             updated
         );
@@ -1480,7 +1498,7 @@ function HistoryPanel({
             return;
         }
 
-        writeStorage(
+        writeSessionStorage(
             STORAGE_KEYS.history,
             []
         );
@@ -1494,13 +1512,22 @@ function HistoryPanel({
     }
 
 
+    function handleHistoryClick(item) {
+        setOpen(true);
+
+        if (onSelectHistory) {
+            onSelectHistory(item);
+        }
+
+        showToast(
+            "Hasil riwayat dipulihkan.",
+            "success"
+        );
+    }
+
+
     return (
-        <section
-            className="history-section"
-            style={{
-                marginTop: "22px"
-            }}
-        >
+        <section className="history-section">
 
             <button
                 className="history-toggle"
@@ -1509,47 +1536,25 @@ function HistoryPanel({
                         value => !value
                     )
                 }
-                style={{
-                    minHeight: "62px"
-                }}
+                type="button"
             >
 
                 <span className="history-toggle-left">
 
-                    <span
-                        className="history-toggle-icon"
-                        style={{
-                            background:
-                                "var(--paper)",
-                            color:
-                                "var(--plum)"
-                        }}
-                    >
+                    <span className="history-toggle-icon">
                         <Icon
                             name="rotate"
-                            size={16}
+                            size={17}
                         />
                     </span>
 
                     <span>
 
-                        <span
-                            className="history-toggle-title"
-                            style={{
-                                color:
-                                    "var(--plum)"
-                            }}
-                        >
+                        <span className="history-toggle-title">
                             Riwayat Acakan
                         </span>
 
-                        <span
-                            className="history-toggle-subtitle"
-                            style={{
-                                color:
-                                    "var(--ink-soft)"
-                            }}
-                        >
+                        <span className="history-toggle-subtitle">
                             {history.length} hasil tersimpan
                         </span>
 
@@ -1560,13 +1565,7 @@ function HistoryPanel({
 
                 <span className="history-toggle-right">
 
-                    <span
-                        className="history-count"
-                        style={{
-                            color:
-                                "var(--plum)"
-                        }}
-                    >
+                    <span className="history-count">
                         {history.length}
                     </span>
 
@@ -1592,22 +1591,11 @@ function HistoryPanel({
 
             {open && (
 
-                <div
-                    className="history-body"
-                    style={{
-                        paddingTop: "10px"
-                    }}
-                >
+                <div className="history-body">
 
                     {history.length === 0 ? (
 
-                        <div
-                            className="history-empty"
-                            style={{
-                                color:
-                                    "var(--ink-soft)"
-                            }}
-                        >
+                        <div className="history-empty">
                             Belum ada hasil acakan.
                         </div>
 
@@ -1623,51 +1611,44 @@ function HistoryPanel({
                                         <div
                                             className="history-item"
                                             key={item.id}
-                                            style={{
-                                                background:
-                                                    "rgba(255,250,241,.72)",
-                                                borderColor:
-                                                    "var(--line)"
+                                            onClick={() =>
+                                                handleHistoryClick(
+                                                    item
+                                                )
+                                            }
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={event => {
+                                                if (
+                                                    event.key ===
+                                                    "Enter"
+                                                ) {
+                                                    handleHistoryClick(
+                                                        item
+                                                    );
+                                                }
                                             }}
                                         >
 
-                                            <div
-                                                className="history-item-icon"
-                                                style={{
-                                                    color:
-                                                        "var(--coral-deep)"
-                                                }}
-                                            >
+                                            <div className="history-item-icon">
                                                 <Icon
                                                     name={
                                                         getHistoryIcon(
                                                             item.type
                                                         )
                                                     }
-                                                    size={15}
+                                                    size={16}
                                                 />
                                             </div>
 
 
                                             <div className="history-item-content">
 
-                                                <div
-                                                    className="history-item-title"
-                                                    style={{
-                                                        color:
-                                                            "var(--plum)"
-                                                    }}
-                                                >
+                                                <div className="history-item-title">
                                                     {item.title}
                                                 </div>
 
-                                                <div
-                                                    className="history-item-date"
-                                                    style={{
-                                                        color:
-                                                            "var(--ink-soft)"
-                                                    }}
-                                                >
+                                                <div className="history-item-date">
                                                     {
                                                         formatHistoryDate(
                                                             item.createdAt
@@ -1675,13 +1656,7 @@ function HistoryPanel({
                                                     }
                                                 </div>
 
-                                                <div
-                                                    className="history-item-preview"
-                                                    style={{
-                                                        color:
-                                                            "var(--ink-soft)"
-                                                    }}
-                                                >
+                                                <div className="history-item-preview">
                                                     {
                                                         getHistoryPreview(
                                                             item
@@ -1694,16 +1669,19 @@ function HistoryPanel({
 
                                             <button
                                                 className="history-item-delete"
-                                                onClick={() =>
+                                                onClick={event => {
+                                                    event.stopPropagation();
+
                                                     deleteHistory(
                                                         item.id
-                                                    )
-                                                }
+                                                    );
+                                                }}
                                                 aria-label="Hapus riwayat"
+                                                type="button"
                                             >
                                                 <Icon
                                                     name="trash"
-                                                    size={14}
+                                                    size={15}
                                                 />
                                             </button>
 
@@ -1722,6 +1700,7 @@ function HistoryPanel({
                                     onClick={
                                         clearHistory
                                     }
+                                    type="button"
                                 >
                                     <Icon
                                         name="trash"
@@ -1752,7 +1731,8 @@ function HistoryPanel({
 
 function GroupMode({
     names,
-    showToast
+    showToast,
+    restoredResult
 }) {
     const [
         groupCount,
@@ -1790,22 +1770,31 @@ function GroupMode({
     }, [names.length]);
 
 
+    useEffect(() => {
+        if (
+            restoredResult &&
+            restoredResult.type === "groups" &&
+            Array.isArray(
+                restoredResult.data
+            )
+        ) {
+            setGroups(
+                restoredResult.data
+            );
+
+            setGroupCount(
+                Math.min(
+                    restoredResult.data.length,
+                    names.length || 1
+                )
+            );
+        }
+    }, [restoredResult]);
+
+
     function handleGroupCountChange(value) {
         if (!names.length) {
             setGroupCount(1);
-            return;
-        }
-
-        /*
-         * Input boleh kosong sementara ketika pengguna
-         * sedang mengetik. Nilai akan dirapikan ketika blur.
-         */
-        if (
-            value === "" ||
-            value === null ||
-            typeof value === "undefined"
-        ) {
-            setGroupCount("");
             return;
         }
 
@@ -1833,27 +1822,6 @@ function GroupMode({
 
         setGroupCount(
             safeValue
-        );
-    }
-
-
-    function normalizeGroupCount() {
-        if (!names.length) {
-            setGroupCount(1);
-            return;
-        }
-
-        setGroupCount(
-            current =>
-                Math.max(
-                    1,
-                    Math.min(
-                        Math.floor(
-                            Number(current) || 1
-                        ),
-                        names.length
-                    )
-                )
         );
     }
 
@@ -1890,13 +1858,8 @@ function GroupMode({
         saveHistory(
             "groups",
             `${count} kelompok`,
-            result
-        );
-
-        window.dispatchEvent(
-            new Event(
-                "arunikamix-history-updated"
-            )
+            result,
+            names
         );
 
         showToast(
@@ -1940,24 +1903,6 @@ function GroupMode({
     }
 
 
-    const safeGroupCount =
-        Math.max(
-            1,
-            Math.min(
-                Number(groupCount) || 1,
-                names.length || 1
-            )
-        );
-
-    const averagePerGroup =
-        names.length > 0
-            ? Math.ceil(
-                names.length /
-                safeGroupCount
-            )
-            : 0;
-
-
     return (
         <section className="mode-panel">
 
@@ -1979,53 +1924,19 @@ function GroupMode({
             </div>
 
 
-            <div
-                className="group-controls"
-                style={{
-                    display: "block"
-                }}
-            >
+            <div className="group-controls">
 
-                <div
-                    className="control-field group-count-field"
-                    style={{
-                        width: "100%"
-                    }}
-                >
+                <div className="control-field group-count-field">
 
-                    <label
-                        style={{
-                            display: "block",
-                            marginBottom: "9px"
-                        }}
-                    >
+                    <label>
                         Banyak kelompok
                     </label>
 
-
-                    <div
-                        className="group-count-input-wrap"
-                        style={{
-                            width: "100%",
-                            minHeight: "58px",
-                            display: "flex",
-                            alignItems: "center",
-                            boxSizing: "border-box",
-                            padding:
-                                "0 16px",
-                            border:
-                                "1px solid var(--line)",
-                            borderRadius:
-                                "14px",
-                            background:
-                                "var(--paper-light)"
-                        }}
-                    >
+                    <div className="group-count-input-wrap">
 
                         <input
                             className="group-count-input"
                             type="number"
-                            inputMode="numeric"
                             min="1"
                             max={
                                 Math.max(
@@ -2043,50 +1954,25 @@ function GroupMode({
                                     e.target.value
                                 )
                             }
-                            onBlur={
-                                normalizeGroupCount
+                            onBlur={e =>
+                                handleGroupCountChange(
+                                    e.target.value
+                                )
                             }
                             disabled={
                                 names.length === 0
                             }
                             aria-label="Banyak kelompok"
-                            placeholder="0"
-                            style={{
-                                flex: "1",
-                                width: "100%",
-                                minWidth: 0,
-                                border: "0",
-                                outline: "0",
-                                background:
-                                    "transparent",
-                                color:
-                                    "var(--plum)",
-                                fontFamily:
-                                    "var(--font-display)",
-                                fontSize:
-                                    "32px",
-                                fontWeight:
-                                    "400",
-                                textAlign:
-                                    "center"
-                            }}
                         />
+
+                        <span className="group-count-suffix">
+                            kelompok
+                        </span>
 
                     </div>
 
-
-                    <small
-                        className="group-count-hint"
-                        style={{
-                            display: "block",
-                            marginTop: "9px",
-                            color:
-                                "var(--ink-soft)"
-                        }}
-                    >
-                        ≈ {averagePerGroup} per grup
-                        {" • "}
-                        seimbang
+                    <small className="group-count-hint">
+                        Maksimal {names.length || 0}
                     </small>
 
                 </div>
@@ -2095,10 +1981,7 @@ function GroupMode({
                 <button
                     className="btn btn-primary group-mix-button"
                     onClick={mixGroups}
-                    style={{
-                        width: "100%",
-                        marginTop: "16px"
-                    }}
+                    type="button"
                 >
 
                     <Icon
@@ -2124,6 +2007,7 @@ function GroupMode({
                     <button
                         className="small-action"
                         onClick={copyGroups}
+                        type="button"
                     >
                         <Icon
                             name="copy"
@@ -2210,7 +2094,8 @@ function GroupMode({
 function SpinWheel({
     names,
     setNames,
-    showToast
+    showToast,
+    restoredResult
 }) {
     const [
         spinning,
@@ -2240,6 +2125,66 @@ function SpinWheel({
         total > 0
             ? 360 / total
             : 360;
+
+
+    useEffect(() => {
+        if (
+            !restoredResult ||
+            restoredResult.type !== "wheel"
+        ) {
+            return;
+        }
+
+        const restoredWinner =
+            restoredResult.data?.winner;
+
+        if (!restoredWinner) {
+            return;
+        }
+
+        setWinner(
+            restoredWinner
+        );
+
+        const snapshotNames =
+            Array.isArray(
+                restoredResult.names
+            )
+                ? restoredResult.names
+                : names;
+
+        const targetIndex =
+            snapshotNames.indexOf(
+                restoredWinner
+            );
+
+        if (
+            targetIndex === -1 ||
+            !snapshotNames.length
+        ) {
+            return;
+        }
+
+        const restoredSector =
+            360 /
+            snapshotNames.length;
+
+        const sectorCenter =
+            targetIndex *
+                restoredSector +
+            restoredSector / 2;
+
+        const desiredRotation =
+            (
+                360 -
+                sectorCenter
+            ) % 360;
+
+        setRotation(
+            desiredRotation
+        );
+
+    }, [restoredResult]);
 
 
     function spin() {
@@ -2291,7 +2236,9 @@ function SpinWheel({
             delta;
 
         setWinner(null);
+
         setSpinning(true);
+
         setRotation(
             finalRotation
         );
@@ -2313,14 +2260,8 @@ function SpinWheel({
                     {
                         winner:
                             targetName
-                    }
-                );
-
-
-                window.dispatchEvent(
-                    new Event(
-                        "arunikamix-history-updated"
-                    )
+                    },
+                    names
                 );
 
 
@@ -2462,6 +2403,7 @@ function SpinWheel({
                                 spinning ||
                                 total === 0
                             }
+                            type="button"
                         >
 
                             <Icon
@@ -2534,12 +2476,28 @@ function SpinWheel({
 
 function DuelTool({
     names,
-    showToast
+    showToast,
+    restoredResult
 }) {
     const [
         pairs,
         setPairs
     ] = useState([]);
+
+
+    useEffect(() => {
+        if (
+            restoredResult &&
+            restoredResult.type === "duel" &&
+            Array.isArray(
+                restoredResult.data
+            )
+        ) {
+            setPairs(
+                restoredResult.data
+            );
+        }
+    }, [restoredResult]);
 
 
     function drawDuel() {
@@ -2560,13 +2518,8 @@ function DuelTool({
         saveHistory(
             "duel",
             "Undian Berpasangan",
-            result
-        );
-
-        window.dispatchEvent(
-            new Event(
-                "arunikamix-history-updated"
-            )
+            result,
+            names
         );
 
         showToast(
@@ -2633,6 +2586,7 @@ function DuelTool({
             <button
                 className="btn btn-primary"
                 onClick={drawDuel}
+                type="button"
             >
 
                 <Icon
@@ -2658,6 +2612,7 @@ function DuelTool({
                         <button
                             className="small-action"
                             onClick={copyDuel}
+                            type="button"
                         >
 
                             <Icon
@@ -2733,12 +2688,28 @@ function DuelTool({
 
 function QueueTool({
     names,
-    showToast
+    showToast,
+    restoredResult
 }) {
     const [
         queue,
         setQueue
     ] = useState([]);
+
+
+    useEffect(() => {
+        if (
+            restoredResult &&
+            restoredResult.type === "queue" &&
+            Array.isArray(
+                restoredResult.data
+            )
+        ) {
+            setQueue(
+                restoredResult.data
+            );
+        }
+    }, [restoredResult]);
 
 
     function makeQueue() {
@@ -2759,13 +2730,8 @@ function QueueTool({
         saveHistory(
             "queue",
             "Urutan Antrean",
-            result
-        );
-
-        window.dispatchEvent(
-            new Event(
-                "arunikamix-history-updated"
-            )
+            result,
+            names
         );
 
         showToast(
@@ -2826,6 +2792,7 @@ function QueueTool({
             <button
                 className="btn btn-primary"
                 onClick={makeQueue}
+                type="button"
             >
 
                 <Icon
@@ -2851,6 +2818,7 @@ function QueueTool({
                         <button
                             className="small-action"
                             onClick={copyQueue}
+                            type="button"
                         >
 
                             <Icon
@@ -2932,9 +2900,7 @@ function QueueTool({
                                             style={{
                                                 color:
                                                     "var(--ink)",
-                                                opacity: 1,
-                                                display:
-                                                    "block"
+                                                opacity: 1
                                             }}
                                         >
                                             {name}
@@ -3028,8 +2994,15 @@ function AuthPanel({
 
 
     async function signIn() {
+        if (loading) {
+            return;
+        }
+
+        const cleanEmail =
+            email.trim();
+
         if (
-            !email.trim() ||
+            !cleanEmail ||
             !password
         ) {
             showToast(
@@ -3042,47 +3015,71 @@ function AuthPanel({
 
         setLoading(true);
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth
-                .signInWithPassword({
-                    email:
-                        email.trim(),
+        try {
 
-                    password
-                });
+            const {
+                data,
+                error
+            } =
+                await supabaseClient.auth
+                    .signInWithPassword({
+                        email:
+                            cleanEmail,
 
-        setLoading(false);
+                        password
+                    });
 
-        if (error) {
+            if (error) {
+                throw error;
+            }
+
+            if (
+                data &&
+                data.user
+            ) {
+                onUserChange(
+                    data.user
+                );
+            }
+
+            setShowLogin(false);
+
+            setPassword("");
+
             showToast(
-                error.message,
+                "Berhasil masuk.",
+                "success"
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Login error:",
+                error
+            );
+
+            showToast(
+                error?.message ||
+                    "Gagal masuk. Coba lagi.",
                 "error"
             );
 
-            return;
+        } finally {
+            setLoading(false);
         }
-
-        onUserChange(
-            data.user
-        );
-
-        setShowLogin(false);
-
-        setPassword("");
-
-        showToast(
-            "Berhasil masuk.",
-            "success"
-        );
     }
 
 
     async function signUp() {
+        if (loading) {
+            return;
+        }
+
+        const cleanEmail =
+            email.trim();
+
         if (
-            !email.trim() ||
+            !cleanEmail ||
             !password
         ) {
             showToast(
@@ -3093,61 +3090,107 @@ function AuthPanel({
             return;
         }
 
-        setLoading(true);
-
-        const redirectUrl =
-            window.location.origin +
-            window.location.pathname;
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth
-                .signUp({
-                    email:
-                        email.trim(),
-
-                    password,
-
-                    options: {
-                        emailRedirectTo:
-                            redirectUrl
-                    }
-                });
-
-        setLoading(false);
-
-        if (error) {
+        if (password.length < 6) {
             showToast(
-                error.message,
+                "Password minimal 6 karakter.",
                 "error"
             );
 
             return;
         }
 
-        if (data.user) {
-            onUserChange(
+        setLoading(true);
+
+        try {
+
+            const redirectUrl =
+                window.location.origin +
+                window.location.pathname;
+
+            const {
+                data,
+                error
+            } =
+                await supabaseClient.auth
+                    .signUp({
+                        email:
+                            cleanEmail,
+
+                        password,
+
+                        options: {
+                            emailRedirectTo:
+                                redirectUrl
+                        }
+                    });
+
+            if (error) {
+                throw error;
+            }
+
+            if (
+                data &&
+                data.session &&
                 data.user
+            ) {
+                onUserChange(
+                    data.user
+                );
+
+                showToast(
+                    "Akun berhasil dibuat dan kamu sudah masuk.",
+                    "success"
+                );
+
+            } else {
+
+                showToast(
+                    "Akun berhasil dibuat. Cek email untuk konfirmasi.",
+                    "success"
+                );
+            }
+
+            setShowLogin(false);
+
+            setPassword("");
+
+        } catch (error) {
+
+            console.error(
+                "Register error:",
+                error
             );
+
+            showToast(
+                error?.message ||
+                    "Gagal membuat akun. Coba lagi.",
+                "error"
+            );
+
+        } finally {
+            setLoading(false);
         }
-
-        setShowLogin(false);
-
-        setPassword("");
-
-        showToast(
-            "Pendaftaran berhasil. Cek email jika konfirmasi diperlukan.",
-            "success"
-        );
     }
 
 
     async function signOut() {
-        await supabaseClient.auth.signOut();
+        try {
+            await supabaseClient.auth.signOut();
+
+        } catch (error) {
+            console.error(
+                "Logout error:",
+                error
+            );
+        }
 
         onUserChange(null);
+
+        setEmail("");
+
+        setPassword("");
+
+        setShowLogin(false);
 
         showToast(
             "Berhasil keluar.",
@@ -3174,6 +3217,7 @@ function AuthPanel({
                 <button
                     className="auth-button"
                     onClick={signOut}
+                    type="button"
                 >
                     Keluar
                 </button>
@@ -3190,6 +3234,7 @@ function AuthPanel({
                 onClick={() =>
                     setShowLogin(true)
                 }
+                type="button"
             >
                 Masuk
             </button>
@@ -3215,118 +3260,150 @@ function AuthPanel({
                         className="login-modal"
                         role="dialog"
                         aria-modal="true"
-                        aria-label="Masuk ke ArunikaMix"
-                        style={{
-                            padding:
-                                "28px"
-                        }}
+                        aria-labelledby="login-modal-title"
                     >
 
-                        <button
-                            className="login-modal-close"
-                            onClick={() =>
-                                setShowLogin(false)
-                            }
-                            aria-label="Tutup"
-                        >
-                            <Icon
-                                name="x"
-                                size={17}
-                            />
-                        </button>
-
-
                         <div
-                            className="auth-fields"
+                            className="login-form-row"
                             style={{
-                                display:
-                                    "flex",
-                                flexDirection:
-                                    "column",
-                                gap:
-                                    "10px",
-                                width:
-                                    "100%"
-                            }}
-                        >
-
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                value={email}
-                                autoComplete="email"
-                                aria-label="Email"
-                                onChange={e =>
-                                    setEmail(
-                                        e.target.value
-                                    )
-                                }
-                                style={{
-                                    width:
-                                        "100%",
-                                    boxSizing:
-                                        "border-box"
-                                }}
-                            />
-
-
-                            <input
-                                type="password"
-                                placeholder="Password"
-                                value={password}
-                                autoComplete="current-password"
-                                aria-label="Password"
-                                onChange={e =>
-                                    setPassword(
-                                        e.target.value
-                                    )
-                                }
-                                onKeyDown={event => {
-
-                                    if (
-                                        event.key ===
-                                        "Enter"
-                                    ) {
-                                        signIn();
-                                    }
-
-                                }}
-                                style={{
-                                    width:
-                                        "100%",
-                                    boxSizing:
-                                        "border-box"
-                                }}
-                            />
-
-                        </div>
-
-
-                        <div
-                            className="auth-actions"
-                            style={{
-                                marginTop:
-                                    "12px"
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "10px"
                             }}
                         >
 
                             <button
-                                className="auth-button modal-primary"
-                                onClick={signIn}
-                                disabled={loading}
+                                className="login-modal-close"
+                                onClick={() =>
+                                    setShowLogin(false)
+                                }
+                                aria-label="Tutup"
+                                type="button"
+                                style={{
+                                    position: "static",
+                                    flexShrink: 0,
+                                    marginTop: "1px"
+                                }}
                             >
-                                {loading
-                                    ? "Memproses..."
-                                    : "Masuk"}
+                                <Icon
+                                    name="x"
+                                    size={17}
+                                />
                             </button>
 
-                            <button
-                                className="auth-button secondary modal-secondary"
-                                onClick={signUp}
-                                disabled={loading}
+
+                            <div
+                                style={{
+                                    flex: 1,
+                                    minWidth: 0
+                                }}
                             >
-                                Daftar akun
-                            </button>
+
+                                <div className="login-modal-mark">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+
+
+                                <div className="login-modal-heading">
+
+                                    <div className="eyebrow">
+                                        ARUNIKAMIX
+                                    </div>
+
+                                    <h2 id="login-modal-title">
+                                        Masuk ke akunmu
+                                    </h2>
+
+                                    <p>
+                                        Simpan daftar peserta
+                                        dan gunakan kembali
+                                        kapan saja.
+                                    </p>
+
+                                </div>
+
+
+                                <div className="auth-fields">
+
+                                    <input
+                                        type="email"
+                                        placeholder="Email"
+                                        value={email}
+                                        autoComplete="email"
+                                        aria-label="Email"
+                                        onChange={e =>
+                                            setEmail(
+                                                e.target.value
+                                            )
+                                        }
+                                        disabled={loading}
+                                    />
+
+
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        value={password}
+                                        autoComplete="current-password"
+                                        aria-label="Password"
+                                        onChange={e =>
+                                            setPassword(
+                                                e.target.value
+                                            )
+                                        }
+                                        onKeyDown={event => {
+
+                                            if (
+                                                event.key ===
+                                                "Enter"
+                                            ) {
+                                                signIn();
+                                            }
+
+                                        }}
+                                        disabled={loading}
+                                    />
+
+                                </div>
+
+
+                                <div className="auth-actions">
+
+                                    <button
+                                        className="auth-button modal-primary"
+                                        onClick={signIn}
+                                        disabled={loading}
+                                        type="button"
+                                        aria-busy={loading}
+                                    >
+                                        {loading
+                                            ? "Memproses..."
+                                            : "Masuk"}
+                                    </button>
+
+                                    <button
+                                        className="auth-button secondary modal-secondary"
+                                        onClick={signUp}
+                                        disabled={loading}
+                                        type="button"
+                                        aria-busy={loading}
+                                    >
+                                        {loading
+                                            ? "Memproses..."
+                                            : "Daftar akun"}
+                                    </button>
+
+                                </div>
+
+
+                                <div className="login-modal-note">
+                                    Akun digunakan untuk menyimpan
+                                    daftar peserta secara pribadi.
+                                </div>
+
+                            </div>
 
                         </div>
 
@@ -3342,161 +3419,6 @@ function AuthPanel({
 
 
 /* =========================================================
-   DESIGN OVERRIDES
-========================================================= */
-
-function DesignOverrides() {
-    return (
-        <style>
-            {`
-                /*
-                 * Override kecil untuk menjaga tampilan
-                 * tetap seperti desain editorial ArunikaMix.
-                 */
-
-                .attendance-panel {
-                    box-sizing: border-box;
-                }
-
-                .attendance-input {
-                    box-sizing: border-box;
-                }
-
-                .attendance-input textarea {
-                    width: 100% !important;
-                    box-sizing: border-box !important;
-                    min-height: 118px;
-                    resize: vertical;
-                }
-
-                .add-member-button {
-                    width: 100% !important;
-                }
-
-                .group-count-field {
-                    width: 100%;
-                }
-
-                .group-count-input-wrap {
-                    overflow: hidden;
-                }
-
-                .group-count-input {
-                    appearance: textfield;
-                }
-
-                .group-count-input::-webkit-outer-spin-button,
-                .group-count-input::-webkit-inner-spin-button {
-                    appearance: none;
-                    margin: 0;
-                }
-
-                .group-count-input:focus {
-                    outline: none;
-                }
-
-                .history-section {
-                    overflow: hidden;
-                }
-
-                .history-toggle {
-                    width: 100%;
-                    box-sizing: border-box;
-                }
-
-                .history-body {
-                    box-sizing: border-box;
-                }
-
-                .history-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 7px;
-                }
-
-                .history-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 11px;
-                    min-height: 54px;
-                    padding: 9px 12px;
-                    box-sizing: border-box;
-                    border: 1px solid var(--line);
-                    border-radius: 9px;
-                }
-
-                .history-item-content {
-                    min-width: 0;
-                    flex: 1;
-                }
-
-                .history-item-title {
-                    font-weight: 600;
-                    line-height: 1.2;
-                }
-
-                .history-item-date {
-                    margin-top: 2px;
-                    font-size: 10px;
-                }
-
-                .history-item-preview {
-                    display: none;
-                }
-
-                .history-item-delete {
-                    flex: 0 0 auto;
-                }
-
-                .hero-stamp {
-                    display: flex;
-                    align-items: baseline;
-                    gap: 9px;
-                }
-
-                .stamp-number {
-                    color: var(--coral);
-                }
-
-                .stamp-label {
-                    color: var(--ink);
-                }
-
-                .queue-name {
-                    color: var(--ink) !important;
-                    opacity: 1 !important;
-                }
-
-                .toast-message {
-                    color: var(--plum) !important;
-                    opacity: 1 !important;
-                }
-
-                @media (max-width: 700px) {
-                    .attendance-panel {
-                        padding-left: 22px !important;
-                        padding-right: 22px !important;
-                    }
-
-                    .group-count-input-wrap {
-                        min-height: 62px !important;
-                    }
-
-                    .group-count-input {
-                        font-size: 34px !important;
-                    }
-
-                    .history-item-preview {
-                        display: none !important;
-                    }
-                }
-            `}
-        </style>
-    );
-}
-
-
-/* =========================================================
    APP
 ========================================================= */
 
@@ -3506,14 +3428,15 @@ function App() {
         setUser
     ] = useState(null);
 
+    /*
+       TIDAK menggunakan localStorage lagi.
+       Setiap membuka website dimulai dari 28 nama.
+    */
     const [
         names,
         setNames
     ] = useState(() =>
-        readStorage(
-            STORAGE_KEYS.currentAttendance,
-            DEFAULT_NAMES
-        )
+        [...DEFAULT_NAMES]
     );
 
     const [
@@ -3526,32 +3449,52 @@ function App() {
         setMode
     ] = useState("groups");
 
+    const [
+        restoredResult,
+        setRestoredResult
+    ] = useState(null);
+
     const {
         toast,
         showToast
     } = useToast();
 
 
+    /* =====================================================
+       AUTH SESSION
+    ===================================================== */
+
     useEffect(() => {
         let mounted = true;
 
         async function loadSession() {
-            const {
-                data
-            } =
-                await supabaseClient.auth.getSession();
+            try {
 
-            if (
-                mounted &&
-                data.session
-            ) {
-                setUser(
-                    data.session.user
+                const {
+                    data
+                } =
+                    await supabaseClient.auth
+                        .getSession();
+
+                if (
+                    mounted &&
+                    data.session
+                ) {
+                    setUser(
+                        data.session.user
+                    );
+                }
+
+            } catch (error) {
+                console.error(
+                    "Session error:",
+                    error
                 );
             }
         }
 
         loadSession();
+
 
         const {
             data: listener
@@ -3566,134 +3509,123 @@ function App() {
                         return;
                     }
 
-                    setUser(
+                    const nextUser =
                         session?.user ||
-                        null
+                        null;
+
+                    setUser(
+                        nextUser
                     );
+
+                    /*
+                       Kalau tidak ada user,
+                       kembalikan daftar ke 28 nama awal.
+                    */
+                    if (!nextUser) {
+
+                        setNames([
+                            ...DEFAULT_NAMES
+                        ]);
+
+                        setSelectedList(
+                            null
+                        );
+
+                        setRestoredResult(
+                            null
+                        );
+
+                    }
 
                 }
             );
+
 
         return () => {
             mounted = false;
 
             listener.subscription.unsubscribe();
         };
+
     }, []);
 
 
-    useEffect(() => {
-        writeStorage(
-            STORAGE_KEYS.currentAttendance,
-            names
-        );
-    }, [names]);
-
+    /* =====================================================
+       RESET SAAT USER KELUAR
+    ===================================================== */
 
     useEffect(() => {
 
         if (!user) {
-            setSelectedList(null);
             return;
         }
 
-        let cancelled = false;
+        /*
+           Setelah login, tetap mulai dari
+           28 nama awal.
 
-        async function loadUserLists() {
+           Daftar tersimpan dibuka manual dari
+           "Daftar tersimpan".
+        */
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from("attendance_lists")
-                    .select("*")
-                    .order(
-                        "updated_at",
-                        {
-                            ascending: false
-                        }
-                    );
+        setNames([
+            ...DEFAULT_NAMES
+        ]);
 
-            if (
-                cancelled ||
-                error
-            ) {
-                return;
-            }
+        setSelectedList(
+            null
+        );
 
-            if (
-                data &&
-                data.length > 0
-            ) {
-
-                const first =
-                    data[0];
-
-                setSelectedList(
-                    first
-                );
-
-                if (
-                    Array.isArray(
-                        first.names
-                    )
-                ) {
-                    setNames(
-                        first.names
-                    );
-                }
-
-                return;
-            }
-
-
-            const {
-                data: created,
-                error: createError
-            } =
-                await supabaseClient
-                    .from("attendance_lists")
-                    .insert({
-                        user_id:
-                            user.id,
-
-                        name:
-                            DEFAULT_TEMPLATE_NAME,
-
-                        names:
-                            DEFAULT_NAMES
-                    })
-                    .select("*")
-                    .single();
-
-            if (
-                cancelled ||
-                createError
-            ) {
-                console.error(
-                    createError
-                );
-
-                return;
-            }
-
-            setSelectedList(
-                created
-            );
-
-            setNames(
-                DEFAULT_NAMES
-            );
-        }
-
-        loadUserLists();
-
-        return () => {
-            cancelled = true;
-        };
+        setRestoredResult(
+            null
+        );
 
     }, [user]);
+
+
+    /* =====================================================
+       HISTORY SELECTION
+    ===================================================== */
+
+    function handleSelectHistory(item) {
+        if (!item) {
+            return;
+        }
+
+        /*
+           Kembalikan daftar peserta yang digunakan
+           ketika hasil tersebut dibuat, jika tersedia.
+        */
+        if (
+            Array.isArray(item.names) &&
+            item.names.length > 0
+        ) {
+            setNames([
+                ...item.names
+            ]);
+        }
+
+        setRestoredResult(
+            item
+        );
+
+
+        if (item.type === "groups") {
+            setMode("groups");
+        }
+
+        if (item.type === "wheel") {
+            setMode("wheel");
+        }
+
+        if (item.type === "duel") {
+            setMode("duel");
+        }
+
+        if (item.type === "queue") {
+            setMode("queue");
+        }
+    }
 
 
     function renderMode() {
@@ -3703,9 +3635,13 @@ function App() {
                 <GroupMode
                     names={names}
                     showToast={showToast}
+                    restoredResult={
+                        restoredResult
+                    }
                 />
             );
         }
+
 
         if (mode === "wheel") {
             return (
@@ -3713,24 +3649,35 @@ function App() {
                     names={names}
                     setNames={setNames}
                     showToast={showToast}
+                    restoredResult={
+                        restoredResult
+                    }
                 />
             );
         }
+
 
         if (mode === "duel") {
             return (
                 <DuelTool
                     names={names}
                     showToast={showToast}
+                    restoredResult={
+                        restoredResult
+                    }
                 />
             );
         }
+
 
         if (mode === "queue") {
             return (
                 <QueueTool
                     names={names}
                     showToast={showToast}
+                    restoredResult={
+                        restoredResult
+                    }
                 />
             );
         }
@@ -3741,9 +3688,6 @@ function App() {
 
     return (
         <div className="app">
-
-            <DesignOverrides />
-
 
             <header className="site-header">
 
@@ -3812,15 +3756,7 @@ function App() {
                     </div>
 
 
-                    <div
-                        className="hero-stamp"
-                        style={{
-                            justifyContent:
-                                "flex-end",
-                            whiteSpace:
-                                "nowrap"
-                        }}
-                    >
+                    <div className="hero-stamp">
 
                         <span className="stamp-number">
                             {names.length}
@@ -3837,7 +3773,10 @@ function App() {
 
                 <ModeNav
                     mode={mode}
-                    setMode={setMode}
+                    setMode={mode => {
+                        setMode(mode);
+                        setRestoredResult(null);
+                    }}
                 />
 
 
@@ -3868,6 +3807,9 @@ function App() {
 
                 <HistoryPanel
                     showToast={showToast}
+                    onSelectHistory={
+                        handleSelectHistory
+                    }
                 />
 
             </main>
