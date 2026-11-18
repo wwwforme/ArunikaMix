@@ -4196,55 +4196,52 @@ function DesignOverrides() {
                     }
 
                 }
+
+
+                /* =================================================
+                   AUTH TOUCH / HITBOX REPAIR — FIXED
+                ================================================= */
+
+                .login-modal-backdrop {
+                    pointer-events: auto !important;
+                }
+
+                .login-modal {
+                    position: relative !important;
+                    pointer-events: auto !important;
+                }
+
+                .login-form-row,
+                .auth-fields,
+                .auth-actions {
+                    pointer-events: auto !important;
+                }
+
+                .auth-button {
+                    pointer-events: auto !important;
+                    touch-action: manipulation !important;
+                    -webkit-tap-highlight-color: transparent !important;
+                    cursor: pointer;
+                }
+
+                .auth-button.modal-primary,
+                .auth-button.modal-secondary {
+                    width: 100%;
+                    min-height: 44px;
+                    position: relative;
+                }
+
+                .toast {
+                    position: fixed !important;
+                    z-index: 99999 !important;
+                    pointer-events: none !important;
+                }
+
+                .toast-message {
+                    pointer-events: none !important;
+                }
             `}
-        
-/* =========================================================
-   AUTH TOUCH / HITBOX REPAIR — FIXED
-   Catatan: z-index tinggi pada .auth-actions / .auth-button
-   dihapus karena menyebabkan hitbox tombol "Masuk" tertutup
-   oleh tombol "Daftar akun" di beberapa browser mobile.
-========================================================= */
-
-.login-modal-backdrop {
-    pointer-events: auto !important;
-}
-
-.login-modal {
-    position: relative !important;
-    pointer-events: auto !important;
-}
-
-.login-form-row,
-.auth-fields,
-.auth-actions {
-    pointer-events: auto !important;
-}
-
-.auth-button {
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: transparent !important;
-    cursor: pointer;
-}
-
-.auth-button.modal-primary,
-.auth-button.modal-secondary {
-    width: 100%;
-    min-height: 44px;
-    position: relative;
-}
-
-.toast {
-    position: fixed !important;
-    z-index: 99999 !important;
-    pointer-events: none !important;
-}
-
-.toast-message {
-    pointer-events: none !important;
-}
-
-</style>
+        </style>
     );
 }
 
