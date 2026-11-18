@@ -4250,7 +4250,7 @@ function DesignOverrides() {
 
 
                 /* =================================================
-                   HERO STAMP — SUN DESIGN (FIXED OVERRIDE)
+                   HERO STAMP — SUN DESIGN (FIXED & LEBIH KECIL)
                 ================================================= */
 
                 .hero-stamp-wrapper {
@@ -4258,19 +4258,19 @@ function DesignOverrides() {
                     display: flex;
                     align-items: center;
                     justify-content: flex-end;
-                    min-width: 300px;
-                    min-height: 220px;
+                    min-width: 260px;
+                    min-height: 200px;
                     z-index: 2;
                 }
 
-                /* Lingkaran Latar Belakang */
+                /* Lingkaran Latar Belakang (Diperkecil) */
                 .stamp-circle {
                     position: absolute;
-                    right: 0;
+                    right: 10px;
                     top: 50%;
                     transform: translateY(-50%);
-                    width: 340px;
-                    height: 340px;
+                    width: 250px; /* Dikecilkan dari 340px */
+                    height: 250px;
                     background: rgba(239, 178, 158, 0.35);
                     border-radius: 50%;
                     z-index: -1;
@@ -4279,18 +4279,22 @@ function DesignOverrides() {
                     justify-content: center;
                 }
 
-                /* Segitiga-segitiga (Matahari) */
+                /* Segitiga-segitiga (Matahari) - Titik Putar Dikunci di Tengah */
                 .stamp-ray {
                     position: absolute;
                     width: 0;
                     height: 0;
-                    border-left: 10px solid transparent;
-                    border-right: 10px solid transparent;
-                    border-bottom: 25px solid rgba(239, 178, 158, 0.5);
-                    transform-origin: 50% 170px;
+                    top: 50%;
+                    left: 50%;
+                    margin-top: -12px;
+                    margin-left: -6px;
+                    border-left: 6px solid transparent;
+                    border-right: 6px solid transparent;
+                    border-bottom: 18px solid rgba(239, 178, 158, 0.6);
+                    transform-origin: center 125px; /* Setengah dari tinggi lingkaran (250px/2) */
                 }
 
-                /* Mengatur rotasi tiap segitiga */
+                /* Mengatur rotasi tiap segitiga (12 segitiga, jarak 30 derajat) */
                 .stamp-ray:nth-child(1)  { transform: rotate(0deg); }
                 .stamp-ray:nth-child(2)  { transform: rotate(30deg); }
                 .stamp-ray:nth-child(3)  { transform: rotate(60deg); }
@@ -4308,15 +4312,15 @@ function DesignOverrides() {
                 .hero-stamp {
                     display: flex !important;
                     align-items: center !important;
-                    gap: 15px !important;
+                    gap: 12px !important;
                     z-index: 2;
-                    margin-right: 50px;
+                    margin-right: 40px;
                     white-space: normal !important;
                 }
 
                 .hero-stamp .stamp-number {
                     font-family: var(--font-display);
-                    font-size: 100px !important;
+                    font-size: 85px !important;
                     line-height: 0.8 !important;
                     color: var(--coral);
                     font-weight: 400;
@@ -4326,12 +4330,12 @@ function DesignOverrides() {
                     display: flex !important;
                     flex-direction: column !important;
                     font-family: var(--font-mono);
-                    font-size: 11px !important;
+                    font-size: 10px !important;
                     font-weight: 500;
                     letter-spacing: 1px;
                     color: var(--ink);
                     text-transform: uppercase;
-                    line-height: 1.4 !important;
+                    line-height: 1.3 !important;
                     position: static !important;
                     top: 0 !important;
                 }
@@ -4345,27 +4349,27 @@ function DesignOverrides() {
                     }
                     
                     .stamp-circle {
-                        width: 280px;
-                        height: 280px;
+                        width: 220px;
+                        height: 220px;
                         right: 50%;
                         transform: translate(50%, -50%);
                     }
                     
                     .stamp-ray {
-                        transform-origin: 50% 140px;
+                        transform-origin: center 110px; /* Setengah tinggi mobile (220/2) */
                     }
                     
                     .hero-stamp {
                         margin-right: 0;
-                        gap: 12px !important;
+                        gap: 10px !important;
                     }
 
                     .hero-stamp .stamp-number {
-                        font-size: 80px !important;
+                        font-size: 75px !important;
                     }
                     
                     .hero-stamp .stamp-label {
-                        font-size: 10px !important;
+                        font-size: 9px !important;
                     }
                 }
             `}
@@ -4489,10 +4493,6 @@ function App() {
                         return;
                     }
 
-                    /*
-                     * Jangan reset daftar ketika Supabase
-                     * hanya melakukan refresh token.
-                     */
                     setUser(
                         session?.user ||
                         null
