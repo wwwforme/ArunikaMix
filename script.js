@@ -723,9 +723,20 @@ function AttendanceManager({
                 return;
             }
 
-            setSavedLists(
-                data || []
-            );
+            // Pastikan data yang diambil berupa Array asli
+            const parsedData = (data || []).map(item => {
+                let parsedNames = [];
+                try {
+                    parsedNames = typeof item.names === 'string' 
+                        ? JSON.parse(item.names) 
+                        : (Array.isArray(item.names) ? item.names : []);
+                } catch (e) {
+                    parsedNames = [];
+                }
+                return { ...item, names: parsedNames };
+            });
+
+            setSavedLists(parsedData);
         } catch (error) {
             console.error(
                 "Gagal memuat daftar:",
@@ -859,7 +870,7 @@ function AttendanceManager({
                     .insert({
                         user_id: user.id,
                         name: name.trim(),
-                        names: []
+                        names: JSON.stringify([])
                     })
                     .select("*")
                     .single();
@@ -868,7 +879,12 @@ function AttendanceManager({
                 throw error;
             }
 
-            setSelectedList(data);
+            const newList = {
+                ...data,
+                names: []
+            };
+
+            setSelectedList(newList);
             setNames([]);
 
             await loadLists();
@@ -909,6 +925,10 @@ function AttendanceManager({
             let data;
             let error;
 
+            const namesJson = JSON.stringify(names);
+
+            // PENTING: Jika sedang membuka daftar (selectedList ada),
+            // maka timpa daftar tersebut. Jangan buat baru.
             if (
                 selectedList &&
                 selectedList.id
@@ -920,13 +940,9 @@ function AttendanceManager({
                     await supabaseClient
                         .from("attendance_lists")
                         .update({
-                            name:
-                                selectedList.name,
-
-                            names,
-
-                            updated_at:
-                                new Date().toISOString()
+                            name: selectedList.name,
+                            names: namesJson,
+                            updated_at: new Date().toISOString()
                         })
                         .eq(
                             "id",
@@ -935,6 +951,7 @@ function AttendanceManager({
                         .select("*")
                         .single());
             } else {
+                // Jika belum ada daftar yang dipilih, buat daftar default
                 ({
                     data,
                     error
@@ -943,11 +960,8 @@ function AttendanceManager({
                         .from("attendance_lists")
                         .insert({
                             user_id: user.id,
-
-                            name:
-                                DEFAULT_TEMPLATE_NAME,
-
-                            names
+                            name: DEFAULT_TEMPLATE_NAME,
+                            names: namesJson
                         })
                         .select("*")
                         .single());
@@ -957,7 +971,11 @@ function AttendanceManager({
                 throw error;
             }
 
-            setSelectedList(data);
+            // Perbarui state dengan data yang baru disimpan
+            setSelectedList({
+                ...data,
+                names: names // Pastikan state nama tetap sinkron
+            });
 
             await loadLists();
 
@@ -1004,9 +1022,7 @@ function AttendanceManager({
                     .from("attendance_lists")
                     .update({
                         name: name.trim(),
-
-                        updated_at:
-                            new Date().toISOString()
+                        updated_at: new Date().toISOString()
                     })
                     .eq(
                         "id",
@@ -1023,7 +1039,10 @@ function AttendanceManager({
                 selectedList &&
                 selectedList.id === list.id
             ) {
-                setSelectedList(data);
+                setSelectedList({
+                    ...data,
+                    names: selectedList.names
+                });
             }
 
             await loadLists();
@@ -1107,7 +1126,7 @@ function AttendanceManager({
 
         setNames(
             Array.isArray(list.names)
-                ? list.names
+                ? [...list.names]
                 : []
         );
 
