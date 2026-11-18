@@ -723,6 +723,7 @@ function AttendanceManager({
                 return;
             }
 
+            // Pastikan data yang diambil berupa Array asli
             const parsedData = (data || []).map(item => {
                 let parsedNames = [];
                 try {
@@ -926,6 +927,8 @@ function AttendanceManager({
 
             const namesJson = JSON.stringify(names);
 
+            // PENTING: Jika sedang membuka daftar (selectedList ada),
+            // maka timpa daftar tersebut. Jangan buat baru.
             if (
                 selectedList &&
                 selectedList.id
@@ -948,6 +951,7 @@ function AttendanceManager({
                         .select("*")
                         .single());
             } else {
+                // Jika belum ada daftar yang dipilih, buat daftar default
                 ({
                     data,
                     error
@@ -967,9 +971,10 @@ function AttendanceManager({
                 throw error;
             }
 
+            // Perbarui state dengan data yang baru disimpan
             setSelectedList({
                 ...data,
-                names: names
+                names: names // Pastikan state nama tetap sinkron
             });
 
             await loadLists();
@@ -3502,6 +3507,10 @@ function AuthPanel({
                         }
                     });
 
+            /*
+             * Supabase bisa mengembalikan error langsung
+             * ketika email sudah digunakan.
+             */
             if (error) {
 
                 const errorMessage =
@@ -3529,6 +3538,12 @@ function AuthPanel({
                         message
                     );
 
+                    /*
+                     * Sengaja memakai "success" supaya
+                     * tampilannya tetap sama seperti
+                     * kotak oranye informasi akun berhasil
+                     * dibuat sebelumnya.
+                     */
                     showToast(
                         message,
                         "success"
@@ -3540,6 +3555,14 @@ function AuthPanel({
                 throw error;
             }
 
+
+            /*
+             * Supabase juga dapat menyembunyikan keberadaan
+             * akun lama demi alasan keamanan. Pada kondisi
+             * tertentu, user dikembalikan tetapi identities
+             * kosong. Ini menandakan email tersebut sudah
+             * memiliki akun.
+             */
             if (
                 data?.user &&
                 Array.isArray(
@@ -3562,6 +3585,12 @@ function AuthPanel({
                 return;
             }
 
+
+            /*
+             * Jika langsung mendapatkan session,
+             * berarti akun berhasil dibuat sekaligus
+             * masuk tanpa perlu konfirmasi email.
+             */
             if (
                 data?.session &&
                 data?.user
@@ -3584,6 +3613,11 @@ function AuthPanel({
                 return;
             }
 
+
+            /*
+             * Akun baru berhasil dibuat tetapi session
+             * belum tersedia karena perlu konfirmasi email.
+             */
             const message =
                 "Akun berhasil dibuat. Cek email untuk konfirmasi.";
 
@@ -3607,6 +3641,10 @@ function AuthPanel({
                 error?.message ||
                 "Gagal membuat akun. Coba lagi.";
 
+            /*
+             * Jaga-jaga apabila Supabase mengembalikan
+             * variasi pesan duplicate-email yang berbeda.
+             */
             if (
                 /already registered/i.test(
                     message
@@ -3918,6 +3956,7 @@ function AuthPanel({
 
         </>
     );
+}
 
 
 /* =========================================================
@@ -4249,7 +4288,7 @@ function DesignOverrides() {
 
 
                 /* =================================================
-                   HERO STAMP — SUN DESIGN (FIXED & LEBIH KECIL)
+                   HERO STAMP — SUN DESIGN (BARU)
                 ================================================= */
 
                 .hero-stamp-wrapper {
@@ -4257,20 +4296,20 @@ function DesignOverrides() {
                     display: flex;
                     align-items: center;
                     justify-content: flex-end;
-                    min-width: 260px;
+                    min-width: 300px;
                     min-height: 200px;
                     z-index: 2;
                 }
 
-                /* Lingkaran Latar Belakang (Diperkecil) */
+                /* Lingkaran Latar Belakang */
                 .stamp-circle {
                     position: absolute;
-                    right: 10px;
+                    right: 0;
                     top: 50%;
                     transform: translateY(-50%);
-                    width: 250px; /* Dikecilkan dari 340px */
-                    height: 250px;
-                    background: rgba(239, 178, 158, 0.35);
+                    width: 320px;
+                    height: 320px;
+                    background: rgba(239, 178, 158, 0.35); /* Warna coral transparan */
                     border-radius: 50%;
                     z-index: -1;
                     display: flex;
@@ -4278,19 +4317,15 @@ function DesignOverrides() {
                     justify-content: center;
                 }
 
-                /* Segitiga-segitiga (Matahari) - Titik Putar Dikunci di Tengah */
+                /* Segitiga-segitiga (Matahari) */
                 .stamp-ray {
                     position: absolute;
                     width: 0;
                     height: 0;
-                    top: 50%;
-                    left: 50%;
-                    margin-top: -12px;
-                    margin-left: -6px;
-                    border-left: 6px solid transparent;
-                    border-right: 6px solid transparent;
-                    border-bottom: 18px solid rgba(239, 178, 158, 0.6);
-                    transform-origin: center 125px; /* Setengah dari tinggi lingkaran (250px/2) */
+                    border-left: 10px solid transparent;
+                    border-right: 10px solid transparent;
+                    border-bottom: 25px solid rgba(239, 178, 158, 0.5);
+                    transform-origin: 50% 160px;
                 }
 
                 /* Mengatur rotasi tiap segitiga (12 segitiga, jarak 30 derajat) */
@@ -4307,68 +4342,58 @@ function DesignOverrides() {
                 .stamp-ray:nth-child(11) { transform: rotate(300deg); }
                 .stamp-ray:nth-child(12) { transform: rotate(330deg); }
 
-                /* Paksa layout teks agar menurun (seperti foto) */
+                /* Angka & Teks */
                 .hero-stamp {
-                    display: flex !important;
-                    align-items: center !important;
-                    gap: 12px !important;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
                     z-index: 2;
-                    margin-right: 40px;
-                    white-space: normal !important;
+                    margin-right: 40px; /* Geser sedikit ke kiri dari tengah lingkaran */
                 }
 
                 .hero-stamp .stamp-number {
                     font-family: var(--font-display);
-                    font-size: 85px !important;
-                    line-height: 0.8 !important;
+                    font-size: 95px; /* Diperbesar seperti di foto */
+                    line-height: 0.8;
                     color: var(--coral);
                     font-weight: 400;
                 }
 
                 .hero-stamp .stamp-label {
-                    display: flex !important;
-                    flex-direction: column !important;
                     font-family: var(--font-mono);
-                    font-size: 10px !important;
+                    font-size: 11px;
                     font-weight: 500;
                     letter-spacing: 1px;
                     color: var(--ink);
                     text-transform: uppercase;
-                    line-height: 1.3 !important;
-                    position: static !important;
-                    top: 0 !important;
+                    line-height: 1.4;
                 }
 
                 /* Responsif untuk Mobile */
                 @media (max-width: 700px) {
                     .hero-stamp-wrapper {
                         min-width: 100%;
-                        margin-top: 40px;
+                        margin-top: 30px;
                         justify-content: center;
                     }
                     
                     .stamp-circle {
-                        width: 220px;
-                        height: 220px;
+                        width: 260px;
+                        height: 260px;
                         right: 50%;
                         transform: translate(50%, -50%);
                     }
                     
                     .stamp-ray {
-                        transform-origin: center 110px; /* Setengah tinggi mobile (220/2) */
+                        transform-origin: 50% 130px; /* Skala segitiga menyesuaikan */
                     }
                     
                     .hero-stamp {
                         margin-right: 0;
-                        gap: 10px !important;
                     }
 
                     .hero-stamp .stamp-number {
-                        font-size: 75px !important;
-                    }
-                    
-                    .hero-stamp .stamp-label {
-                        font-size: 9px !important;
+                        font-size: 80px;
                     }
                 }
             `}
