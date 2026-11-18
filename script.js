@@ -4280,28 +4280,27 @@ function DesignOverrides() {
                     position: absolute;
                     top: 50%;
                     left: 50%;
-                    width: 0;
-                    height: 0;
-                    margin-top: -18px;
-                    margin-left: -6px;
-                    border-left: 6px solid transparent;
-                    border-right: 6px solid transparent;
-                    border-bottom: 18px solid rgba(239, 178, 158, 0.65);
-                    transform-origin: 6px 18px;
+                    width: 5px;
+                    height: 16px;
+                    margin-top: -8px;
+                    margin-left: -2.5px;
+                    background: rgba(239, 178, 158, 0.62);
+                    border-radius: 999px;
+                    transform-origin: 2.5px 8px;
                 }
 
-                .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-125px); }
-                .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-125px); }
-                .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-125px); }
-                .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-125px); }
-                .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-125px); }
-                .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-125px); }
-                .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-125px); }
-                .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-125px); }
-                .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-125px); }
-                .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-125px); }
-                .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-125px); }
-                .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-125px); }
+                .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-137px); }
+                .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-137px); }
+                .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-137px); }
+                .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-137px); }
+                .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-137px); }
+                .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-137px); }
+                .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-137px); }
+                .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-137px); }
+                .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-137px); }
+                .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-137px); }
+                .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-137px); }
+                .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-137px); }
 
                 .hero-stamp {
                     display: flex !important;
@@ -4345,21 +4344,26 @@ function DesignOverrides() {
                     }
 
                     .stamp-ray {
-                        transform-origin: 6px 18px;
+                        width: 4px;
+                        height: 13px;
+                        margin-top: -6.5px;
+                        margin-left: -2px;
+                        border-radius: 999px;
+                        transform-origin: 2px 6.5px;
                     }
 
-                    .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-105px); }
-                    .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-105px); }
-                    .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-105px); }
-                    .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-105px); }
-                    .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-105px); }
-                    .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-105px); }
-                    .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-105px); }
-                    .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-105px); }
-                    .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-105px); }
-                    .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-105px); }
-                    .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-105px); }
-                    .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-105px); }
+                    .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-116px); }
+                    .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-116px); }
+                    .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-116px); }
+                    .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-116px); }
+                    .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-116px); }
+                    .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-116px); }
+                    .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-116px); }
+                    .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-116px); }
+                    .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-116px); }
+                    .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-116px); }
+                    .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-116px); }
+                    .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-116px); }
 
                     .hero-stamp .stamp-number {
                         font-size: 70px !important;
