@@ -4140,11 +4140,37 @@ function DesignOverrides() {
 
 
                 /* =================================================
-                   LOGIN
+                   LOGIN MODAL
+                   (Position fixed & transform agar selalu di tengah)
                 ================================================= */
 
                 .login-modal-backdrop {
                     z-index: 9990 !important;
+                    
+                    /* Tambahan untuk memaksa modal ke tengah */
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    background: rgba(48, 35, 51, 0.4) !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 20px !important;
+                    box-sizing: border-box !important;
+                }
+
+                .login-modal {
+                    margin: 0 !important;
+                    max-height: 90vh !important;
+                    overflow-y: auto !important;
+                    background: var(--paper-light) !important;
+                    border-radius: 14px !important;
+                    border: 1px solid var(--line) !important;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+                    width: 100% !important;
+                    max-width: 340px !important;
                 }
 
                 .auth-error-message {
