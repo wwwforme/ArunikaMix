@@ -4285,6 +4285,117 @@ function DesignOverrides() {
                 .toast-message {
                     pointer-events: none !important;
                 }
+
+
+                /* =================================================
+                   HERO STAMP — SUN DESIGN (BARU)
+                ================================================= */
+
+                .hero-stamp-wrapper {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    min-width: 300px;
+                    min-height: 200px;
+                    z-index: 2;
+                }
+
+                /* Lingkaran Latar Belakang */
+                .stamp-circle {
+                    position: absolute;
+                    right: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 320px;
+                    height: 320px;
+                    background: rgba(239, 178, 158, 0.35); /* Warna coral transparan */
+                    border-radius: 50%;
+                    z-index: -1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                /* Segitiga-segitiga (Matahari) */
+                .stamp-ray {
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                    border-left: 10px solid transparent;
+                    border-right: 10px solid transparent;
+                    border-bottom: 25px solid rgba(239, 178, 158, 0.5);
+                    transform-origin: 50% 160px;
+                }
+
+                /* Mengatur rotasi tiap segitiga (12 segitiga, jarak 30 derajat) */
+                .stamp-ray:nth-child(1)  { transform: rotate(0deg); }
+                .stamp-ray:nth-child(2)  { transform: rotate(30deg); }
+                .stamp-ray:nth-child(3)  { transform: rotate(60deg); }
+                .stamp-ray:nth-child(4)  { transform: rotate(90deg); }
+                .stamp-ray:nth-child(5)  { transform: rotate(120deg); }
+                .stamp-ray:nth-child(6)  { transform: rotate(150deg); }
+                .stamp-ray:nth-child(7)  { transform: rotate(180deg); }
+                .stamp-ray:nth-child(8)  { transform: rotate(210deg); }
+                .stamp-ray:nth-child(9)  { transform: rotate(240deg); }
+                .stamp-ray:nth-child(10) { transform: rotate(270deg); }
+                .stamp-ray:nth-child(11) { transform: rotate(300deg); }
+                .stamp-ray:nth-child(12) { transform: rotate(330deg); }
+
+                /* Angka & Teks */
+                .hero-stamp {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    z-index: 2;
+                    margin-right: 40px; /* Geser sedikit ke kiri dari tengah lingkaran */
+                }
+
+                .hero-stamp .stamp-number {
+                    font-family: var(--font-display);
+                    font-size: 95px; /* Diperbesar seperti di foto */
+                    line-height: 0.8;
+                    color: var(--coral);
+                    font-weight: 400;
+                }
+
+                .hero-stamp .stamp-label {
+                    font-family: var(--font-mono);
+                    font-size: 11px;
+                    font-weight: 500;
+                    letter-spacing: 1px;
+                    color: var(--ink);
+                    text-transform: uppercase;
+                    line-height: 1.4;
+                }
+
+                /* Responsif untuk Mobile */
+                @media (max-width: 700px) {
+                    .hero-stamp-wrapper {
+                        min-width: 100%;
+                        margin-top: 30px;
+                        justify-content: center;
+                    }
+                    
+                    .stamp-circle {
+                        width: 260px;
+                        height: 260px;
+                        right: 50%;
+                        transform: translate(50%, -50%);
+                    }
+                    
+                    .stamp-ray {
+                        transform-origin: 50% 130px; /* Skala segitiga menyesuaikan */
+                    }
+                    
+                    .hero-stamp {
+                        margin-right: 0;
+                    }
+
+                    .hero-stamp .stamp-number {
+                        font-size: 80px;
+                    }
+                }
             `}
         </style>
     );
@@ -4585,24 +4696,35 @@ function App() {
                     </div>
 
 
-                    <div
-                        className="hero-stamp"
-                        style={{
-                            justifyContent:
-                                "flex-end",
-                            whiteSpace:
-                                "nowrap"
-                        }}
-                    >
+                    <div className="hero-stamp-wrapper">
+                        <div className="stamp-circle">
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                            <span className="stamp-ray"></span>
+                        </div>
+                        
+                        <div className="hero-stamp">
+                            <span className="stamp-number">
+                                {names.length}
+                            </span>
 
-                        <span className="stamp-number">
-                            {names.length}
-                        </span>
-
-                        <span className="stamp-label">
-                            orang di dalamnya
-                        </span>
-
+                            <span className="stamp-label">
+                                ORANG
+                                <br />
+                                DI
+                                <br />
+                                DALAMNYA
+                            </span>
+                        </div>
                     </div>
 
                 </section>
