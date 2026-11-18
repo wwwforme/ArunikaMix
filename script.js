@@ -4250,7 +4250,7 @@ function DesignOverrides() {
 
 
                 /* =================================================
-                   HERO STAMP — SUN DESIGN (PERBAIKAN POSISI SEGITIGA)
+                   HERO STAMP — SUN DESIGN (DI LUAR & DIGESER KE KANAN)
                 ================================================= */
 
                 .hero-stamp-wrapper {
@@ -4260,7 +4260,7 @@ function DesignOverrides() {
                     justify-content: center;
                     width: 280px;
                     height: 280px;
-                    margin: 0 auto;
+                    margin: 0 0 0 auto; /* Menggeser posisi stempel ke sebelah kanan */
                     z-index: 2;
                 }
 
@@ -4269,8 +4269,8 @@ function DesignOverrides() {
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    width: 260px;
-                    height: 260px;
+                    width: 250px;
+                    height: 250px;
                     background: rgba(239, 178, 158, 0.35);
                     border-radius: 50%;
                     z-index: -1;
@@ -4282,26 +4282,26 @@ function DesignOverrides() {
                     left: 50%;
                     width: 0;
                     height: 0;
-                    margin-top: -10px;
+                    margin-top: -18px;
                     margin-left: -6px;
                     border-left: 6px solid transparent;
                     border-right: 6px solid transparent;
                     border-bottom: 18px solid rgba(239, 178, 158, 0.65);
-                    transform-origin: 6px 10px;
+                    transform-origin: 6px 18px;
                 }
 
-                .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-120px); }
-                .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-120px); }
-                .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-120px); }
-                .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-120px); }
-                .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-120px); }
-                .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-120px); }
-                .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-120px); }
-                .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-120px); }
-                .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-120px); }
-                .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-120px); }
-                .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-120px); }
-                .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-120px); }
+                .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-125px); }
+                .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-125px); }
+                .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-125px); }
+                .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-125px); }
+                .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-125px); }
+                .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-125px); }
+                .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-125px); }
+                .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-125px); }
+                .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-125px); }
+                .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-125px); }
+                .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-125px); }
+                .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-125px); }
 
                 .hero-stamp {
                     display: flex !important;
@@ -4336,16 +4336,16 @@ function DesignOverrides() {
                     .hero-stamp-wrapper {
                         width: 240px;
                         height: 240px;
-                        margin-top: 30px;
+                        margin: 30px auto 0 auto;
                     }
                     
                     .stamp-circle {
-                        width: 220px;
-                        height: 220px;
+                        width: 210px;
+                        height: 210px;
                     }
 
                     .stamp-ray {
-                        transform-origin: 6px 10px;
+                        transform-origin: 6px 18px;
                     }
 
                     .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-105px); }
