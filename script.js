@@ -4250,72 +4250,66 @@ function DesignOverrides() {
 
 
                 /* =================================================
-                   HERO STAMP — SUN DESIGN (FIXED & LEBIH KECIL)
+                   HERO STAMP — SUN DESIGN (FIXED & CENTERED)
                 ================================================= */
 
                 .hero-stamp-wrapper {
                     position: relative;
                     display: flex;
                     align-items: center;
-                    justify-content: flex-end;
-                    min-width: 260px;
-                    min-height: 200px;
+                    justify-content: center;
+                    width: 280px;
+                    height: 280px;
+                    margin: 0 auto;
                     z-index: 2;
                 }
 
-                /* Lingkaran Latar Belakang (Diperkecil) */
                 .stamp-circle {
                     position: absolute;
-                    right: 10px;
                     top: 50%;
-                    transform: translateY(-50%);
-                    width: 250px; /* Dikecilkan dari 340px */
-                    height: 250px;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 260px;
+                    height: 260px;
                     background: rgba(239, 178, 158, 0.35);
                     border-radius: 50%;
                     z-index: -1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
                 }
 
-                /* Segitiga-segitiga (Matahari) - Titik Putar Dikunci di Tengah */
                 .stamp-ray {
                     position: absolute;
-                    width: 0;
-                    height: 0;
                     top: 50%;
                     left: 50%;
-                    margin-top: -12px;
+                    width: 0;
+                    height: 0;
+                    margin-top: -10px;
                     margin-left: -6px;
                     border-left: 6px solid transparent;
                     border-right: 6px solid transparent;
-                    border-bottom: 18px solid rgba(239, 178, 158, 0.6);
-                    transform-origin: center 125px; /* Setengah dari tinggi lingkaran (250px/2) */
+                    border-bottom: 20px solid rgba(239, 178, 158, 0.65);
+                    transform-origin: 6px 130px;
                 }
 
-                /* Mengatur rotasi tiap segitiga (12 segitiga, jarak 30 derajat) */
-                .stamp-ray:nth-child(1)  { transform: rotate(0deg); }
-                .stamp-ray:nth-child(2)  { transform: rotate(30deg); }
-                .stamp-ray:nth-child(3)  { transform: rotate(60deg); }
-                .stamp-ray:nth-child(4)  { transform: rotate(90deg); }
-                .stamp-ray:nth-child(5)  { transform: rotate(120deg); }
-                .stamp-ray:nth-child(6)  { transform: rotate(150deg); }
-                .stamp-ray:nth-child(7)  { transform: rotate(180deg); }
-                .stamp-ray:nth-child(8)  { transform: rotate(210deg); }
-                .stamp-ray:nth-child(9)  { transform: rotate(240deg); }
-                .stamp-ray:nth-child(10) { transform: rotate(270deg); }
-                .stamp-ray:nth-child(11) { transform: rotate(300deg); }
-                .stamp-ray:nth-child(12) { transform: rotate(330deg); }
+                .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-130px); }
+                .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-130px); }
+                .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-130px); }
+                .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-130px); }
+                .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-130px); }
+                .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-130px); }
+                .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-130px); }
+                .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-130px); }
+                .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-130px); }
+                .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-130px); }
+                .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-130px); }
+                .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-130px); }
 
-                /* Paksa layout teks agar menurun (seperti foto) */
                 .hero-stamp {
                     display: flex !important;
                     align-items: center !important;
+                    justify-content: center !important;
                     gap: 12px !important;
                     z-index: 2;
-                    margin-right: 40px;
-                    white-space: normal !important;
+                    position: relative;
                 }
 
                 .hero-stamp .stamp-number {
@@ -4336,36 +4330,39 @@ function DesignOverrides() {
                     color: var(--ink);
                     text-transform: uppercase;
                     line-height: 1.3 !important;
-                    position: static !important;
-                    top: 0 !important;
                 }
 
-                /* Responsif untuk Mobile */
                 @media (max-width: 700px) {
                     .hero-stamp-wrapper {
-                        min-width: 100%;
-                        margin-top: 40px;
-                        justify-content: center;
+                        width: 240px;
+                        height: 240px;
+                        margin-top: 30px;
                     }
                     
                     .stamp-circle {
                         width: 220px;
                         height: 220px;
-                        right: 50%;
-                        transform: translate(50%, -50%);
-                    }
-                    
-                    .stamp-ray {
-                        transform-origin: center 110px; /* Setengah tinggi mobile (220/2) */
-                    }
-                    
-                    .hero-stamp {
-                        margin-right: 0;
-                        gap: 10px !important;
                     }
 
+                    .stamp-ray {
+                        transform-origin: 6px 110px;
+                    }
+
+                    .stamp-ray:nth-child(1)  { transform: rotate(0deg) translateY(-110px); }
+                    .stamp-ray:nth-child(2)  { transform: rotate(30deg) translateY(-110px); }
+                    .stamp-ray:nth-child(3)  { transform: rotate(60deg) translateY(-110px); }
+                    .stamp-ray:nth-child(4)  { transform: rotate(90deg) translateY(-110px); }
+                    .stamp-ray:nth-child(5)  { transform: rotate(120deg) translateY(-110px); }
+                    .stamp-ray:nth-child(6)  { transform: rotate(150deg) translateY(-110px); }
+                    .stamp-ray:nth-child(7)  { transform: rotate(180deg) translateY(-110px); }
+                    .stamp-ray:nth-child(8)  { transform: rotate(210deg) translateY(-110px); }
+                    .stamp-ray:nth-child(9)  { transform: rotate(240deg) translateY(-110px); }
+                    .stamp-ray:nth-child(10) { transform: rotate(270deg) translateY(-110px); }
+                    .stamp-ray:nth-child(11) { transform: rotate(300deg) translateY(-110px); }
+                    .stamp-ray:nth-child(12) { transform: rotate(330deg) translateY(-110px); }
+
                     .hero-stamp .stamp-number {
-                        font-size: 75px !important;
+                        font-size: 70px !important;
                     }
                     
                     .hero-stamp .stamp-label {
